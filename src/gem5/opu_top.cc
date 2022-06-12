@@ -60,7 +60,7 @@ using namespace std;
 // FIXME
 // int no_of_ptx = 0;
 // char *ptx_line_stats_filename = "ptx_line_stats.rpt";
-OpuSimBase* g_the_gpu;
+OpuSimBase* g_the_opu;
 
 namespace gem5 {
 
@@ -125,7 +125,7 @@ OpuTop::OpuTop(const OpuTopParams &p) :
     // FIXME
     theGPU->init();
 
-    g_the_gpu = theGPU;
+    g_the_opu = theGPU;
 
     // Set up the component wrappers in order to cycle the GPGPU-Sim
     // shader cores, interconnect, L2 cache and DRAM
