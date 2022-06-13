@@ -189,8 +189,8 @@ class OpuTop : public ClockedObject
         return new_id;
     }
 
-    gpgpu_context * getGPGPUCtx() {
-        return gpgpu_ctx;
+    OpuContext * getGPGPUCtx() {
+        return opu_ctx;
     }
 
     stream_manager * getStreamManager () {
@@ -369,7 +369,7 @@ class OpuTop : public ClockedObject
     /// Pointers to GPGPU-Sim objects
     OpuSimBase *theGPU;
     stream_manager *streamManager;
-    gpgpu_context *gpgpu_ctx;
+    OpuContext *opu_ctx;
 
     /// Flag to make sure we don't schedule twice in the same tick
     bool streamScheduled;

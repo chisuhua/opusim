@@ -118,10 +118,10 @@ OpuTop::OpuTop(const OpuTopParams &p) :
     cpMemoryBaseSize = TheISA::PageBytes * 10;  // reserve 10 page for cp scratch
 
     // Initiaalize default gpgpu_context
-    // gpgpu_ctx = new gpgpu_context();
+    opu_ctx = new OpuContext();
 
     // Initialize GPGPU-Sim
-    // theGPU = gpgpu_ctx->gem5_ptx_sim_init_perf(&streamManager, this, getConfigPath());
+    theGPU = opu_ctx->gem5_ptx_sim_init_perf(&streamManager, this, getConfigPath());
     // FIXME
     theGPU->init();
 
