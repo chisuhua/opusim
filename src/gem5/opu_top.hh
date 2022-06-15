@@ -35,15 +35,15 @@
 #include <string>
 #include <vector>
 
-#include "stream_manager.h"
+#include "opu_stream.hh"
 #include "base/callback.hh"
 #include "debug/OpuTop.hh"
 #include "debug/OpuTopPageTable.hh"
 #include "opusim_base.hh"
 #include "opu_core.hh"
-#include "gpu/copy_engine.hh"
-#include "gpu/command_processor.hh"
-#include "gpu/shader_mmu.hh"
+#include "opu_dma.hh"
+#include "opu_cp.hh"
+#include "opu_mmu.hh"
 #include "params/OpuTop.hh"
 #include "params/OpuSimComponentWrapper.hh"
 #include "sim/clock_domain.hh"
@@ -52,6 +52,9 @@
 #include "sim/system.hh"
 
 namespace gem5 {
+class OpuContext;
+class OpuDma;
+class OpuCp;
 /**
  * A wrapper class to manage the clocking of GPGPU-Sim-side components.
  * The OpuTop must contain one of these wrappers for each clocked component or
@@ -193,7 +196,7 @@ class OpuTop : public ClockedObject
         return opu_ctx;
     }
 
-    stream_manager * getStreamManager () {
+    OpuStream * getStreamManager () {
         return streamManager;
     };
 
@@ -293,10 +296,10 @@ class OpuTop : public ClockedObject
     void streamTick();
 
     /// Pointer to the copy engine for this device
-    GPUCopyEngine *copyEngine;
+    OpuDma *copyEngine;
 
     /// Pointer to the copy engine for this device
-    CommandProcessor *commandProcessor;
+    OpuCp *commandProcessor;
 
     /// Used to register this SPA with the system
     System *system;
@@ -328,10 +331,10 @@ class OpuTop : public ClockedObject
 
     /// The thread context, stream and thread ID currently running on the SPA
     ThreadContext *runningTC;
-    struct CUstream_st *runningStream;
+    struct Stream_st *runningStream;
     int runningTID;
     Addr runningPTBase;
-    void beginStreamOperation(struct CUstream_st *_stream) {
+    void beginStreamOperation(struct Stream_st *_stream) {
         // We currently do not support multiple concurrent streams
         if (runningStream || runningTC) {
             panic("Already a stream operation running (only support one at a time)!");
@@ -368,7 +371,7 @@ class OpuTop : public ClockedObject
 
     /// Pointers to GPGPU-Sim objects
     OpuSimBase *theGPU;
-    stream_manager *streamManager;
+    OpuStream *streamManager;
     OpuContext *opu_ctx;
 
     /// Flag to make sure we don't schedule twice in the same tick
@@ -380,7 +383,7 @@ class OpuTop : public ClockedObject
 
     /// For GPU syscalls
     /// This is what is required to save and restore on checkpoints
-    std::map<const void*,function_info*> m_kernel_lookup; // unique id (CUDA app function address) => kernel entry point
+    // std::map<const void*,function_info*> m_kernel_lookup; // unique id (CUDA app function address) => kernel entry point
     uint64_t instBaseVaddr;
     bool instBaseVaddrSet;
     Addr localBaseVaddr;
@@ -424,7 +427,7 @@ class OpuTop : public ClockedObject
     Addr cpMemoryBaseSize;
     std::map<Addr,size_t> allocatedGPUMemory;
 
-    ShaderMMU *shaderMMU;
+    OpuMMU *shaderMMU;
 
     OpuDeviceProperties deviceProperties;
 
@@ -441,8 +444,8 @@ class OpuTop : public ClockedObject
 
     /// Register devices callbacks
     void registerOpuCore(OpuCore *sc);
-    void registerCopyEngine(GPUCopyEngine *ce);
-    void registerCommandProcessor(CommandProcessor *cp);
+    void registerCopyEngine(OpuDma *ce);
+    void registerCp(OpuCp *cp);
 
     /// Getter for whether we are using Ruby or GPGPU-Sim memory modeling
     OpuDeviceProperties *getDeviceProperties() { return &deviceProperties; }
@@ -460,7 +463,7 @@ class OpuTop : public ClockedObject
     OpuSimBase* getTheGPU() { return theGPU; }
 
     /// Called at the beginning of each kernel launch to start the statistics
-    void beginRunning(Tick stream_queued_time, struct CUstream_st *_stream);
+    void beginRunning(Tick stream_queued_time, struct Stream_st *_stream);
 
     /**
      * Marks the kernel as complete and signals the stream manager
@@ -475,7 +478,7 @@ class OpuTop : public ClockedObject
     void handleFinishPageFault(ThreadContext *tc)
         { shaderMMU->handleFinishPageFault(tc); }
 
-    ShaderMMU *getMMU() { return shaderMMU; }
+    OpuMMU *getMMU() { return shaderMMU; }
 
     /// Schedules the stream manager to be checked in 'ticks' ticks from now
     void scheduleStreamEvent();
@@ -497,14 +500,14 @@ class OpuTop : public ClockedObject
 
 
     /// Begins a timing memory copy from src to dst
-    void memcpy(void *src, void *dst, size_t count, struct CUstream_st *stream, stream_operation_type type);
+    void memcpy(void *src, void *dst, size_t count, struct Stream_st *stream, stream_operation_type type);
 
     /// Begins a timing memory copy from src to/from the symbol+offset
-    void memcpy_to_symbol(const char *hostVar, const void *src, size_t count, size_t offset, struct CUstream_st *stream);
-    void memcpy_from_symbol(void *dst, const char *hostVar, size_t count, size_t offset, struct CUstream_st *stream);
+    void memcpy_to_symbol(const char *hostVar, const void *src, size_t count, size_t offset, struct Stream_st *stream);
+    void memcpy_from_symbol(void *dst, const char *hostVar, size_t count, size_t offset, struct Stream_st *stream);
 
     /// Begins a timing memory set of value to dst
-    void memset(Addr dst, int value, size_t count, struct CUstream_st *stream);
+    void memset(Addr dst, int value, size_t count, struct Stream_st *stream);
 
     /// Called by the copy engine when a memcpy or memset is complete
     void finishCopyOperation();
@@ -540,7 +543,7 @@ class OpuTop : public ClockedObject
         }
         // NOTE: If we can get away with live updating the thread context
         // pointer while the GPU is executing, we need to make sure that the
-        // ShaderMMU and ShaderTLBs use the latest runningTC (i.e. we may need
+        // OpuMMU and ShaderTLBs use the latest runningTC (i.e. we may need
         // to dynamically update the tc of in-flight translations, and squash
         // those that are in page-walks). This possibility seems unlikely.
     }
@@ -553,7 +556,7 @@ class OpuTop : public ClockedObject
     void unblockThread(ThreadContext *tc);
 
     /// From gpu syscalls (used to be CUctx_st)
-    function_info *get_kernel(const char *hostFun);
+    // function_info *get_kernel(const char *hostFun);
     void setInstBaseVaddr(uint64_t addr);
     uint64_t getInstBaseVaddr();
     void setLocalBaseVaddr(uint64_t addr);

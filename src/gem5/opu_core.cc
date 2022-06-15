@@ -125,7 +125,7 @@ void OpuCore::initialize()
 
 int OpuCore::instCacheResourceAvailable(Addr addr)
 {
-    map<Addr,mem_fetch *>::iterator iter =
+    map<Addr,OpuMemfetch *>::iterator iter =
             busyInstCacheLineAddrs.find(addrToLine(addr));
     return iter == busyInstCacheLineAddrs.end();
 }
@@ -137,7 +137,7 @@ inline Addr OpuCore::addrToLine(Addr a)
 }
 
 void
-OpuCore::icacheFetch(Addr addr, mem_fetch *mf)
+OpuCore::icacheFetch(Addr addr, OpuMemfetch *mf)
 {
     assert(instCacheResourceAvailable(addr));
 
@@ -237,7 +237,7 @@ void
 OpuCore::recvInstResp(PacketPtr pkt)
 {
     assert(pkt->req->isInstFetch());
-    map<Addr,mem_fetch *>::iterator iter =
+    map<Addr,OpuMemfetch *>::iterator iter =
             busyInstCacheLineAddrs.find(addrToLine(pkt->req->getVaddr()));
     assert(iter != busyInstCacheLineAddrs.end());
 
@@ -253,13 +253,13 @@ OpuCore::recvInstResp(PacketPtr pkt)
 }
 
 bool
-OpuCore::executeMemOp(const warp_inst_t &inst)
+OpuCore::executeMemOp(const OpuWarpinst &inst)
 {
-    assert(inst.space.get_type() == global_space ||
-           inst.space.get_type() == const_space ||
-           inst.space.get_type() == local_space ||
-           inst.op == BARRIER_OP ||
-           inst.op == MEMORY_BARRIER_OP);
+    assert(inst.space_type == opu_mspace_t::GLOBAL ||
+           // inst.space_type == const_space ||
+           inst.space_type == opu_mspace_t::PRIVATE ||
+           inst.op == opu_op_t::BARRIER_OP ||
+           inst.op == opu_op_t::MEMORY_BARRIER_OP);
     assert(inst.valid());
 
     // for debugging
@@ -271,7 +271,7 @@ OpuCore::executeMemOp(const warp_inst_t &inst)
     }
     size *= inst.vectorLength;
     assert(size <= 16);
-    if (inst.op == BARRIER_OP || inst.op == MEMORY_BARRIER_OP) {
+    if (inst.op == opu_op_t::BARRIER_OP || inst.op == opu_op_t::MEMORY_BARRIER_OP) {
         if (inst.active_count() != inst.warp_size()) {
             warn_once("ShaderLSQ received partial-warp fence: Assuming you know what you're doing");
         }
@@ -279,18 +279,18 @@ OpuCore::executeMemOp(const warp_inst_t &inst)
     const int asid = 0;
     Request::Flags flags;
     if (inst.isatomic()) {
-        assert(inst.memory_op == memory_store);
+        assert(inst.memory_op == opu_memop_t::STORE);
         // Assert that gem5-gpu knows how to handle the requested atomic type.
         // TODO: When all atomic types and data sizes are implemented, remove
-        assert(inst.get_atomic() == ATOMIC_INC ||
-               inst.get_atomic() == ATOMIC_MAX ||
-               inst.get_atomic() == ATOMIC_MIN ||
-               inst.get_atomic() == ATOMIC_ADD ||
-               inst.get_atomic() == ATOMIC_CAS);
-        assert(inst.data_type == S32_TYPE ||
-               inst.data_type == U32_TYPE ||
-               inst.data_type == F32_TYPE ||
-               inst.data_type == B32_TYPE);
+        assert(inst.get_atomic() == opu_atomic_t::ATOMIC_INC ||
+               inst.get_atomic() == opu_atomic_t::ATOMIC_MAX ||
+               inst.get_atomic() == opu_atomic_t::ATOMIC_MIN ||
+               inst.get_atomic() == opu_atomic_t::ATOMIC_ADD ||
+               inst.get_atomic() == opu_atomic_t::ATOMIC_CAS);
+        assert(inst.data_type == opu_datatype_t::DT_INT32 ||
+               inst.data_type == opu_datatype_t::DT_UINT32 ||
+               inst.data_type == opu_datatype_t::DT_FP32 ||
+               inst.data_type == opu_datatype_t::DT_B32);
         // GPU atomics will use the MEM_SWAP flag to indicate to Ruby that the
         // request should be passed to the cache hierarchy as secondary
         // RubyRequest_Atomic.
@@ -301,15 +301,17 @@ OpuCore::executeMemOp(const warp_inst_t &inst)
         flags.set(Request::MEM_SWAP);
     }
 
-    if (inst.space.get_type() == const_space) {
+#if 0
+    if (inst.space_type == const_space) {
         DPRINTF(OpuCoreAccess, "Const space: %p\n", inst.pc);
-    } else if (inst.space.get_type() == local_space) {
+    } else if (inst.space_type == local_space) {
         DPRINTF(OpuCoreAccess, "Local space: %p\n", inst.pc);
-    } else if (inst.space.get_type() == param_space_local) {
+    } else if (inst.space_type == param_space_local) {
         DPRINTF(OpuCoreAccess, "Param local space: %p\n", inst.pc);
     } else {
         DPRINTF(OpuCoreAccess, "Global space: %p\n", inst.pc);
     }
+#endif
 
     for (int lane = 0; lane < warpSize; lane++) {
         if (inst.active(lane)) {
@@ -320,18 +322,18 @@ OpuCore::executeMemOp(const warp_inst_t &inst)
                 // Not all cache operators are currently supported in gem5-gpu.
                 // Verify that a supported cache operator is specified for this
                 // load instruction.
-                if (!inst.isatomic() && inst.cache_op == CACHE_GLOBAL) {
+                if (!inst.isatomic() && inst.cache_op == opu_cacheop_t::CACHE_GLOBAL) {
                     // If this is a load instruction that must access coherent
                     // global memory, bypass the L1 cache to avoid stale hits
                     flags.set(Request::BYPASS_L1);
-                } else if (inst.cache_op != CACHE_ALL &&
-                    !(inst.isatomic() && inst.cache_op == CACHE_GLOBAL)) {
+                } else if (inst.cache_op != opu_cacheop_t::CACHE_ALL &&
+                    !(inst.isatomic() && inst.cache_op == opu_cacheop_t::CACHE_GLOBAL)) {
                     panic("Unhandled cache operator (%d) on load\n",
-                          inst.cache_op);
+                          static_cast<int>(inst.cache_op));
                 }
                 // TODO schi RequestPtr req = new Request(asid, addr, size, flags,
                 RequestPtr req = std::make_shared<Request>(asid, addr, size, flags,
-                        dataMasterId, inst.pc, id, inst.warp_id());
+                        dataMasterId, inst.pc, id, inst.warp_id);
                 pkt = new Packet(req, MemCmd::ReadReq);
                 if (inst.isatomic()) {
                     assert(flags.isSet(Request::MEM_SWAP));
@@ -360,29 +362,29 @@ OpuCore::executeMemOp(const warp_inst_t &inst)
                 // Not all cache operators are currently supported in gem5-gpu.
                 // Verify that a supported cache operator is specified for this
                 // load instruction.
-                if (inst.cache_op == CACHE_GLOBAL) {
+                if (inst.cache_op == opu_cacheop_t::CACHE_GLOBAL) {
                     flags.set(Request::BYPASS_L1);
-                } else if (inst.cache_op != CACHE_ALL &&
-                           inst.cache_op != CACHE_WRITE_BACK) {
+                } else if (inst.cache_op != opu_cacheop_t::CACHE_ALL &&
+                           inst.cache_op != opu_cacheop_t::CACHE_WRITE_BACK) {
                     panic("Unhandled cache operator (%d) on store\n",
-                          inst.cache_op);
+                          static_cast<int>(inst.cache_op));
                 }
                 // TODO schi RequestPtr req = new Request(asid, addr, size, flags,
                 RequestPtr req = std::make_shared<Request>(asid, addr, size, flags,
-                        dataMasterId, inst.pc, id, inst.warp_id());
+                        dataMasterId, inst.pc, id, inst.warp_id);
                 pkt = new Packet(req, MemCmd::WriteReq);
                 pkt->allocate();
                 pkt->setData((uint8_t*)inst.get_data(lane));
                 DPRINTF(OpuCoreAccess, "Send store from lane %d address 0x%llx: data = %d\n",
                         lane, pkt->req->getVaddr(), *(int*)inst.get_data(lane));
-            } else if (inst.op == BARRIER_OP || inst.op == MEMORY_BARRIER_OP) {
+            } else if (inst.op == opu_op_t::BARRIER_OP || inst.op == opu_op_t::MEMORY_BARRIER_OP) {
                 assert(!inst.isatomic());
                 // Setup Fence packet
                 // TODO: If adding fencing functionality, specify control data
                 // in packet or request
                 // TODO schi RequestPtr req = new Request(asid, 0x0, 0, flags, dataMasterId,
                 RequestPtr req = std::make_shared<Request>(asid, 0x0, 0, flags, dataMasterId,
-                        inst.pc, id, inst.warp_id());
+                        inst.pc, id, inst.warp_id);
                 pkt = new Packet(req, MemCmd::FenceReq);
                 pkt->senderState = new SenderState(inst);
             } else {
@@ -397,8 +399,8 @@ OpuCore::executeMemOp(const warp_inst_t &inst)
                     panic("Should never fail after first accepted lane");
                 }
 
-                if (inst.is_load() || inst.op == BARRIER_OP ||
-                    inst.op == MEMORY_BARRIER_OP) {
+                if (inst.is_load() || inst.op == opu_op_t::BARRIER_OP ||
+                    inst.op == opu_op_t::MEMORY_BARRIER_OP) {
                     delete pkt->senderState;
                 }
                 // TODO schi delete pkt->req;
@@ -412,8 +414,8 @@ OpuCore::executeMemOp(const warp_inst_t &inst)
         }
     }
 
-    if (inst.op == BARRIER_OP || inst.op == MEMORY_BARRIER_OP) {
-        needsFenceUnblock[inst.warp_id()] = true;
+    if (inst.op == opu_op_t::BARRIER_OP || inst.op == opu_op_t::MEMORY_BARRIER_OP) {
+        needsFenceUnblock[inst.warp_id] = true;
     }
 
     // Return that there should not be a pipeline stall
@@ -428,7 +430,7 @@ OpuCore::recvLSQDataResp(PacketPtr pkt, int lane_id)
     DPRINTF(OpuCoreAccess, "Got a response for lane %d address 0x%llx\n",
             lane_id, pkt->req->getVaddr());
 
-    warp_inst_t &inst = ((SenderState*)pkt->senderState)->inst;
+    OpuWarpinst &inst = ((SenderState*)pkt->senderState)->inst;
     assert(!inst.empty() && inst.valid());
 
     if (pkt->isRead()) {
@@ -452,22 +454,22 @@ OpuCore::recvLSQDataResp(PacketPtr pkt, int lane_id)
         DPRINTF(OpuCoreAccess, "Loaded data %d\n", *(int*)data);
         coreImpl->writeRegister(inst, warpSize, lane_id, (char*)data);
     } else if (pkt->cmd == MemCmd::FenceResp) {
-        if (needsFenceUnblock[inst.warp_id()]) {
-            if (inst.op == BARRIER_OP) {
+        if (needsFenceUnblock[inst.warp_id]) {
+            if (inst.op == opu_op_t::BARRIER_OP) {
                 // Signal that warp has reached barrier
-                assert(!coreImpl->warp_waiting_at_barrier(inst.warp_id()));
+                assert(!coreImpl->warp_waiting_at_barrier(inst.warp_id));
                 coreImpl->warp_reaches_barrier(inst);
                 DPRINTF(OpuCoreAccess, "Warp %d reaches barrier\n",
                         pkt->req->threadId());
             }
 
             // Signal that fence has been cleared
-            assert(coreImpl->fence_unblock_needed(inst.warp_id()));
+            assert(coreImpl->fence_unblock_needed(inst.warp_id));
             coreImpl->complete_fence(pkt->req->threadId());
             DPRINTF(OpuCoreAccess, "Cleared fence, unblocking warp %d\n",
                     pkt->req->threadId());
 
-            needsFenceUnblock[inst.warp_id()] = false;
+            needsFenceUnblock[inst.warp_id] = false;
         }
     }
 
@@ -685,36 +687,39 @@ OpuCore::regStats()
 }
 
 void
-OpuCore::record_ld(memory_space_t space)
+OpuCore::record_ld(opu_mspace_t space_type)
 {
-    switch(space.get_type()) {
-    case local_space: numLocalLoads++; break;
-    case shared_space: numSharedLoads++; break;
+    switch(space_type) {
+        case opu_mspace_t::PRIVATE: numLocalLoads++; break;
+        case opu_mspace_t::SHARED: numSharedLoads++; break;
+        case opu_mspace_t::GLOBAL: numGlobalLoads++; break;
+#if 0
     case param_space_kernel: numParamKernelLoads++; break;
     case param_space_local: numParamLocalLoads++; break;
     case const_space: numConstLoads++; break;
     case tex_space: numTexLoads++; break;
     case surf_space: numSurfLoads++; break;
-    case global_space: numGlobalLoads++; break;
     case generic_space: numGenericLoads++; break;
     case param_space_unclassified:
     case undefined_space:
     case reg_space:
     case instruction_space:
+#endif
     default:
-        panic("Load from invalid space: %d!", space.get_type());
+        panic("Load from invalid space: %d!", static_cast<int>(space_type));
         break;
     }
 }
 
 void
-OpuCore::record_st(memory_space_t space)
+OpuCore::record_st(opu_mspace_t space_type)
 {
-    switch(space.get_type()) {
-    case local_space: numLocalStores++; break;
-    case shared_space: numSharedStores++; break;
+    switch(space_type) {
+        case opu_mspace_t::PRIVATE: numLocalStores++; break;
+        case opu_mspace_t::SHARED: numSharedStores++; break;
+        case opu_mspace_t::GLOBAL: numGlobalStores++; break;
+#if 0
     case param_space_local: numParamLocalStores++; break;
-    case global_space: numGlobalStores++; break;
     case generic_space: numGenericStores++; break;
 
     case param_space_kernel:
@@ -725,8 +730,9 @@ OpuCore::record_st(memory_space_t space)
     case undefined_space:
     case reg_space:
     case instruction_space:
+#endif
     default:
-        panic("Store to invalid space: %d!", space.get_type());
+        panic("Store to invalid space: %d!", static_cast<int>(space_type));
         break;
     }
 }

@@ -3755,7 +3755,7 @@ barrier_set_t::barrier_set_t(shader_core_ctx *shader,
   }
   if (max_barriers_per_cta > MAX_BARRIERS_PER_CTA) {
     printf(
-        "ERROR ** increase MAX_BARRIERS_PER_CTA in abstract_hardware_model.h "
+        "ERROR ** increase MAX_BARRIERS_PER_CTA in abstract_core.h "
         "from %u to >= %u or barriers per cta in gpgpusim.config\n",
         MAX_BARRIERS_PER_CTA, max_barriers_per_cta);
     exit(1);

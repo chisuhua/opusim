@@ -1,5 +1,3 @@
-# -*- mode:python -*-
-
 # Copyright (c) 2011 Mark D. Hill and David A. Wood
 # All rights reserved.
 #
@@ -27,36 +25,32 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-Import('*')
+from m5.defines import buildEnv
+from m5.params import *
+from m5.proxy import *
+#from m5.objects.MemObject import MemObject
+from m5.objects.ClockedObject import ClockedObject
+from m5.objects.OpuTlb import OpuTLB
 
-import os
-design_root = os.environ['DESIGN_ROOT']
-env.Append(CCFLAGS=['-I'+design_root+'/opu/coasm'])
+class OpuDma(ClockedObject):
+    type = 'OpuDma'
+    cxx_class = 'gem5::OpuDma'
+    cxx_header = "opu_dma.hh"
 
-SimObject('OpuCore.py')
-SimObject('OpuTop.py')
-SimObject('OpuTlb.py')
-SimObject('OpuMMU.py')
-SimObject('OpuDma.py')
-SimObject('OpuCp.py')
+    host_port = MasterPort("The copy engine port to host coherence domain")
+    device_port = MasterPort("The copy engine port to device coherence domain")
+    driver_delay = Param.Int(0, "memcpy launch delay in ticks");
+    sys = Param.System(Parent.any, "system sc will run on")
+    # @TODO: This will need to be removed when CUDA syscalls manage copies
+    opu = Param.OpuTop(Parent.any, "The OPU")
 
-Source('opu_context.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
-Source('opu_stream.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
-Source('opu_core.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
-Source('opu_top.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
-Source('opu_dma.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
-Source('opu_cp.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
-Source('opu_tlb.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
-Source('opu_mmu.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
+    cache_line_size = Param.Unsigned(Parent.cache_line_size, "Cache line size in bytes")
+    buffering = Param.Unsigned(0, "The maximum cache lines that the copy engine"
+                                  "can buffer (0 implies effectively infinite)")
 
-DebugFlag('OpuCore')
-DebugFlag('OpuCoreAccess')
-DebugFlag('OpuCoreFetch')
-DebugFlag('OpuTop')
-DebugFlag('OpuTopAccess')
-DebugFlag('OpuTopPageTable')
-DebugFlag('OpuTopTick')
-DebugFlag('OpuTlb')
-DebugFlag('OpuCp')
-DebugFlag('OpuDma')
-DebugFlag('OpuMMU')
+    host_dtb = Param.OpuTLB(OpuTLB(access_host_pagetable = True), "TLB for the host memory space")
+    device_dtb = Param.OpuTLB(OpuTLB(), "TLB for the device memory space")
+
+    id = Param.Int(-1, "ID of the CE")
+    stats_filename = Param.String("ce_stats.txt",
+        "file to which copy engine dumps its stats")

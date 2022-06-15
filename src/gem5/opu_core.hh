@@ -37,8 +37,9 @@
 // #include "cuda-sim/ptx.tab.h"
 // #include "cuda-sim/ptx_ir.h"
 // #include "cuda-sim/ptx_sim.h"
-// #include "gpgpu-sim/mem_fetch.h"
-#include "../core/shader.h"
+// #include "gpgpu-sim/OpuMemfetch.h"
+//#include "../core/shader.h"
+#include "coasm.h"
 #include "opucore_base.hh"
 #include "gpu/atomic_operations.hh"
 #include "gpu/shader_tlb.hh"
@@ -64,44 +65,40 @@ class OpuCore : public ClockedObject
     typedef OpuCoreParams Params;
     // Functions to translate GPGPU-Sim values to gem5-gpu values
     static AtomicOpRequest::Operation
-    getAtomOpType(unsigned gpgpu_sim_value) {
-#if 0
-        switch (gpgpu_sim_value) {
-          case ATOMIC_CAS:
+    getAtomOpType(opu_atomic_t opu_sim_value) {
+        switch (opu_sim_value) {
+            case opu_atomic_t::ATOMIC_CAS:
             return AtomicOpRequest::ATOMIC_CAS_OP;
-          case ATOMIC_ADD:
+            case opu_atomic_t::ATOMIC_ADD:
             return AtomicOpRequest::ATOMIC_ADD_OP;
-          case ATOMIC_INC:
+            case opu_atomic_t::ATOMIC_INC:
             return AtomicOpRequest::ATOMIC_INC_OP;
-          case ATOMIC_MIN:
+            case opu_atomic_t::ATOMIC_MIN:
             return AtomicOpRequest::ATOMIC_MIN_OP;
-          case ATOMIC_MAX:
+            case opu_atomic_t::ATOMIC_MAX:
             return AtomicOpRequest::ATOMIC_MAX_OP;
           default:
-            panic("Unknown atomic type: %llu\n", gpgpu_sim_value);
+            panic("Unknown atomic type: %u\n", static_cast<uint32_t>(opu_sim_value));
             break;
         }
-#endif
         return AtomicOpRequest::ATOMIC_INVALID_OP;
     }
 
     static AtomicOpRequest::DataType
-    getDataType(unsigned gpgpu_sim_value) {
-#if 0
-        switch (gpgpu_sim_value) {
-          case S32_TYPE:
+    getDataType(opu_datatype_t opu_sim_value) {
+        switch (opu_sim_value) {
+            case opu_datatype_t::DT_INT32:
             return AtomicOpRequest::S32_TYPE_;
-          case U32_TYPE:
+            case opu_datatype_t::DT_UINT32:
             return AtomicOpRequest::U32_TYPE_;
-          case F32_TYPE:
+            case opu_datatype_t::DT_FP32:
             return AtomicOpRequest::F32_TYPE_;
-          case B32_TYPE:
+            case opu_datatype_t::DT_B32:
             return AtomicOpRequest::B32_TYPE_;
           default:
-            panic("Unknown atomic data type: %llu\n", gpgpu_sim_value);
+            panic("Unknown atomic data type: %u\n", static_cast<uint32_t>(opu_sim_value));
             break;
         }
-#endif
         return AtomicOpRequest::INVALID_TYPE;
     }
     /**
@@ -179,8 +176,8 @@ class OpuCore : public ClockedObject
 
     class SenderState : public Packet::SenderState {
     public:
-        SenderState(warp_inst_t _inst) : inst(_inst) {}
-        warp_inst_t inst;
+        SenderState(OpuWarpinst _inst) : inst(_inst) {}
+        OpuWarpinst inst;
     };
 
     const Params * params() const {
@@ -205,7 +202,7 @@ class OpuCore : public ClockedObject
 
     // Holds all outstanding addresses, maps from address to mf object used
     // mostly for acking GPGPU-Sim
-    std::map<Addr,mem_fetch *> busyInstCacheLineAddrs;
+    std::map<Addr,OpuMemfetch *> busyInstCacheLineAddrs;
 
     // Holds instruction packets that need to be retried
     std::list<PacketPtr> retryInstPkts;
@@ -266,7 +263,7 @@ class OpuCore : public ClockedObject
 
     // Instruction memory access functions:
     // Initializes an instruction fetch from gem5-side memory
-    void icacheFetch(Addr a, mem_fetch *mf);
+    void icacheFetch(Addr a, OpuMemfetch *mf);
 
     // Required for translation. Calls sendInstAccess with physical address
     void finishTranslation(WholeTranslationState *state);
@@ -288,7 +285,7 @@ class OpuCore : public ClockedObject
      * memory request to the LSQ on a per-lane basis.
      * @return true if stall
      */
-    bool executeMemOp(const warp_inst_t &inst);
+    bool executeMemOp(const OpuWarpinst &inst);
 
     /**
      * The specified lane is returning a packet from the ShaderLSQ to be
@@ -348,9 +345,8 @@ class OpuCore : public ClockedObject
     Stats::Formula instPerCycle;
     Stats::Scalar numKernelsCompleted;
     void regStats();
-
-    void record_ld(memory_space_t space);
-    void record_st(memory_space_t space);
+    void record_ld(opu_mspace_t space);
+    void record_st(opu_mspace_t space);
     void record_inst(int inst_type);
     void record_block_issue(unsigned hw_cta_id);
     void record_block_commit(unsigned hw_cta_id);

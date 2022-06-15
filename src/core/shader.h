@@ -46,15 +46,12 @@
 
 //#include "../cuda-sim/ptx.tab.h"
 
-#include "../abstract_hardware_model.h"
+#include "../abstract_core.h"
 #include "delayqueue.h"
-#include "dram.h"
-#include "gpu-cache.h"
-#include "mem_fetch.h"
+// #include "mem_fetch.h"
 #include "scoreboard.h"
 #include "stack.h"
 #include "stats.h"
-#include "traffic_breakdown.h"
 
 #define NO_OP_FLAG 0xFF
 
@@ -71,7 +68,7 @@
 
 #define WRITE_MASK_SIZE 8
 
-class gpgpu_context;
+class OpuContext;
 
 enum exec_unit_type_t {
   NONE = 0,
@@ -1358,7 +1355,7 @@ public:
             shader_core_mem_fetch_allocator *mf_allocator,
             shader_core_ctx *core, opndcoll_rfu_t *operand_collector,
             Scoreboard *scoreboard, const shader_core_config *config,
-            const memory_config *mem_config, class shader_core_stats *stats,
+            /*class shader_core_stats *stats,*/
             unsigned sid, unsigned tpc);
 
   // modifiers
@@ -1400,29 +1397,19 @@ public:
   virtual bool stallable() const { return true; }
   bool response_buffer_full() const;
   void print(FILE *fout) const;
-  void print_cache_stats(FILE *fp, unsigned &dl1_accesses,
-                         unsigned &dl1_misses);
-  void get_cache_stats(unsigned &read_accesses, unsigned &write_accesses,
-                       unsigned &read_misses, unsigned &write_misses,
-                       unsigned cache_type);
-  void get_cache_stats(cache_stats &cs);
-
-  void get_L1D_sub_stats(struct cache_sub_stats &css) const;
-  void get_L1C_sub_stats(struct cache_sub_stats &css) const;
-  void get_L1T_sub_stats(struct cache_sub_stats &css) const;
 
 protected:
   ldst_unit(mem_fetch_interface *icnt,
             shader_core_mem_fetch_allocator *mf_allocator,
             shader_core_ctx *core, opndcoll_rfu_t *operand_collector,
             Scoreboard *scoreboard, const shader_core_config *config,
-            const memory_config *mem_config, shader_core_stats *stats,
-            unsigned sid, unsigned tpc, l1_cache *new_l1d_cache);
+            /*shader_core_stats *stats,*/
+            unsigned sid, unsigned tpc);
   void init(mem_fetch_interface *icnt,
             shader_core_mem_fetch_allocator *mf_allocator,
             shader_core_ctx *core, opndcoll_rfu_t *operand_collector,
             Scoreboard *scoreboard, const shader_core_config *config,
-            const memory_config *mem_config, shader_core_stats *stats,
+            shader_core_stats *stats,
             unsigned sid, unsigned tpc);
 
 
@@ -1454,9 +1441,6 @@ protected:
   unsigned m_sid;
   unsigned m_tpc;
 
-  tex_cache *m_L1T; // texture cache
-  read_only_cache *m_L1C; // constant cache
-  l1_cache *m_L1D; // data cache
   std::map<unsigned /*warp_id*/,
            std::map<unsigned /*regnum*/, unsigned /*count*/>>
       m_pending_writes;
@@ -1517,7 +1501,7 @@ struct specialized_unit_params {
 
 class shader_core_config : public core_config {
  public:
-  shader_core_config(gpgpu_context *ctx) : core_config(ctx) {
+  shader_core_config(OpuContext *ctx) : core_config(ctx) {
     pipeline_widths_string = NULL;
     gpgpu_ctx = ctx;
   }
@@ -1557,7 +1541,7 @@ class shader_core_config : public core_config {
     if (n_thread_per_shader > MAX_THREAD_PER_SM) {
       printf(
           "GPGPU-Sim uArch: Error ** increase MAX_THREAD_PER_SM in "
-          "abstract_hardware_model.h from %u to %u\n",
+          "abstract_core.h from %u to %u\n",
           MAX_THREAD_PER_SM, n_thread_per_shader);
       abort();
     }
@@ -1566,12 +1550,6 @@ class shader_core_config : public core_config {
 
     set_pipeline_latency();
 
-    m_L1I_config.init(m_L1I_config.m_config_string, FuncCachePreferNone);
-    m_L1T_config.init(m_L1T_config.m_config_string, FuncCachePreferNone);
-    m_L1C_config.init(m_L1C_config.m_config_string, FuncCachePreferNone);
-    m_L1D_config.init(m_L1D_config.m_config_string, FuncCachePreferNone);
-    gpgpu_cache_texl1_linesize = m_L1T_config.get_line_sz();
-    gpgpu_cache_constl1_linesize = m_L1C_config.get_line_sz();
     m_valid = true;
 
     m_specialized_unit_num = 0;
@@ -1620,7 +1598,7 @@ class shader_core_config : public core_config {
   void set_pipeline_latency();
 
   // backward pointer
-  class gpgpu_context *gpgpu_ctx;
+  class OpuContext *gpgpu_ctx;
   // data
   char *gpgpu_shader_core_pipeline_opt;
   bool gpgpu_perfect_mem;
@@ -1638,11 +1616,6 @@ class shader_core_config : public core_config {
   unsigned gpgpu_registers_per_block;
   char *pipeline_widths_string;
   int pipe_widths[N_PIPELINE_STAGES];
-
-  mutable cache_config m_L1I_config;
-  mutable cache_config m_L1T_config;
-  mutable cache_config m_L1C_config;
-  mutable l1d_cache_config m_L1D_config;
 
   bool gpgpu_dwf_reg_bankconflict;
 
@@ -1943,9 +1916,6 @@ class shader_core_stats : public shader_core_stats_pod {
     n_simt_to_mem = (long *)calloc(config->num_shader(), sizeof(long));
     n_mem_to_simt = (long *)calloc(config->num_shader(), sizeof(long));
 
-    m_outgoing_traffic_stats = new traffic_breakdown("coretomem");
-    m_incoming_traffic_stats = new traffic_breakdown("memtocore");
-
     gpgpu_n_shmem_bank_access =
         (unsigned *)calloc(config->num_shader(), sizeof(unsigned));
 
@@ -1954,8 +1924,6 @@ class shader_core_stats : public shader_core_stats_pod {
   }
 
   ~shader_core_stats() {
-    delete m_outgoing_traffic_stats;
-    delete m_incoming_traffic_stats;
     free(m_num_sim_insn);
     free(m_num_sim_winsn);
     free(m_num_FPdecoded_insn);
@@ -2010,8 +1978,6 @@ class shader_core_stats : public shader_core_stats_pod {
   void event_warp_issued(unsigned s_id, unsigned warp_id, unsigned num_issued,
                          unsigned dynamic_warp_id);
 
-  void visualizer_print(gzFile visualizer_file);
-
   void print(FILE *fout) const;
 
   const std::vector<std::vector<unsigned>> &get_dynamic_warp_issue() const {
@@ -2024,9 +1990,6 @@ class shader_core_stats : public shader_core_stats_pod {
 
  private:
   const shader_core_config *m_config;
-
-  traffic_breakdown *m_outgoing_traffic_stats;  // core to memory partitions
-  traffic_breakdown *m_incoming_traffic_stats;  // memory partition to core
 
   // Counts the instructions issued for each dynamic warp.
   std::vector<std::vector<unsigned>> m_shader_dynamic_warp_issue_distro;
@@ -2082,7 +2045,7 @@ class shader_core_ctx : public core_t {
   shader_core_ctx(class gpgpu_sim *gpu, class simt_core_cluster *cluster,
                   unsigned shader_id, unsigned tpc_id,
                   const shader_core_config *config,
-                  const memory_config *mem_config, shader_core_stats *stats);
+                  shader_core_stats *stats);
 
   // used by simt_core_cluster:
   // modifiers
@@ -2169,17 +2132,6 @@ class shader_core_ctx : public core_t {
   // accessors
   std::list<unsigned> get_regs_written(const inst_t &fvt) const;
   const shader_core_config *get_config() const { return m_config; }
-  void print_cache_stats(FILE *fp, unsigned &dl1_accesses,
-                         unsigned &dl1_misses);
-
-  void get_cache_stats(cache_stats &cs);
-  void get_L1I_sub_stats(struct cache_sub_stats &css) const;
-  void get_L1D_sub_stats(struct cache_sub_stats &css) const;
-  void get_L1C_sub_stats(struct cache_sub_stats &css) const;
-  void get_L1T_sub_stats(struct cache_sub_stats &css) const;
-
-  void get_icnt_power_stats(long &n_simt_to_mem, long &n_mem_to_simt) const;
-
 
   // debug:
   void display_simt_state(FILE *fout, int mask) const;

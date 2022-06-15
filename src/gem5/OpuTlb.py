@@ -1,5 +1,3 @@
-# -*- mode:python -*-
-
 # Copyright (c) 2011 Mark D. Hill and David A. Wood
 # All rights reserved.
 #
@@ -27,36 +25,22 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-Import('*')
+from m5.params import *
+from m5.proxy import *
+from m5.objects.BaseTLB import BaseTLB
 
-import os
-design_root = os.environ['DESIGN_ROOT']
-env.Append(CCFLAGS=['-I'+design_root+'/opu/coasm'])
+class OpuTLB(BaseTLB):
+    type = 'OpuTLB'
+    cxx_class = 'gem5::OpuTLB'
+    cxx_header = "opu_tlb.hh"
 
-SimObject('OpuCore.py')
-SimObject('OpuTop.py')
-SimObject('OpuTlb.py')
-SimObject('OpuMMU.py')
-SimObject('OpuDma.py')
-SimObject('OpuCp.py')
+    access_host_pagetable = Param.Bool(False, \
+                "Whether to allow accesses to host page table")
+    opu = Param.OpuTop(Parent.any, "The OPU")
 
-Source('opu_context.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
-Source('opu_stream.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
-Source('opu_core.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
-Source('opu_top.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
-Source('opu_dma.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
-Source('opu_cp.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
-Source('opu_tlb.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
-Source('opu_mmu.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
+    entries = Param.Int(0, "number entries in TLB (0 implies infinite)")
 
-DebugFlag('OpuCore')
-DebugFlag('OpuCoreAccess')
-DebugFlag('OpuCoreFetch')
-DebugFlag('OpuTop')
-DebugFlag('OpuTopAccess')
-DebugFlag('OpuTopPageTable')
-DebugFlag('OpuTopTick')
-DebugFlag('OpuTlb')
-DebugFlag('OpuCp')
-DebugFlag('OpuDma')
-DebugFlag('OpuMMU')
+    associativity = Param.Int(4, "Number of sets in the TLB")
+
+    hit_latency = Param.Cycles(1, "number of cycles for a hit")
+

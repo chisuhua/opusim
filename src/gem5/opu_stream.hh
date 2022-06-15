@@ -25,16 +25,17 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef STREAM_MANAGER_H_INCLUDED
-#define STREAM_MANAGER_H_INCLUDED
+#pragma once
 
 #include "cpu/thread_context.hh"
 #include <pthread.h>
 #include <time.h>
 #include <list>
-#include "abstract_hardware_model.h"
+// #include "abstract_core.h"
 
-using namespace gem5;
+namespace gem5 {
+class KernelInfoBase;
+class OpuSimBase;
 
 //class stream_barrier {
 //public:
@@ -118,7 +119,7 @@ public:
         m_done=true;
         launchTime = curTick(); // TODO schi
     }
-    stream_operation( const void *src, const char *symbol, size_t count, size_t offset, struct CUstream_st *stream )
+    stream_operation( const void *src, const char *symbol, size_t count, size_t offset, struct Stream_st *stream )
     {
         m_kernel=NULL;
         m_stream = stream;
@@ -130,7 +131,7 @@ public:
         m_done=false;
         launchTime = curTick();
     }
-    stream_operation( const char *symbol, void *dst, size_t count, size_t offset, struct CUstream_st *stream )
+    stream_operation( const char *symbol, void *dst, size_t count, size_t offset, struct Stream_st *stream )
     {
         m_kernel=NULL;
         m_stream = stream;
@@ -142,7 +143,7 @@ public:
         m_done=false;
         launchTime = curTick();
     }
-    stream_operation( kernel_info_t *kernel, bool sim_mode, struct CUstream_st *stream )
+    stream_operation( KernelInfoBase *kernel, bool sim_mode, struct Stream_st *stream )
     {
         m_type=stream_kernel_launch;
         m_kernel=kernel;
@@ -151,7 +152,7 @@ public:
         m_done=false;
         launchTime = curTick();
     }
-    stream_operation( struct CUevent_st *e, struct CUstream_st *stream )
+    stream_operation( struct CUevent_st *e, struct Stream_st *stream )
     {
         m_kernel=NULL;
         m_type=stream_event;
@@ -160,7 +161,7 @@ public:
         m_done=false;
         launchTime = curTick();
     }
-    stream_operation( struct CUstream_st *stream, class CUevent_st *e, unsigned int flags )
+    stream_operation( struct Stream_st *stream, class CUevent_st *e, unsigned int flags )
     {
         m_kernel=NULL;
         m_type=stream_wait_event;
@@ -170,7 +171,7 @@ public:
         m_done=false;
         launchTime = curTick();
     }
-    stream_operation( const void *host_address_src, size_t device_address_dst, size_t cnt, struct CUstream_st *stream )
+    stream_operation( const void *host_address_src, size_t device_address_dst, size_t cnt, struct Stream_st *stream )
     {
         m_kernel=NULL;
         m_type=stream_memcpy_host_to_device;
@@ -184,7 +185,7 @@ public:
         m_done=false;
         launchTime = curTick();
     }
-    stream_operation( size_t device_address_src, void *host_address_dst, size_t cnt, struct CUstream_st *stream  )
+    stream_operation( size_t device_address_src, void *host_address_dst, size_t cnt, struct Stream_st *stream  )
     {
         m_kernel=NULL;
         m_type=stream_memcpy_device_to_host;
@@ -198,7 +199,7 @@ public:
         m_done=false;
         launchTime = curTick();
     }
-    stream_operation( size_t device_address_src, size_t device_address_dst, size_t cnt, struct CUstream_st *stream  )
+    stream_operation( size_t device_address_src, size_t device_address_dst, size_t cnt, struct Stream_st *stream  )
     {
         m_kernel=NULL;
         m_type=stream_memcpy_device_to_device;
@@ -213,7 +214,7 @@ public:
         launchTime = curTick();
     }
     // TODO schi check it is need
-    stream_operation( size_t device_address_dst, int value, size_t cnt, struct CUstream_st *stream )
+    stream_operation( size_t device_address_dst, int value, size_t cnt, struct Stream_st *stream )
     {
         m_kernel=NULL;
         m_type=stream_memset;
@@ -237,18 +238,18 @@ public:
   }
   bool is_noop() const { return m_type == stream_no_op; }
   bool is_done() const { return m_done; }
-  kernel_info_t *get_kernel() { return m_kernel; }
-  bool do_operation( gpgpu_sim *gpu );
+  KernelInfoBase *get_kernel() { return m_kernel; }
+  bool do_operation( OpuSimBase *gpu );
   void print( FILE *fp ) const;
-  struct CUstream_st *get_stream() { return m_stream; }
-  void set_stream( CUstream_st *stream ) { m_stream = stream; }
+  struct Stream_st *get_stream() { return m_stream; }
+  void set_stream( Stream_st *stream ) { m_stream = stream; }
 
   // TODO schi remove it in next step
   // For handling the gem5 thread context
   void setThreadContext(ThreadContext *_tc) { tc = _tc; }
 
 private:
-  struct CUstream_st *m_stream;
+  struct Stream_st *m_stream;
 
   bool m_done;
 
@@ -264,7 +265,7 @@ private:
   int m_write_value;
 
   bool m_sim_mode;
-  kernel_info_t *m_kernel;
+  KernelInfoBase *m_kernel;
   struct CUevent_st *m_event;
   Tick launchTime;
 
@@ -273,9 +274,10 @@ private:
   ThreadContext *tc;
 
 };
-struct CUstream_st {
+
+struct Stream_st {
 public:
-  CUstream_st(); 
+  Stream_st(); 
   bool empty();
   bool busy();
   void synchronize();
@@ -302,15 +304,15 @@ private:
   ThreadContext *tc;
 };
 
-class stream_manager {
+class OpuStream {
 public:
-  stream_manager( gpgpu_sim *gpu, bool cuda_launch_blocking );
+  OpuStream( OpuSimBase *gpu, bool cuda_launch_blocking );
   bool register_finished_kernel(unsigned grid_uid  );
   bool check_finished_kernel(  );
   stream_operation front();
   bool ready();
-  void add_stream( CUstream_st *stream );
-  void destroy_stream( CUstream_st *stream );
+  void add_stream( Stream_st *stream );
+  void destroy_stream( Stream_st *stream );
   bool concurrent_streams_empty();
   bool empty_protected();
   bool empty();
@@ -326,13 +328,13 @@ private:
   void print_impl( FILE *fp);
 
   bool m_cuda_launch_blocking;
-  gpgpu_sim *m_gpu;
-  std::list<CUstream_st *> m_streams;
-  std::map<unsigned,CUstream_st *> m_grid_id_to_stream;
-  CUstream_st m_stream_zero;
+  OpuSimBase *m_gpu;
+  std::list<Stream_st *> m_streams;
+  std::map<unsigned,Stream_st *> m_grid_id_to_stream;
+  Stream_st m_stream_zero;
   bool m_service_stream_zero;
   pthread_mutex_t m_lock;
-  std::list<struct CUstream_st*>::iterator m_last_stream;
+  std::list<struct Stream_st*>::iterator m_last_stream;
 };
 
-#endif
+}

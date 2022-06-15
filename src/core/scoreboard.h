@@ -34,7 +34,7 @@
 #ifndef SCOREBOARD_H_
 #define SCOREBOARD_H_
 
-#include "../abstract_hardware_model.h"
+#include "../core/abstract_core.h"
 
 class Scoreboard {
 public:

@@ -48,6 +48,7 @@
 #include "debug/OpuTopTick.hh"
 // #include "gpgpusim_entrypoint.h"
 // #include "../libcuda_sim/gpgpu_context.h"
+#include "opu_context.hh"
 #include "opu_top.hh"
 #include "opusim_base.hh"
 #include "mem/ruby/system/RubySystem.hh"
@@ -84,7 +85,7 @@ OpuTop::OpuTop(const OpuTopParams &p) :
     clearTick(0), dumpKernelStats(p.dump_kernel_stats), pageTable(),
     manageGPUMemory(p.manage_gpu_memory),
     accessHostPageTable(p.access_host_pagetable),
-    gpuMemoryRange(p.gpu_memory_range), shaderMMU(p.shader_mmu)
+    gpuMemoryRange(p.gpu_memory_range), shaderMMU(p.opu_mmu)
 {
     // Register this device as a CUDA-enabled GPU
     cudaDeviceID = registerOpuDevice(this);
@@ -121,7 +122,7 @@ OpuTop::OpuTop(const OpuTopParams &p) :
     opu_ctx = new OpuContext();
 
     // Initialize GPGPU-Sim
-    theGPU = opu_ctx->gem5_ptx_sim_init_perf(&streamManager, this, getConfigPath());
+    theGPU = opu_ctx->gem5_opu_sim_init(&streamManager, this, getConfigPath());
     // FIXME
     theGPU->init();
 
@@ -254,12 +255,12 @@ void OpuTop::registerOpuCore(OpuCore *sc)
     deviceProperties.multiProcessorCount = opuCores.size();
 }
 
-void OpuTop::registerCopyEngine(GPUCopyEngine *ce)
+void OpuTop::registerCopyEngine(OpuDma *ce)
 {
     copyEngine = ce;
 }
 
-void OpuTop::registerCommandProcessor(CommandProcessor *cp)
+void OpuTop::registerCp(OpuCp *cp)
 {
     commandProcessor = cp;
 }
@@ -302,7 +303,7 @@ void OpuTop::scheduleStreamEvent() {
     streamScheduled = true;
 }
 
-void OpuTop::beginRunning(Tick stream_queued_time, struct CUstream_st *_stream)
+void OpuTop::beginRunning(Tick stream_queued_time, struct Stream_st *_stream)
 {
     beginStreamOperation(_stream);
 
@@ -400,9 +401,11 @@ void OpuTop::gpuPrintStats(std::ostream& out) {
     out << "\nshader CTA times (ticks):\n";
     out << "shader, CTA ID, start, end, start, end, ..., exit\n";
     std::vector<OpuCore*>::iterator cores;
+#if 0
     for (cores = opuCores.begin(); cores != opuCores.end(); cores++) {
         (*cores)->printCTAStats(out);
     }
+#endif
     out << "\ntotal kernel time (ticks) = " << total_kernel_ticks << "\n";
 
     if (clearTick) {
@@ -426,12 +429,12 @@ void OpuTop::printPTXFileLineStats() {
 }
 #endif
 
-void OpuTop::memcpy(void *src, void *dst, size_t count, struct CUstream_st *_stream, stream_operation_type type) {
+void OpuTop::memcpy(void *src, void *dst, size_t count, struct Stream_st *_stream, stream_operation_type type) {
     beginStreamOperation(_stream);
     copyEngine->memcpy((Addr)src, (Addr)dst, count, type);
 }
 
-void OpuTop::memcpy_to_symbol(const char *hostVar, const void *src, size_t count, size_t offset, struct CUstream_st *_stream) {
+void OpuTop::memcpy_to_symbol(const char *hostVar, const void *src, size_t count, size_t offset, struct Stream_st *_stream) {
     // First, initialize the stream operation
     beginStreamOperation(_stream);
 
@@ -453,7 +456,7 @@ void OpuTop::memcpy_to_symbol(const char *hostVar, const void *src, size_t count
 #endif
 }
 
-void OpuTop::memcpy_from_symbol(void *dst, const char *hostVar, size_t count, size_t offset, struct CUstream_st *_stream) {
+void OpuTop::memcpy_from_symbol(void *dst, const char *hostVar, size_t count, size_t offset, struct Stream_st *_stream) {
     // First, initialize the stream operation
     beginStreamOperation(_stream);
 #if 0
@@ -475,7 +478,7 @@ void OpuTop::memcpy_from_symbol(void *dst, const char *hostVar, size_t count, si
 #endif
 }
 
-void OpuTop::memset(Addr dst, int value, size_t count, struct CUstream_st *_stream) {
+void OpuTop::memset(Addr dst, int value, size_t count, struct Stream_st *_stream) {
     beginStreamOperation(_stream);
     copyEngine->memset(dst, value, count);
 }
@@ -599,7 +602,6 @@ void OpuTop::register_function( unsigned fat_cubin_handle, const char *hostFun, 
         m_kernel_lookup[hostFun] = NULL;
     }
 }
-*/
 
 function_info *OpuTop::get_kernel(const char *hostFun)
 {
@@ -609,6 +611,7 @@ function_info *OpuTop::get_kernel(const char *hostFun)
     }
     return NULL;
 }
+*/
 
 void OpuTop::setInstBaseVaddr(uint64_t addr)
 {

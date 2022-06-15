@@ -1,7 +1,14 @@
+#include "opu_context.hh"
+#include "opu_stream.hh"
+#include "opusim_base.hh"
+#include <cstdio>
+#include <dlfcn.h>
 
-typedef IsaSim* (*pfn_make_isasim)(gpgpu_t* gpu, gpgpu_context *ctx);
+namespace gem5 {
+#if 0
+typedef IsaSim* (*pfn_make_isasim)(gpgpu_t* gpu, OpuContext *ctx);
 
-IsaSim* gpgpu_context::get_isasim() {
+IsaSim* OpuContext::get_isasim() {
     static IsaSim* isasim = nullptr;
     if (isasim == nullptr) {
         void* lib_handle = dlopen("libisasim.so", RTLD_NOW | RTLD_GLOBAL);
@@ -19,16 +26,15 @@ IsaSim* gpgpu_context::get_isasim() {
     }
     return isasim;
 }
-#if 0
-void gpgpu_context::synchronize() {
+void OpuContext::synchronize() {
   printf("GPGPU-Sim: synchronize waiting for inactive GPU simulation\n");
-  the_gpgpusim->g_stream_manager->print(stdout);
+  the_gpgpusim->g_OpuStream->print(stdout);
   fflush(stdout);
   //    sem_wait(&g_sim_signal_finish);
   bool done = false;
   do {
     pthread_mutex_lock(&(the_gpgpusim->g_sim_lock));
-    done = (the_gpgpusim->g_stream_manager->empty() &&
+    done = (the_gpgpusim->g_OpuStream->empty() &&
             !the_gpgpusim->g_sim_active) ||
            the_gpgpusim->g_sim_done;
     pthread_mutex_unlock(&(the_gpgpusim->g_sim_lock));
@@ -38,7 +44,7 @@ void gpgpu_context::synchronize() {
   //    sem_post(&g_sim_signal_start);
 }
 
-void gpgpu_context::exit_simulation() {
+void OpuContext::exit_simulation() {
   the_gpgpusim->g_sim_done = true;
   printf("GPGPU-Sim: exit_simulation called\n");
   fflush(stdout);
@@ -47,7 +53,7 @@ void gpgpu_context::exit_simulation() {
   fflush(stdout);
 }
 
-gpgpu_sim *gpgpu_context::gpgpu_ptx_sim_init_perf() {
+gpgpu_sim *OpuContext::gpgpu_ptx_sim_init_perf() {
   srand(1);
   print_splash();
   func_sim->read_sim_environment_variables();
@@ -73,7 +79,7 @@ gpgpu_sim *gpgpu_context::gpgpu_ptx_sim_init_perf() {
 
   the_gpgpusim->g_the_gpu =
       new exec_gpgpu_sim(*(the_gpgpusim->g_the_gpu_config), this);
-  the_gpgpusim->g_stream_manager = new stream_manager(
+  the_gpgpusim->g_OpuStream = new OpuStream(
       (the_gpgpusim->g_the_gpu), func_sim->g_cuda_launch_blocking);
 
   the_gpgpusim->g_simulation_starttime = time((time_t *)NULL);
@@ -86,41 +92,32 @@ gpgpu_sim *gpgpu_context::gpgpu_ptx_sim_init_perf() {
 }
 #endif
 
-gpgpu_sim *OpuContext::gem5_ptx_sim_init_perf(stream_manager **p_stream_manager, CudaGPU *cuda_gpu, const char *config_path)
+typedef OpuSimBase* (*pfn_make_opusim)(OpuSimConfig* config, OpuContext *ctx, gem5::OpuTop *);
+
+OpuSimBase *OpuContext::gem5_opu_sim_init(OpuStream **p_opu_stream, gem5::OpuTop *opu_top, const char *config_path)
 {
-  srand(1);
-  print_splash();
-  func_sim->read_sim_environment_variables();
-  ptx_parser->read_parser_environment_variables();
-  option_parser_t opp = option_parser_create();
+  // the_gpgpusim->g_the_gpu_config = new gpgpu_sim_config(this);
+  if (g_the_opu == nullptr) {
+    void* lib_handle = dlopen("libopusim.so", RTLD_NOW | RTLD_GLOBAL);
+    if (lib_handle == nullptr) {
+        printf("Failed to load libopusim.so, error - %sn\n", dlerror());
+        exit(-1);
+    }
+    pfn_make_opusim make_opusim = (pfn_make_opusim)dlsym(lib_handle, "make_opusim");
 
-  ptx_reg_options(opp);
-  func_sim->ptx_opcocde_latency_options(opp);
+    if (make_opusim == nullptr) {
+        printf("Failed to dlsym make_opusim, error - %sn\n", dlerror());
+        exit(-1);
+    }
+    g_the_opu = make_opusim(g_config, this, opu_top);
+  }
 
-  icnt_reg_options(opp);
-  the_gpgpusim->g_the_gpu_config = new gpgpu_sim_config(this);
-  the_gpgpusim->g_the_gpu_config->reg_options(
-      opp);  // register GPU microrachitecture options
+  g_opu_stream = new OpuStream(g_the_opu, true);
 
-  option_parser_cmdline(opp, sg_argc, sg_argv);  // parse configuration options
-  fprintf(stdout, "GPGPU-Sim: Configuration options:\n\n");
-  option_parser_print(opp, stdout);
-  // Set the Numeric locale to a standard locale where a decimal point is a
-  // "dot" not a "comma" so it does the parsing correctly independent of the
-  // system environment variables
-  assert(setlocale(LC_NUMERIC, "C"));
-  the_gpgpusim->g_the_gpu_config->init();
+  *p_opu_stream = g_opu_stream;
 
-  the_gpgpusim->g_the_gpu =
-      new exec_gpgpu_sim(*(the_gpgpusim->g_the_gpu_config), this, cuda_gpu);
-  the_gpgpusim->g_stream_manager = new stream_manager(
-      (the_gpgpusim->g_the_gpu), func_sim->g_cuda_launch_blocking);
-
-  the_gpgpusim->g_simulation_starttime = time((time_t *)NULL);
-
-  *p_stream_manager = the_gpgpusim->g_stream_manager;
-
-  return the_gpgpusim->g_the_gpu;
+  return g_the_opu;
 }
 
 
+}

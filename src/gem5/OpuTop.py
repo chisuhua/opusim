@@ -29,7 +29,7 @@ from m5.defines import buildEnv
 from m5.params import *
 from m5.proxy import *
 from m5.objects.ClockedObject import ClockedObject
-from m5.objects.ShaderMMU import ShaderMMU
+from m5.objects.OpuMMU import OpuMMU
 
 class OpuSimComponentWrapper(ClockedObject):
     type = 'OpuSimComponentWrapper'
@@ -61,7 +61,7 @@ class OpuTop(ClockedObject):
                 "Whether to allow accesses to host page table")
     gpu_memory_range = Param.AddrRange(AddrRange('1kB'), "The address range for the GPU memory space")
 
-    shader_mmu = Param.ShaderMMU(ShaderMMU(), "Memory managment unit for this GPU")
+    opu_mmu = Param.OpuMMU(OpuMMU(), "Memory managment unit for this GPU")
 
     # Wrapper class to clock the GPGPU-Sim side shader cores and interconnect
     # Must be specified or gem5-gpu will error during initialization

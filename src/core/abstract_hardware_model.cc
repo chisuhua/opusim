@@ -27,7 +27,7 @@
 
 
 
-#include "abstract_hardware_model.h"
+#include "abstract_core.h"
 #include <sys/stat.h>
 #include <algorithm>
 #include <iostream>
