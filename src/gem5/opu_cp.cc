@@ -533,7 +533,7 @@ void OpuCp::completeRequest(PacketPtr pkt, bool functional)
 }
 
 CpRegIndex
-decodeAddr(Addr paddr)
+OpuCp::decodeAddr(Addr paddr)
 {
     CpRegIndex regNum;
     paddr &= ~mask(3);

@@ -181,6 +181,7 @@ OpuTLB::flushAll()
     panic("Flush all unimplemented");
 }
 
+#if 0
 bool
 TLBMemory::lookup(Addr vp_base, Addr& pp_base, bool set_mru)
 {
@@ -229,6 +230,7 @@ TLBMemory::insert(Addr vp_base, Addr pp_base)
     entry->free = false;
     entry->setMRU();
 }
+#endif
 
 void
 OpuTLB::regStats()

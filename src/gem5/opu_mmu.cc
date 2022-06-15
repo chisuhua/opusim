@@ -718,7 +718,7 @@ OpuMMU *OpuMMUParams::create() const {
 // Global function which the x86 microop gpufinishfault calls.
 namespace X86ISAInst {
 void
-gpuFinishPageFault(int gpuId, ThreadContext *tc)
+opuFinishPageFault(int gpuId, ThreadContext *tc)
 {
     OpuTop::getOpuTop(gpuId)->handleFinishPageFault(tc);
 }

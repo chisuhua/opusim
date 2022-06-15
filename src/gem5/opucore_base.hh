@@ -6,8 +6,10 @@ class OpuSimBase;
 
 class OpuMemfetch {
  public:
-  uint32_t size();
-  uint64_t get_pc();
+  uint32_t size() { return data_size;};
+  uint64_t get_pc() { return pc; };
+  uint32_t data_size;
+  uint64_t pc;
 };
 
 class OpuWarpinst {
@@ -23,18 +25,18 @@ public:
   opu_mspace_t space_type;
   opu_memop_t memory_op;
 
-  uint64_t get_addr(uint32_t lane) const;
-  uint64_t get_data(uint32_t lane) const;
-  bool active(uint32_t lane) const;
-  bool valid() const;
-  bool empty() const;
+  virtual uint64_t get_addr(uint32_t lane) const = 0;
+  virtual uint64_t get_data(uint32_t lane) const = 0;
+  virtual bool active(uint32_t lane) const = 0;
+  virtual bool valid() const = 0;
+  virtual bool empty() const = 0;
 
-  uint32_t active_count() const;
-  uint32_t warp_size() const;
-  bool is_load() const;
-  bool is_store() const;
+  virtual uint32_t active_count() const = 0;
+  virtual uint32_t warp_size() const = 0;
+  virtual bool is_load() const = 0;
+  virtual bool is_store() const = 0;
 
-  bool isatomic() const;
+  virtual bool isatomic() const = 0;
   opu_atomic_t get_atomic() const { return m_atomic_spec; }
 
 };

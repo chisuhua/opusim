@@ -244,6 +244,7 @@ private:
     AddrRangeList getAddrRanges() const;
     uint32_t readReg(CpRegIndex reg);
     void setReg(CpRegIndex reg, uint32_t val);
+    CpRegIndex decodeAddr(Addr paddr);
 
     /*
      * Initialize this object by registering it with the IO APIC.

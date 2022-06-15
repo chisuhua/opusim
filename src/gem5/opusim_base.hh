@@ -35,12 +35,16 @@ public:
 
 class KernelInfoBase {
 public:
+    KernelInfoBase(std::string& name) : name(name) {};
     uint32_t m_launch_latency {0};
     std::string name();
     uint32_t get_uid();
     void print_parent_info();
     bool is_finished();
-    bool notify_parent_finished();
+    void notify_parent_finished();
+    std::string name;
+    uint32_t uid;
+    bool finished;
 };
 
 }
