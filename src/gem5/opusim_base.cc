@@ -1,9 +1,6 @@
 #include "opusim_base.hh"
 
-std::string KernelInfoBase::name() {
-    return name;
-}
-
+namespace gem5 {
 uint32_t KernelInfoBase::get_uid() {
     return uid;
 }
@@ -17,3 +14,4 @@ bool KernelInfoBase::is_finished() {
 
 void KernelInfoBase::notify_parent_finished() {
 };
+}

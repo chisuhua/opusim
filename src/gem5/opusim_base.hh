@@ -1,4 +1,6 @@
 #pragma once
+#include <stdint.h>
+#include <memory>
 
 namespace gem5 {
 class OpuCoreBase;
@@ -7,7 +9,7 @@ class KernelInfoBase;
 
 class OpuSimBase {
 public:
-    OpuSimBase(OpuTop *opu_top): oputop(opu_top) {};
+    OpuSimBase(OpuTop *opu_top): opu_top(opu_top) {};
     virtual OpuCoreBase* getCore(uint32_t id) = 0;
     virtual void init() = 0;
     virtual bool active() = 0;
@@ -29,20 +31,21 @@ public:
     // virtual void set_cache_config() = 0;
 
     uint32_t gpu_tot_sim_cycle;
+    OpuTop* get_opu() {return opu_top;}
 
-    OpuTop *oputop;
+    OpuTop *opu_top;
 };
 
 class KernelInfoBase {
 public:
-    KernelInfoBase(std::string& name) : name(name) {};
+    KernelInfoBase(std::string& name) : name_(name) {};
     uint32_t m_launch_latency {0};
-    std::string name();
+    std::string name() { return name_;};
     uint32_t get_uid();
     void print_parent_info();
     bool is_finished();
     void notify_parent_finished();
-    std::string name;
+    std::string name_;
     uint32_t uid;
     bool finished;
 };

@@ -1,5 +1,5 @@
 project(
-  'isasim',
+  'opusim',
   ['c', 'cpp'],
   version : run_command(
     [find_program('python', 'python3'), 'bin/meson_get_version.py']
@@ -45,7 +45,7 @@ extra_c_args = extra_cpp_args
 
 link_args = ['-ldl', '-lpthread', '-L' + meson.current_build_dir(), '-lstdc++' ]
 
-model_symbol_list = meson.current_source_dir() + '/model_symbol_export.def'
+symbol_export = meson.current_source_dir() + '/symbol_export.def'
 
 #pymodule = import('python3')
 #python3 = pymodule.find_python()
@@ -58,71 +58,49 @@ message('DESIGN_ROOT is ' + DESIGN_ROOT)
 message('GEM5_ROOT is ' + GEM5_ROOT)
 message('CUDA_INSTALL_PATH is ' + CUDA_INSTALL_PATH)
 
-isa_link_args = link_args + ['-L' + DESIGN_ROOT + '/cosim', '-lcudart', '-lcash' ] + ['-Wl,--version-script='+model_symbol_list]
-#isa_link_args += ['-L' + DESIGN_ROOT + '/opu/3rdparty/cash/build/lib', '-lcash']
-isa_inc = [
-  'isa',
-  'model',
-  'hwop',
+core_link_args = link_args + ['-L' + DESIGN_ROOT + '/cosim', '-lcash'] + ['-Wl,--version-script='+symbol_export]
+core_inc = [
+  'src',
   DESIGN_ROOT + '/opu/coasm',
-  DESIGN_ROOT + '/opu/umd',
-  DESIGN_ROOT + '/libcuda',
+  DESIGN_ROOT + '/opu/isasim/isa',
+  DESIGN_ROOT + '/opu/isasim/model',
   DESIGN_ROOT + '/opu/3rdparty/cash/include',
-  DESIGN_ROOT + '/opu/3rdparty/cash/soft-ieee754/includes',
-  CUDA_INSTALL_PATH + '/include'
   ]
 
-isa_src = [
-  'common/string_utils.cpp',
-  'common/debug.cpp',
-  'model/Executor.cpp',
-  'model/Kernel.cpp',
-  'model/Warp.cpp',
-  'model/CUResource.cpp',
-  'model/WarpState.cpp',
-  'model/BlockState.cpp',
-  'model/ThreadBlock.cpp',
-  'model/ThreadItem.cpp',
-  #'isa/Compute.cpp',
-  #'isa/ComputeUnit.cpp',
-  #'isa/CopyEngine.cpp',
-  #'isa/StreamProcessor.cpp',
-  #'isa/Engine.cpp',
-  #'isa/Memory.cpp',
-  #'isa/MemoryImpl.cc',
-  #'isa/Mmio.cpp',
-  #'isa/Warp.cpp',
-  'hwop/IAlu.cpp',
-  'hwop/FunUnit.cpp',
-  'isa/Instruction.cpp',
-  'isa/InstructionDLS.cpp',
-  'isa/InstructionSLS.cpp',
-  'isa/InstructionVLS.cpp',
-  #'isa/InstructionMTBUF.cpp',
-  'isa/InstructionVMUBUF.cpp',
-  #'isa/InstructionSMRD.cpp',
-  'isa/InstructionSOP1.cpp',
-  'isa/InstructionSOP2.cpp',
-  'isa/InstructionSOPC.cpp',
-  'isa/InstructionSOPK.cpp',
-  'isa/InstructionSOPP.cpp',
-  'isa/InstructionVOP1.cpp',
-  'isa/InstructionVOP2.cpp',
-  'isa/InstructionVOP3A.cpp',
-  'isa/InstructionVOP3B.cpp',
-  'isa/InstructionVOPC.cpp',
-  'isa/DecodeCommon.cpp',
-  'isa/ExecCommon.cpp',
-  'isa/MemCommon.cpp'
+core_src = [
+  #'src/opustats.cc',
+  #'src/option_parser.cc',
+  #'src/opuconfig.cc',
+  #'src/stack.cc',
+  #'src/statwrapper.cc',
+  #'src/core/opusim.cc',
+  'src/core/simt_core.cc',
+  #'src/core/simt_core_cluster.cc',
+  #'src/core/simt_stack.cc',
+  #'src/core/abstract_core.cc',
+  #'src/core/warp_inst.cc',
+  #'src/core/warp_executor.cc',
+  #'src/core/warp_scheduler.cc',
+  #'src/core/scoreboard.cc',
+  #'src/core/tbsync.cc',
+  #'src/core/opndcoll.cc',
+  #'src/core/ldst_unit.cc',
+  #'src/core/sf_unit.cc',
+  #'src/core/sp_unit.cc',
+  #'src/core/int_unit.cc',
+  #'src/core/dp_unit.cc',
+  #'src/core/tensor_unit.cc',
+  #'src/core/specialized_unit.cc',
+  #'src/core/funit.cc',
   ]
 
-isa = shared_library(
-  'isasim',
-  isa_src,
-  include_directories : include_directories(isa_inc),
+core = shared_library(
+  'opusim',
+  core_src,
+  include_directories : include_directories(core_inc),
   install : false,
   cpp_args : extra_cpp_args,
-  link_args : isa_link_args,
+  link_args : core_link_args,
   )
 
 
