@@ -27,7 +27,7 @@
 
 #include "opu_stream.hh"
 // #include "cuda-sim/cuda-sim.h"
-#include "opusim_base.hh"
+#include "../opuusim_base.h"
 // #include "gpgpusim_entrypoint.h"
 #include "opu_top.hh"
 #include "opu_context.hh"
@@ -139,31 +139,31 @@ bool stream_operation::do_operation( OpuSimBase *gpu )
         if(g_debug_execution >= 3)
             printf("memcpy host-to-device\n");
         // gpu->memcpy_to_gpu(m_device_address_dst,m_host_address_src,m_cnt);
-        gpu->oputop->memcpy((void *)m_host_address_src,(void *)m_device_address_dst,m_cnt, m_stream, m_type);
+        gpu->opu_top->memcpy((void *)m_host_address_src,(void *)m_device_address_dst,m_cnt, m_stream, m_type);
         break;
     case stream_memcpy_device_to_host:
         if(g_debug_execution >= 3)
             printf("memcpy device-to-host\n");
         // gpu->memcpy_from_gpu(m_host_address_dst,m_device_address_src,m_cnt);
-        gpu->oputop->memcpy((void *)m_device_address_src,m_host_address_dst,m_cnt, m_stream, m_type);
+        gpu->opu_top->memcpy((void *)m_device_address_src,m_host_address_dst,m_cnt, m_stream, m_type);
         break;
     case stream_memcpy_device_to_device:
         if(g_debug_execution >= 3)
             printf("memcpy device-to-device\n");
         // gpu->memcpy_gpu_to_gpu(m_device_address_dst,m_device_address_src,m_cnt);
-        gpu->oputop->memcpy((void *)m_device_address_src,(void *)m_device_address_dst,m_cnt, m_stream, m_type);
+        gpu->opu_top->memcpy((void *)m_device_address_src,(void *)m_device_address_dst,m_cnt, m_stream, m_type);
         break;
     case stream_memcpy_to_symbol:
         if(g_debug_execution >= 3)
             printf("memcpy to symbol\n");
         // gpgpu_ptx_sim_memcpy_symbol(m_symbol,m_host_address_src,m_cnt,m_offset,1,gpu);
-        gpu->oputop->memcpy_to_symbol(m_symbol, m_host_address_src, m_cnt, m_offset, m_stream);
+        gpu->opu_top->memcpy_to_symbol(m_symbol, m_host_address_src, m_cnt, m_offset, m_stream);
         break;
     case stream_memcpy_from_symbol:
         if(g_debug_execution >= 3)
             printf("memcpy from symbol\n");
         // gpgpu_ptx_sim_memcpy_symbol(m_symbol,m_host_address_dst,m_cnt,m_offset,0,gpu);
-        gpu->oputop->memcpy_from_symbol(m_host_address_dst, m_symbol, m_cnt, m_offset, m_stream);
+        gpu->opu_top->memcpy_from_symbol(m_host_address_dst, m_symbol, m_cnt, m_offset, m_stream);
         break;
     case stream_kernel_launch:
         if( gpu->can_start_kernel() && m_kernel->m_launch_latency == 0) {
@@ -173,7 +173,7 @@ bool stream_operation::do_operation( OpuSimBase *gpu )
             }
             // gpu->set_cache_config(m_kernel->name());
             gpu->launch( m_kernel );
-            gpu->oputop->beginRunning(launchTime, m_stream);
+            gpu->opu_top->beginRunning(launchTime, m_stream);
         }
         else {
             if(m_kernel->m_launch_latency)
@@ -189,19 +189,19 @@ bool stream_operation::do_operation( OpuSimBase *gpu )
         time_t wallclock = time((time_t *)NULL);
         // TODO
         // m_event->update( gpu_tot_sim_cycle, wallclock );
-        m_event->update( gpu->gpu_tot_sim_cycle, wallclock, gpu->oputop->getCurTick() );
+        m_event->update( gpu->gpu_tot_sim_cycle, wallclock, gpu->opu_top->getCurTick() );
         if (m_event->needs_unblock()) {
-            gpu->oputop->unblockThread(NULL);
+            gpu->opu_top->unblockThread(NULL);
             m_event->reset();
         }
         m_stream->record_next_done();
-        gpu->oputop->scheduleStreamEvent();
+        gpu->opu_top->scheduleStreamEvent();
         }
         break;
     case stream_memset:
         if (g_debug_execution >= 3)
             printf("memset\n");
-        gpu->oputop->memset((Addr)m_device_address_dst, m_write_value, m_cnt, m_stream);
+        gpu->opu_top->memset((Addr)m_device_address_dst, m_write_value, m_cnt, m_stream);
         break;
     case stream_wait_event:
         //only allows next op to go if event is done
@@ -512,7 +512,7 @@ void OpuStream::push( stream_operation op ) {
 
   // TODO schi fixme
   if (ready()) {
-        m_gpu->oputop->scheduleStreamEvent();
+        m_gpu->opu_top->scheduleStreamEvent();
     }
 }
 

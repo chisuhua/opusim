@@ -58,7 +58,7 @@ message('DESIGN_ROOT is ' + DESIGN_ROOT)
 message('GEM5_ROOT is ' + GEM5_ROOT)
 message('CUDA_INSTALL_PATH is ' + CUDA_INSTALL_PATH)
 
-core_link_args = link_args + ['-L' + DESIGN_ROOT + '/cosim', '-lcash'] + ['-Wl,--version-script='+symbol_export]
+core_link_args = link_args + ['-L' + DESIGN_ROOT + '/cosim', '-lisasim', '-lcash'] + ['-Wl,--version-script='+symbol_export]
 core_inc = [
   'src',
   DESIGN_ROOT + '/opu/coasm',
@@ -72,9 +72,10 @@ core_src = [
   #'src/option_parser.cc',
   #'src/opuconfig.cc',
   #'src/stack.cc',
+  'src/cache_base.cc',
   #'src/statwrapper.cc',
-  #'src/core/opusim.cc',
-  'src/core/simt_core.cc',
+  #'src/opu_sim.cc',
+  #'src/core/simt_core.cc',
   #'src/core/simt_core_cluster.cc',
   #'src/core/simt_stack.cc',
   #'src/core/abstract_core.cc',

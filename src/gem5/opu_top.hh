@@ -39,7 +39,7 @@
 #include "base/callback.hh"
 #include "debug/OpuTop.hh"
 #include "debug/OpuTopPageTable.hh"
-#include "opusim_base.hh"
+#include "../opuusim_base.h"
 #include "opu_core.hh"
 #include "opu_dma.hh"
 #include "opu_cp.hh"

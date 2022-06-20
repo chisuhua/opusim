@@ -1,9 +1,8 @@
 class simt_core_cluster {
  public:
-  simt_core_cluster(class gpgpu_sim *gpu, unsigned cluster_id,
-                    const gem5::core_config *config,
-                    const memory_config *mem_config, shader_core_stats *stats,
-                    memory_stats_t *mstats);
+  simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
+                    const shader_core_config *config,
+                    shader_core_stats *stats);
 
   void core_cycle();
   void icnt_cycle();
@@ -30,19 +29,19 @@ class simt_core_cluster {
   void print_not_completed(FILE *fp) const;
   unsigned get_n_active_cta() const;
   unsigned get_n_active_sms() const;
-  gpgpu_sim *get_gpu() { return m_gpu; }
+  opu_sim *get_gpu() { return m_opu; }
 
   void display_pipeline(unsigned sid, FILE *fout, int print_mem, int mask);
   void print_cache_stats(FILE *fp, unsigned &dl1_accesses,
                          unsigned &dl1_misses) const;
 
-  void get_cache_stats(cache_stats &cs) const;
-  void get_L1I_sub_stats(struct cache_sub_stats &css) const;
-  void get_L1D_sub_stats(struct cache_sub_stats &css) const;
-  void get_L1C_sub_stats(struct cache_sub_stats &css) const;
-  void get_L1T_sub_stats(struct cache_sub_stats &css) const;
+  //void get_cache_stats(cache_stats &cs) const;
+  //void get_L1I_sub_stats(struct cache_sub_stats &css) const;
+  //void get_L1D_sub_stats(struct cache_sub_stats &css) const;
+  //void get_L1C_sub_stats(struct cache_sub_stats &css) const;
+  //void get_L1T_sub_stats(struct cache_sub_stats &css) const;
 
-  void get_icnt_stats(long &n_simt_to_mem, long &n_mem_to_simt) const;
+  //void get_icnt_stats(long &n_simt_to_mem, long &n_mem_to_simt) const;
   float get_current_occupancy(unsigned long long &active,
                               unsigned long long &total) const;
   virtual void create_shader_core_ctx() = 0;
@@ -50,12 +49,10 @@ class simt_core_cluster {
   shader_core_ctx *get_core(int id_in_cluster) { return m_core[id_in_cluster]; }
  protected:
   unsigned m_cluster_id;
-  gpgpu_sim *m_gpu;
-  const gem5::core_config *m_config;
+  opu_sim *m_opu;
+  const shader_core_config *m_config;
   shader_core_stats *m_stats;
-  memory_stats_t *m_memory_stats;
   shader_core_ctx **m_core;
-  const memory_config *m_mem_config;
 
   unsigned m_cta_issue_next_core;
   std::list<unsigned> m_core_sim_order;
@@ -64,12 +61,10 @@ class simt_core_cluster {
 
 class exec_simt_core_cluster : public simt_core_cluster {
  public:
-  exec_simt_core_cluster(class gpgpu_sim *gpu, unsigned cluster_id,
-                         const gem5::core_config *config,
-                         const memory_config *mem_config,
-                         class shader_core_stats *stats,
-                         class memory_stats_t *mstats)
-      : simt_core_cluster(gpu, cluster_id, config, mem_config, stats, mstats) {
+  exec_simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
+                         const shader_core_config *config,
+                         class shader_core_stats *stats)
+      : simt_core_cluster(gpu, cluster_id, config, stats) {
     create_shader_core_ctx();
   }
 

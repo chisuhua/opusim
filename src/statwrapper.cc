@@ -1,5 +1,5 @@
 //a Wraper function for stats class
-#include "intersim2/stats.hpp"
+//#include "intersim2/stats.hpp"
 #include <stdio.h>
 
 Stats_gpgpu* StatCreate (const char * name, double bin_size, int num_bins) {

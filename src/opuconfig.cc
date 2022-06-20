@@ -153,7 +153,7 @@ void shader_core_config::set_pipeline_latency() {
   max_sp_latency = fp_latency[1];
   max_int_latency = std::max(int_latency[1], int_latency[5]);
   max_dp_latency = dp_latency[1];
-  max_tensor_core_latency = tensor_latency;
+  max_tensor_latency = tensor_latency;
 }
 void shader_core_config::reg_options(class OptionParser *opp) {
   //option_parser_register(opp, "-opu_simd_model", OPT_INT32, &model,

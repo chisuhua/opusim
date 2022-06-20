@@ -48,7 +48,7 @@ Source('opu_dma.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
 Source('opu_cp.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
 Source('opu_tlb.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
 Source('opu_mmu.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
-Source('opusim_base.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
+#Source('opusim_base.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
 
 DebugFlag('OpuCore')
 DebugFlag('OpuCoreAccess')

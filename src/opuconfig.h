@@ -233,7 +233,7 @@ class shader_core_config : public core_config {
   unsigned max_int_latency;
   unsigned max_sfu_latency;
   unsigned max_dp_latency;
-  unsigned max_tensor_core_latency;
+  unsigned max_tensor_latency;
 
   unsigned n_simt_cores_per_cluster;
   unsigned n_simt_clusters;

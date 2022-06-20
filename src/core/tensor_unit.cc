@@ -6,7 +6,7 @@
 tensor_unit::tensor_unit(register_set *result_port,
                          const shader_core_config *config,
                          shader_core_ctx *core, unsigned issue_reg_id, bool sub_core_model)
-    : pipelined_simd_unit(result_port, config->max_tensor_unit_latency,
+    : pipelined_simd_unit(result_port, config->max_tensor_latency,
                           core, issue_reg_id, sub_core_model) {
   m_name = "tensor_unit";
 }

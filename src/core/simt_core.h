@@ -1,5 +1,4 @@
-#ifndef SHADER_H
-#define SHADER_H
+#pragma once
 
 #include <assert.h>
 #include <math.h>
@@ -573,7 +572,7 @@ class shader_core_ctx : public core_t {
   // shader_core_mem_fetch_allocator *m_mem_fetch_allocator;
 
   // fetch
-  // read_only_cache *m_L1I;  // instruction cache
+  read_only_cache *m_L1I;  // instruction cache
   int m_last_warp_fetched;
 
   // decode/dispatch
@@ -704,6 +703,3 @@ class perfect_memory_interface : public mem_fetch_interface {
   simt_core_cluster *m_cluster;
 };
 #endif
-
-
-#endif /* SHADER_H */

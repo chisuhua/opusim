@@ -1,15 +1,17 @@
+#include "simt_core_cluster.h"
+
 void exec_simt_core_cluster::create_shader_core_ctx() {
   m_core = new shader_core_ctx *[m_config->n_simt_cores_per_cluster];
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++) {
     unsigned sid = m_config->cid_to_sid(i, m_cluster_id);
-    m_core[i] = new exec_shader_core_ctx(m_gpu, this, sid, m_cluster_id,
+    m_core[i] = new exec_shader_core_ctx(m_opu, this, sid, m_cluster_id,
                                          m_config, m_mem_config, m_stats);
     m_core_sim_order.push_back(i);
   }
 }
 
 
-simt_core_cluster::simt_core_cluster(class gpgpu_sim *gpu, unsigned cluster_id,
+simt_core_cluster::simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
                                      const gem5::core_config *config,
                                      const memory_config *mem_config,
                                      shader_core_stats *stats,
@@ -18,7 +20,7 @@ simt_core_cluster::simt_core_cluster(class gpgpu_sim *gpu, unsigned cluster_id,
   m_cta_issue_next_core = m_config->n_simt_cores_per_cluster -
                           1;  // this causes first launch to use hw cta 0
   m_cluster_id = cluster_id;
-  m_gpu = gpu;
+  m_opu = gpu;
   m_stats = stats;
   m_memory_stats = mstats;
   m_mem_config = mem_config;
@@ -93,23 +95,23 @@ unsigned simt_core_cluster::issue_block2core() {
     // Jin: fetch kernel according to concurrent kernel setting
     if (m_config->gpgpu_concurrent_kernel_sm) {  // concurrent kernel on sm
       // always select latest issued kernel
-      kernel_info_t *k = m_gpu->select_kernel();
+      kernel_info_t *k = m_opu->select_kernel();
       kernel = k;
     } else {
       // first select core kernel, if no more cta, get a new kernel
       // only when core completes
       kernel = m_core[core]->get_kernel();
-      if (!m_gpu->kernel_more_cta_left(kernel)) {
+      if (!m_opu->kernel_more_cta_left(kernel)) {
         // wait till current kernel finishes
         if (m_core[core]->get_not_completed() == 0) {
-          kernel_info_t *k = m_gpu->select_kernel();
+          kernel_info_t *k = m_opu->select_kernel();
           if (k) m_core[core]->set_kernel(k);
           kernel = k;
         }
       }
     }
 
-    if (m_gpu->kernel_more_cta_left(kernel) &&
+    if (m_opu->kernel_more_cta_left(kernel) &&
         //            (m_core[core]->get_n_active_cta() <
         //            m_config->max_cta(*kernel)) ) {
         m_core[core]->can_issue_1block(*kernel)) {
@@ -195,7 +197,7 @@ void simt_core_cluster::icnt_inject_request_packet(class mem_fetch *mf) {
   m_stats->m_outgoing_traffic_stats->record_traffic(mf, packet_size);
   unsigned destination = mf->get_sub_partition_id();
   mf->set_status(IN_ICNT_TO_MEM,
-                 m_gpu->gpu_sim_cycle + m_gpu->gpu_tot_sim_cycle);
+                 m_opu->gpu_sim_cycle + m_opu->gpu_tot_sim_cycle);
   if (!mf->get_is_write() && !mf->isatomic())
     ::icnt_push(m_cluster_id, m_config->mem2device(destination), (void *)mf,
                 mf->get_ctrl_size());
@@ -236,7 +238,7 @@ void simt_core_cluster::icnt_cycle() {
         (mf->get_is_write()) ? mf->get_ctrl_size() : mf->size();
     m_stats->m_incoming_traffic_stats->record_traffic(mf, packet_size);
     mf->set_status(IN_CLUSTER_TO_SHADER_QUEUE,
-                   m_gpu->gpu_sim_cycle + m_gpu->gpu_tot_sim_cycle);
+                   m_opu->gpu_sim_cycle + m_opu->gpu_tot_sim_cycle);
     // m_memory_stats->memlatstat_read_done(mf,m_shader_config->max_warps_per_shader);
     m_response_fifo.push_back(mf);
     m_stats->n_mem_to_simt[m_cluster_id] += mf->get_num_flits(false);

@@ -27,10 +27,11 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "simt_core.h"
+#include "simt_core_cluster.h"
 #include <float.h>
 #include <limits.h>
 #include <string.h>
-#include "opusim.h"
+#include "opu_sim.h"
 // #include "../../libcuda_sim/opu_context.h"
 // #include "../cuda-sim/cuda-sim.h"
 // #include "../cuda-sim/ptx-stats.h"
@@ -196,7 +197,7 @@ void shader_core_ctx::create_front_pipeline() {
 #define STRSIZE 1024
   char name[STRSIZE];
   snprintf(name, STRSIZE, "L1I_%03d", m_sid);
-  //FIXME m_L1I = new l1icache_gem5(m_gpu, name,m_config->m_L1I_config,m_sid,get_shader_instruction_cache_id(),m_icnt,IN_L1I_MISS_QUEUE);
+  m_L1I = new l1icache_gem5(m_opu, name,m_config->m_L1I_config,m_sid,get_shader_instruction_cache_id(),m_icnt,IN_L1I_MISS_QUEUE);
   /*
   m_L1I = new read_only_cache(name, m_config->m_L1I_config, m_sid,
                               get_shader_instruction_cache_id(), m_icnt,
@@ -506,7 +507,7 @@ shader_core_ctx::shader_core_ctx(class opu_sim *opu,
 
   m_cluster = cluster;
   m_config = config;
-  m_memory_config = mem_config;
+  // m_memory_config = mem_config;
   m_stats = stats;
   unsigned warp_size = config->warp_size;
   Issue_Prio = 0;
@@ -558,7 +559,7 @@ void shader_core_ctx::init_warps(unsigned cta_id, unsigned start_thread,
                                  unsigned end_thread, unsigned ctaid,
                                  int cta_size, kernel_info_t &kernel) {
   //
-  address_type start_pc = next_pc(start_thread);
+  address_type start_pc = 0; // next_pc(start_thread);
   // unsigned kernel_id = kernel.get_uid();
   //if (m_config->model == POST_DOMINATOR) {
     unsigned start_warp = start_thread / m_config->warp_size;
@@ -638,7 +639,7 @@ float shader_core_ctx::get_current_occupancy(unsigned long long &active,
 const warp_inst_t *exec_shader_core_ctx::get_next_inst(unsigned warp_id,
                                                        address_type pc) {
   // read the inst from the functional model
-  return m_gpu->opu_ctx->ptx_fetch_inst(pc);
+  return m_opu->opu_ctx->ptx_fetch_inst(pc);
 }
 
 void exec_shader_core_ctx::get_pdom_stack_top_info(unsigned warp_id,
@@ -700,7 +701,7 @@ void shader_core_ctx::fetch() {
             */
 
       m_inst_fetch_buffer.m_valid = true;
-      m_warp[mf->get_wid()]->set_last_fetch(m_gpu->gpu_sim_cycle);
+      m_warp[mf->get_wid()]->set_last_fetch(m_opu->gpu_sim_cycle);
       delete mf;
     } else {
       // find an active warp with space in instruction buffer that is not
@@ -757,11 +758,11 @@ void shader_core_ctx::fetch() {
           // HACK: This access will get sent into gem5, so the control
           // header size must be zero, since gem5 packets will assess
           // control header sizing
-          mem_access_t acc(INST_ACC_R, ppc, nbytes, false, m_gpu->opu_ctx);
+          mem_access_t acc(INST_ACC_R, ppc, nbytes, false, m_opu->opu_ctx);
           mem_fetch *mf = new mem_fetch(
               acc, NULL /*we don't have an instruction yet*/, READ_PACKET_SIZE,
               warp_id, m_sid, m_tpc, m_memory_config,
-              m_gpu->gpu_tot_sim_cycle + m_gpu->gpu_sim_cycle);
+              m_opu->gpu_tot_sim_cycle + m_opu->gpu_sim_cycle);
           std::list<cache_event> events;
           enum cache_request_status status;
           if (m_config->perfect_inst_const_cache){
@@ -771,16 +772,16 @@ void shader_core_ctx::fetch() {
           else
             status = m_L1I->access(
                 (address_type)ppc, mf,
-                m_gpu->gpu_sim_cycle + m_gpu->gpu_tot_sim_cycle, events);
+                m_opu->gpu_sim_cycle + m_opu->gpu_tot_sim_cycle, events);
 
           if (status == MISS) {
             m_last_warp_fetched = warp_id;
             m_warp[warp_id]->set_imiss_pending();
-            m_warp[warp_id]->set_last_fetch(m_gpu->gpu_sim_cycle);
+            m_warp[warp_id]->set_last_fetch(m_opu->gpu_sim_cycle);
           } else if (status == HIT) {
             m_last_warp_fetched = warp_id;
             m_inst_fetch_buffer = ifetch_buffer_t(pc, nbytes, warp_id);
-            m_warp[warp_id]->set_last_fetch(m_gpu->gpu_sim_cycle);
+            m_warp[warp_id]->set_last_fetch(m_opu->gpu_sim_cycle);
             delete mf;
           } else {
             m_last_warp_fetched = warp_id;
@@ -821,7 +822,7 @@ void shader_core_ctx::issue_warp(register_set &pipe_reg_set,
   assert(next_inst->valid());
   **pipe_reg = *next_inst;  // static instruction information
   (*pipe_reg)->issue(active_mask, warp_id,
-                     m_gpu->gpu_tot_sim_cycle + m_gpu->gpu_sim_cycle,
+                     m_opu->gpu_tot_sim_cycle + m_opu->gpu_sim_cycle,
                      m_warp[warp_id]->get_dynamic_warp_id(),
                      sch_id);  // dynamic instruction information
   m_stats->shader_cycle_distro[2 + (*pipe_reg)->active_count()]++;
@@ -1000,7 +1001,7 @@ void shader_core_ctx::execute() {
 void shader_core_ctx::warp_inst_complete(const warp_inst_t &inst) {
 #if 0
       printf("[warp_inst_complete] uid=%u core=%u warp=%u pc=%#x @ time=%llu \n",
-             inst.get_uid(), m_sid, inst.warp_id(), inst.pc,  m_gpu->gpu_tot_sim_cycle +  m_gpu->gpu_sim_cycle);
+             inst.get_uid(), m_sid, inst.warp_id(), inst.pc,  m_opu->gpu_tot_sim_cycle +  m_opu->gpu_sim_cycle);
 #endif
 
   if (inst.op_pipe == opu_pipeline_t::SP__OP)
@@ -1018,8 +1019,8 @@ class shader_core_config;
     m_stats->m_num_sim_insn[m_sid] += inst.active_count();
 
   m_stats->m_num_sim_winsn[m_sid]++;
-  m_gpu->gpu_sim_insn += inst.active_count();
-  inst.completed(m_gpu->gpu_tot_sim_cycle + m_gpu->gpu_sim_cycle);
+  m_opu->gpu_sim_insn += inst.active_count();
+  inst.completed(m_opu->gpu_tot_sim_cycle + m_opu->gpu_sim_cycle);
 }
 
 void shader_core_ctx::writeback() {
@@ -1059,10 +1060,10 @@ void shader_core_ctx::writeback() {
     m_scoreboard->releaseRegisters(pipe_reg);
     m_warp[warp_id]->dec_inst_in_pipeline();
     warp_inst_complete(*pipe_reg);
-    m_gpu->gpu_sim_insn_last_update_sid = m_sid;
-    m_gpu->gpu_sim_insn_last_update = m_gpu->gpu_sim_cycle;
-    m_last_inst_gpu_sim_cycle = m_gpu->gpu_sim_cycle;
-    m_last_inst_gpu_tot_sim_cycle = m_gpu->gpu_tot_sim_cycle;
+    m_opu->gpu_sim_insn_last_update_sid = m_sid;
+    m_opu->gpu_sim_insn_last_update = m_opu->gpu_sim_cycle;
+    m_last_inst_gpu_sim_cycle = m_opu->gpu_sim_cycle;
+    m_last_inst_gpu_tot_sim_cycle = m_opu->gpu_tot_sim_cycle;
     pipe_reg->clear();
     preg = m_pipeline_reg[EX_WB].get_ready();
     pipe_reg = (preg == NULL) ? NULL : *preg;
@@ -1077,19 +1078,19 @@ void shader_core_ctx::register_cta_thread_exit(unsigned cta_num,
   if (!m_cta_status[cta_num]) {
     // Increment the completed CTAs
     m_stats->ctas_completed++;
-    m_gpu->inc_completed_cta();
+    m_opu->inc_completed_cta();
     m_n_active_cta--;
     m_barriers.deallocate_barrier(cta_num);
     shader_CTA_count_unlog(m_sid, 1);
 //      printf("GPGPU-Sim uArch: Shader %d finished CTA #%d (%lld,%lld), %u CTAs running\n", m_sid, cta_num, gpu_sim_cycle, gpu_tot_sim_cycle,
 //             m_n_active_cta );
-    m_gpu->gem5CudaGPU->getCudaCore(m_sid)->record_block_commit(cta_num);
+    m_opu->gem5CudaGPU->getCudaCore(m_sid)->record_block_commit(cta_num);
 
 
     SHADER_DPRINTF(
         LIVENESS,
         "GPGPU-Sim uArch: Finished CTA #%u (%lld,%lld), %u CTAs running\n",
-        cta_num, m_gpu->gpu_sim_cycle, m_gpu->gpu_tot_sim_cycle,
+        cta_num, m_opu->gpu_sim_cycle, m_opu->gpu_tot_sim_cycle,
         m_n_active_cta);
 
     if (m_n_active_cta == 0) {
@@ -1101,7 +1102,7 @@ void shader_core_ctx::register_cta_thread_exit(unsigned cta_num,
 
       // Shader can only be empty when no more cta are dispatched
       if (kernel != m_kernel) {
-        assert(m_kernel == NULL || !m_gpu->kernel_more_cta_left(m_kernel));
+        assert(m_kernel == NULL || !m_opu->kernel_more_cta_left(m_kernel));
       }
       m_kernel = NULL;
     }
@@ -1109,7 +1110,7 @@ void shader_core_ctx::register_cta_thread_exit(unsigned cta_num,
     // Jin: for concurrent kernels on sm
     release_shader_resource_1block(cta_num, *kernel);
     kernel->dec_running();
-    if (!m_gpu->kernel_more_cta_left(kernel)) {
+    if (!m_opu->kernel_more_cta_left(kernel)) {
       if (!kernel->running()) {
         SHADER_DPRINTF(LIVENESS,
                        "GPGPU-Sim uArch: GPU detected kernel %u \'%s\' "
@@ -1117,7 +1118,7 @@ void shader_core_ctx::register_cta_thread_exit(unsigned cta_num,
                        kernel->get_uid(), kernel->name().c_str(), m_sid);
 
         if (m_kernel == kernel) m_kernel = NULL;
-        m_gpu->set_kernel_done(kernel);
+        m_opu->set_kernel_done(kernel);
       }
     }
   }
@@ -1127,7 +1128,7 @@ void shader_core_ctx::start_kernel_finish()
 {
     assert(!m_kernel_finishing);
     m_kernel_finishing = true;
-    m_gpu->gem5CudaGPU->getCudaCore(m_sid)->finishKernel();
+    m_opu->gem5CudaGPU->getCudaCore(m_sid)->finishKernel();
 }
 
 void shader_core_ctx::finish_kernel()
@@ -1139,7 +1140,7 @@ void shader_core_ctx::finish_kernel()
   if ( m_kernel->no_more_ctas_to_run() ) {
       if ( !m_kernel->running() ) {
           printf("GPGPU-Sim uArch: GPU detected kernel \'%s\' finished on shader %u.\n", m_kernel->name().c_str(), m_sid );
-          m_gpu->set_kernel_done( m_kernel );
+          m_opu->set_kernel_done( m_kernel );
       }
   }
   m_kernel=NULL;
@@ -1426,7 +1427,7 @@ void shader_core_ctx::display_pipeline(FILE *fout, int print_mem,
                                        int mask) const {
   fprintf(fout, "=================================================\n");
   fprintf(fout, "shader %u at cycle %Lu+%Lu (%u threads running)\n", m_sid,
-          m_gpu->gpu_tot_sim_cycle, m_gpu->gpu_sim_cycle, m_not_completed);
+          m_opu->gpu_tot_sim_cycle, m_opu->gpu_sim_cycle, m_not_completed);
   fprintf(fout, "=================================================\n");
 
   dump_warp_state(fout);
@@ -1582,7 +1583,7 @@ bool shader_core_ctx::warp_waiting_at_mem_barrier(unsigned warp_id) {
   if (!m_warp[warp_id]->get_membar()) return false;
   if (!m_scoreboard->pendingWrites(warp_id)) {
     m_warp[warp_id]->clear_membar();
-    if (m_gpu->get_config().flush_l1()) {
+    if (m_opu->get_config().flush_l1()) {
       // Mahmoud fixed this on Nov 2019
       // Invalidate L1 cache
       // Based on Nvidia Doc, at MEM barrier, we have to
@@ -1629,8 +1630,8 @@ bool shader_core_ctx::fetch_unit_response_buffer_full() const { return false; }
 #if 0
 void shader_core_ctx::accept_fetch_response(mem_fetch *mf) {
   mf->set_status(IN_SHADER_FETCHED,
-                 m_gpu->gpu_sim_cycle + m_gpu->gpu_tot_sim_cycle);
-  m_L1I->fill(mf, m_gpu->gpu_sim_cycle + m_gpu->gpu_tot_sim_cycle);
+                 m_opu->gpu_sim_cycle + m_opu->gpu_tot_sim_cycle);
+  m_L1I->fill(mf, m_opu->gpu_sim_cycle + m_opu->gpu_tot_sim_cycle);
 }
 #endif
 
