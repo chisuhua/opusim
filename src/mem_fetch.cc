@@ -4,7 +4,7 @@ unsigned mem_fetch::sm_next_mf_request_uid = 1;
 
 mem_fetch::mem_fetch(const mem_access_t &access, const warp_inst_t *inst,
                      unsigned ctrl_size, unsigned wid, unsigned sid,
-                     unsigned tpc, const memory_config *config,
+                     unsigned tpc,
                      unsigned long long cycle, mem_fetch *m_original_mf,
                      mem_fetch *m_original_wr_mf)
     : m_access(access)
@@ -21,22 +21,13 @@ mem_fetch::mem_fetch(const mem_access_t &access, const warp_inst_t *inst,
   m_sid = sid;
   m_tpc = tpc;
   m_wid = wid;
-  config->m_address_mapping.addrdec_tlx(access.get_addr(), &m_raw_addr);
-  m_partition_addr =
-      config->m_address_mapping.partition_address(access.get_addr());
   m_type = m_access.is_write() ? WRITE_REQUEST : READ_REQUEST;
   m_timestamp = cycle;
   m_timestamp2 = 0;
   m_status = MEM_FETCH_INITIALIZED;
   m_status_change = cycle;
-  m_mem_config = config;
-  icnt_flit_size = config->icnt_flit_size;
   original_mf = m_original_mf;
   original_wr_mf = m_original_wr_mf;
-  if (m_original_mf) {
-    m_raw_addr.chip = m_original_mf->get_tlx_addr().chip;
-    m_raw_addr.sub_partition = m_original_mf->get_tlx_addr().sub_partition;
-  }
 }
 
 mem_fetch::~mem_fetch() { m_status = MEM_FETCH_DELETED; }
@@ -52,17 +43,17 @@ bool mem_fetch::isatomic() const {
   return m_inst.isatomic();
 }
 
-void mem_fetch::do_atomic() { m_inst.do_atomic(m_access.get_warp_mask()); }
+// FIXME void mem_fetch::do_atomic() { m_inst.do_atomic(m_access.get_warp_mask()); }
 
-bool mem_fetch::istexture() const {
-  if (m_inst.empty()) return false;
-  return m_inst.space.get_type() == tex_space;
-}
+// bool mem_fetch::istexture() const {
+//  if (m_inst.empty()) return false;
+//  return m_inst.space.get_type() == tex_space;
+//}
 
 bool mem_fetch::isconst() const {
   if (m_inst.empty()) return false;
-  return (m_inst.space.get_type() == const_space) ||
-         (m_inst.space.get_type() == param_space_kernel);
+  return (m_inst.get_space() == opu_mspace_t::CONST) ||
+         (m_inst.get_space() == opu_mspace_t::PARAM);
 }
 
 /// Returns number of flits traversing interconnect. simt_to_mem specifies the

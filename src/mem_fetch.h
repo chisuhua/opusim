@@ -1,10 +1,50 @@
 #pragma once
+#include "mem_common.h"
+#include "core/warp_inst.h"
+
+enum mf_type {
+  READ_REQUEST = 0,
+  WRITE_REQUEST,
+  READ_REPLY,  // send to shader
+  WRITE_ACK
+};
+
+enum mem_fetch_status {
+    MEM_FETCH_INITIALIZED = 0,
+    IN_L1I_MISS_QUEUE,
+    IN_L1D_MISS_QUEUE,
+    IN_L1T_MISS_QUEUE,
+    IN_L1C_MISS_QUEUE,
+    IN_L1TLB_MISS_QUEUE,
+    IN_VM_MANAGER_QUEUE,
+    IN_ICNT_TO_MEM,
+    IN_PARTITION_ROP_DELAY,
+    IN_PARTITION_ICNT_TO_L2_QUEUE,
+    IN_PARTITION_L2_TO_DRAM_QUEUE,
+    IN_PARTITION_DRAM_LATENCY_QUEUE,
+    IN_PARTITION_L2_MISS_QUEUE,
+    IN_PARTITION_MC_INTERFACE_QUEUE,
+    IN_PARTITION_MC_INPUT_QUEUE,
+    IN_PARTITION_MC_BANK_ARB_QUEUE,
+    IN_PARTITION_DRAM,
+    IN_PARTITION_MC_RETURNQ,
+    IN_PARTITION_DRAM_TO_L2_QUEUE,
+    IN_PARTITION_L2_FILL_QUEUE,
+    IN_PARTITION_L2_TO_ICNT_QUEUE,
+    IN_ICNT_TO_SHADER,
+    IN_CLUSTER_TO_SHADER_QUEUE,
+    IN_SHADER_LDST_RESPONSE_FIFO,
+    IN_SHADER_FETCHED,
+    IN_SHADER_L1T_ROB,
+    MEM_FETCH_DELETED,
+    NUM_MEM_REQ_STAT
+};
 
 class mem_fetch {
  public:
   mem_fetch(const mem_access_t &access, const warp_inst_t *inst,
             unsigned ctrl_size, unsigned wid, unsigned sid, unsigned tpc,
-            const memory_config *config, unsigned long long cycle,
+            unsigned long long cycle,
             mem_fetch *original_mf = NULL, mem_fetch *original_wr_mf = NULL);
   ~mem_fetch();
 
@@ -24,21 +64,21 @@ class mem_fetch {
 
   void print(FILE *fp, bool print_inst = true) const;
 
-  const addrdec_t &get_tlx_addr() const { return m_raw_addr; }
-  void set_chip(unsigned chip_id) { m_raw_addr.chip = chip_id; }
-  void set_parition(unsigned sub_partition_id) {
-    m_raw_addr.sub_partition = sub_partition_id;
-  }
+  // const addrdec_t &get_tlx_addr() const { return m_raw_addr; }
+  // void set_chip(unsigned chip_id) { m_raw_addr.chip = chip_id; }
+  // void set_parition(unsigned sub_partition_id) {
+  //   m_raw_addr.sub_partition = sub_partition_id;
+  // }
   unsigned get_data_size() const { return m_data_size; }
   void set_data_size(unsigned size) { m_data_size = size; }
   unsigned get_ctrl_size() const { return m_ctrl_size; }
   unsigned size() const { return m_data_size + m_ctrl_size; }
   bool is_write() { return m_access.is_write(); }
-  void set_addr(new_addr_type addr) { m_access.set_addr(addr); }
-  new_addr_type get_addr() const { return m_access.get_addr(); }
+  void set_addr(address_type addr) { m_access.set_addr(addr); }
+  address_type get_addr() const { return m_access.get_addr(); }
   unsigned get_access_size() const { return m_access.get_size(); }
-  new_addr_type get_partition_addr() const { return m_partition_addr; }
-  unsigned get_sub_partition_id() const { return m_raw_addr.sub_partition; }
+  // address_type get_partition_addr() const { return m_partition_addr; }
+  // unsigned get_sub_partition_id() const { return m_raw_addr.sub_partition; }
   bool get_is_write() const { return m_access.is_write(); }
   unsigned get_request_uid() const { return m_request_uid; }
   unsigned get_sid() const { return m_sid; }
@@ -70,8 +110,6 @@ class mem_fetch {
   const warp_inst_t &get_inst() { return m_inst; }
   enum mem_fetch_status get_status() const { return m_status; }
 
-  const memory_config *get_mem_config() { return m_mem_config; }
-
   unsigned get_num_flits(bool simt_to_mem);
 
   mem_fetch *get_original_mf() { return original_mf; }
@@ -94,11 +132,11 @@ private:
   unsigned
       m_ctrl_size;  // how big would all this meta data be in hardware (does not
                     // necessarily match actual size of mem_fetch)
-  new_addr_type
-      m_partition_addr;  // linear physical address *within* dram partition
+  // address_type
+  //    m_partition_addr;  // linear physical address *within* dram partition
                          // (partition bank select bits squeezed out)
-  addrdec_t m_raw_addr;  // raw physical address (i.e., decoded DRAM
-                         // chip-row-bank-column address)
+  // addrdec_t m_raw_addr;  // raw physical address (i.e., decoded DRAM
+  //                       // chip-row-bank-column address)
   enum mf_type m_type;
 
   // statistics
@@ -114,7 +152,6 @@ private:
 
   static unsigned sm_next_mf_request_uid;
 
-  const memory_config *m_mem_config;
   unsigned icnt_flit_size;
 
   mem_fetch

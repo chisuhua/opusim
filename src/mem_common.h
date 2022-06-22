@@ -1,24 +1,47 @@
+#pragma once
+#include <bitset>
+#include "simt_common.h"
+
 const unsigned MAX_MEMORY_ACCESS_SIZE = 128;
 typedef std::bitset<MAX_MEMORY_ACCESS_SIZE> mem_access_byte_mask_t;
 const unsigned SECTOR_CHUNCK_SIZE = 4;   //four sectors
 const unsigned SECTOR_SIZE = 32 ;        //sector is 32 bytes width
 typedef std::bitset<SECTOR_CHUNCK_SIZE> mem_access_sector_mask_t;
 
+enum mem_access_type {
+   GLOBAL_ACC_R,
+   LOCAL_ACC_R,
+   CONST_ACC_R ,
+   TEXTURE_ACC_R ,
+   GLOBAL_ACC_W ,
+   LOCAL_ACC_W ,
+   L1_WRBK_ACC ,
+   L2_WRBK_ACC ,
+   INST_ACC_R ,
+   L1_WR_ALLOC_R ,
+   L2_WR_ALLOC_R ,
+   NUM_MEM_ACCESS_TYPE
+};
+
+namespace gem5 {
+class OpuContext;
+}
+
 class mem_access_t {
  public:
-  mem_access_t(gpgpu_context *ctx) { init(ctx); }
-  mem_access_t(mem_access_type type, new_addr_type address, unsigned size,
-               bool wr, gpgpu_context *ctx) {
+  mem_access_t(gem5::OpuContext *ctx) { init(ctx); }
+  mem_access_t(mem_access_type type, address_type address, unsigned size,
+               bool wr, gem5::OpuContext *ctx) {
     init(ctx);
     m_type = type;
     m_addr = address;
     m_req_size = size;
     m_write = wr;
   }
-  mem_access_t(mem_access_type type, new_addr_type address, unsigned size,
+  mem_access_t(mem_access_type type, address_type address, unsigned size,
                bool wr, const active_mask_t &active_mask,
                const mem_access_byte_mask_t &byte_mask,
-               const mem_access_sector_mask_t &sector_mask, gpgpu_context *ctx)
+               const mem_access_sector_mask_t &sector_mask, gem5::OpuContext *ctx)
       : m_warp_mask(active_mask),
         m_byte_mask(byte_mask),
         m_sector_mask(sector_mask) {
@@ -29,8 +52,8 @@ class mem_access_t {
     m_write = wr;
   }
 
-  new_addr_type get_addr() const { return m_addr; }
-  void set_addr(new_addr_type addr) { m_addr = addr; }
+  address_type get_addr() const { return m_addr; }
+  void set_addr(address_type addr) { m_addr = addr; }
   unsigned get_size() const { return m_req_size; }
   const active_mask_t &get_warp_mask() const { return m_warp_mask; }
   bool is_write() const { return m_write; }
@@ -75,10 +98,10 @@ class mem_access_t {
     }
   }
 
-  gpgpu_context *gpgpu_ctx;
+  gem5::OpuContext *gpgpu_ctx;
 
 private:
-  void init(gpgpu_context *ctx);
+  void init(gem5::OpuContext *ctx);
   /*
    void init() 
    {
@@ -89,7 +112,7 @@ private:
    */
 
   unsigned m_uid;
-  new_addr_type m_addr;  // request address
+  address_type m_addr;  // request address
   bool m_write;
   unsigned m_req_size;  // bytes
   mem_access_type m_type;
@@ -111,18 +134,18 @@ class mem_fetch_interface {
 class mem_fetch_allocator {
 public:
   /*
-  virtual mem_fetch *alloc( new_addr_type addr, mem_access_type type,
+  virtual mem_fetch *alloc( address_type addr, mem_access_type type,
                                 unsigned size, bool wr ) const = 0;
   virtual mem_fetch *alloc( const class warp_inst_t &inst,
                                 const mem_access_t &access ) const = 0;
                                 */
-  virtual mem_fetch *alloc(new_addr_type addr, mem_access_type type,
+  virtual mem_fetch *alloc(address_type addr, mem_access_type type,
                            unsigned size, bool wr,
                            unsigned long long cycle) const = 0;
   virtual mem_fetch *alloc(const class warp_inst_t &inst,
                            const mem_access_t &access,
                            unsigned long long cycle) const = 0;
-  virtual mem_fetch *alloc(new_addr_type addr, mem_access_type type,
+  virtual mem_fetch *alloc(address_type addr, mem_access_type type,
                            const active_mask_t &active_mask,
                            const mem_access_byte_mask_t &byte_mask,
                            const mem_access_sector_mask_t &sector_mask,

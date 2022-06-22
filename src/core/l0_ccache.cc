@@ -1,6 +1,6 @@
-#include "const_cache.h"
+#include "l0_ccache.h"
 
-const_cache::const_cache(abstract_core* _gpu, const char *name, cache_config &config,
+l0_ccache::l0_ccache(abstract_core* _gpu, const char *name, cache_config &config,
         int core_id, int type_id, mem_fetch_interface *memport,
         enum mem_fetch_status status)
     : read_only_cache(name, config, core_id, type_id, memport, status),
@@ -10,7 +10,7 @@ const_cache::const_cache(abstract_core* _gpu, const char *name, cache_config &co
 }
 
 enum cache_request_status
-const_cache::access(new_addr_type addr, mem_fetch *mf, unsigned time,
+l0_ccache::access(new_addr_type addr, mem_fetch *mf, unsigned time,
         std::list<cache_event> &events)
 {
     assert( mf->get_data_size() <= m_config.get_line_sz());
@@ -51,7 +51,7 @@ const_cache::access(new_addr_type addr, mem_fetch *mf, unsigned time,
     return RESERVATION_FAIL;
 }
 
-void const_cache::cycle()
+void l0_ccache::cycle()
 {
     // Intentionally left empty
 }
