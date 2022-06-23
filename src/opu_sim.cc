@@ -27,7 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-#include "gem5/opu_top.hh"
+// #include "gem5/opu_top.hh"
 
 #include "opu_sim.h"
 
@@ -2136,3 +2136,226 @@ shader_core_ctx* opu_sim::get_shader(int id)
 
     return m_cluster[cluster]->get_core(shader_in_cluster);
 }
+
+void opu_sim::shader_print_runtime_stat(FILE *fout) {
+  /*
+ fprintf(fout, "SHD_INSN: ");
+ for (unsigned i=0;i<m_n_shader;i++)
+    fprintf(fout, "%u ",m_sc[i]->get_num_sim_insn());
+ fprintf(fout, "\n");
+ fprintf(fout, "SHD_THDS: ");
+ for (unsigned i=0;i<m_n_shader;i++)
+    fprintf(fout, "%u ",m_sc[i]->get_not_completed());
+ fprintf(fout, "\n");
+ fprintf(fout, "SHD_DIVG: ");
+ for (unsigned i=0;i<m_n_shader;i++)
+    fprintf(fout, "%u ",m_sc[i]->get_n_diverge());
+ fprintf(fout, "\n");
+
+ fprintf(fout, "THD_INSN: ");
+ for (unsigned i=0; i<m_shader_config->n_thread_per_shader; i++)
+    fprintf(fout, "%d ", m_sc[0]->get_thread_n_insn(i) );
+ fprintf(fout, "\n");
+ */
+}
+
+
+void opu_sim::shader_print_scheduler_stat(FILE *fout,
+                                            bool print_dynamic_info) const {
+  fprintf(fout, "ctas_completed %d, ", m_shader_stats->ctas_completed);
+  // Print out the stats from the sampling shader core
+  const unsigned scheduler_sampling_core =
+      m_shader_config->opu_warp_issue_shader;
+#define STR_SIZE 55
+  char name_buff[STR_SIZE];
+  name_buff[STR_SIZE - 1] = '\0';
+  const std::vector<unsigned> &distro =
+      print_dynamic_info
+          ? m_shader_stats->get_dynamic_warp_issue()[scheduler_sampling_core]
+          : m_shader_stats->get_warp_slot_issue()[scheduler_sampling_core];
+  if (print_dynamic_info) {
+    snprintf(name_buff, STR_SIZE - 1, "dynamic_warp_id");
+  } else {
+    snprintf(name_buff, STR_SIZE - 1, "warp_id");
+  }
+  fprintf(fout, "Shader %d %s issue ditsribution:\n", scheduler_sampling_core,
+          name_buff);
+  const unsigned num_warp_ids = distro.size();
+  // First print out the warp ids
+  fprintf(fout, "%s:\n", name_buff);
+  for (unsigned warp_id = 0; warp_id < num_warp_ids; ++warp_id) {
+    fprintf(fout, "%d, ", warp_id);
+  }
+
+  fprintf(fout, "\ndistro:\n");
+  // Then print out the distribution of instuctions issued
+  for (std::vector<unsigned>::const_iterator iter = distro.begin();
+       iter != distro.end(); iter++) {
+    fprintf(fout, "%d, ", *iter);
+  }
+  fprintf(fout, "\n");
+}
+
+void opu_sim::shader_print_cache_stats(FILE *fout) const {
+  // L1I
+  struct cache_sub_stats total_css;
+  struct cache_sub_stats css;
+
+  if (!m_shader_config->m_L1I_config.disabled()) {
+    total_css.clear();
+    css.clear();
+    fprintf(fout, "\n========= Core cache stats =========\n");
+    fprintf(fout, "L1I_cache:\n");
+    for (unsigned i = 0; i < m_shader_config->n_simt_clusters; ++i) {
+      m_cluster[i]->get_L1I_sub_stats(css);
+      total_css += css;
+    }
+    fprintf(fout, "\tL1I_total_cache_accesses = %llu\n", total_css.accesses);
+    fprintf(fout, "\tL1I_total_cache_misses = %llu\n", total_css.misses);
+    if (total_css.accesses > 0) {
+      fprintf(fout, "\tL1I_total_cache_miss_rate = %.4lf\n",
+              (double)total_css.misses / (double)total_css.accesses);
+    }
+    fprintf(fout, "\tL1I_total_cache_pending_hits = %llu\n",
+            total_css.pending_hits);
+    fprintf(fout, "\tL1I_total_cache_reservation_fails = %llu\n",
+            total_css.res_fails);
+  }
+
+  // L1D
+  if (!m_shader_config->m_L1D_config.disabled()) {
+    total_css.clear();
+    css.clear();
+    fprintf(fout, "L1D_cache:\n");
+    for (unsigned i = 0; i < m_shader_config->n_simt_clusters; i++) {
+      m_cluster[i]->get_L1D_sub_stats(css);
+
+      fprintf(stdout,
+              "\tL1D_cache_core[%d]: Access = %llu, Miss = %llu, Miss_rate = "
+              "%.3lf, Pending_hits = %llu, Reservation_fails = %llu\n",
+              i, css.accesses, css.misses,
+              (double)css.misses / (double)css.accesses, css.pending_hits,
+              css.res_fails);
+
+      total_css += css;
+    }
+    fprintf(fout, "\tL1D_total_cache_accesses = %llu\n", total_css.accesses);
+    fprintf(fout, "\tL1D_total_cache_misses = %llu\n", total_css.misses);
+    if (total_css.accesses > 0) {
+      fprintf(fout, "\tL1D_total_cache_miss_rate = %.4lf\n",
+              (double)total_css.misses / (double)total_css.accesses);
+    }
+    fprintf(fout, "\tL1D_total_cache_pending_hits = %llu\n",
+            total_css.pending_hits);
+    fprintf(fout, "\tL1D_total_cache_reservation_fails = %llu\n",
+            total_css.res_fails);
+    total_css.print_port_stats(fout, "\tL1D_cache");
+  }
+
+  // L1C
+  if (!m_shader_config->m_L1C_config.disabled()) {
+    total_css.clear();
+    css.clear();
+    fprintf(fout, "L1C_cache:\n");
+    for (unsigned i = 0; i < m_shader_config->n_simt_clusters; ++i) {
+      m_cluster[i]->get_L1C_sub_stats(css);
+      total_css += css;
+    }
+    fprintf(fout, "\tL1C_total_cache_accesses = %llu\n", total_css.accesses);
+    fprintf(fout, "\tL1C_total_cache_misses = %llu\n", total_css.misses);
+    if (total_css.accesses > 0) {
+      fprintf(fout, "\tL1C_total_cache_miss_rate = %.4lf\n",
+              (double)total_css.misses / (double)total_css.accesses);
+    }
+    fprintf(fout, "\tL1C_total_cache_pending_hits = %llu\n",
+            total_css.pending_hits);
+    fprintf(fout, "\tL1C_total_cache_reservation_fails = %llu\n",
+            total_css.res_fails);
+  }
+
+  // L1T
+  if (!m_shader_config->m_L1T_config.disabled()) {
+    total_css.clear();
+    css.clear();
+    fprintf(fout, "L1T_cache:\n");
+    for (unsigned i = 0; i < m_shader_config->n_simt_clusters; ++i) {
+      m_cluster[i]->get_L1T_sub_stats(css);
+      total_css += css;
+    }
+    fprintf(fout, "\tL1T_total_cache_accesses = %llu\n", total_css.accesses);
+    fprintf(fout, "\tL1T_total_cache_misses = %llu\n", total_css.misses);
+    if (total_css.accesses > 0) {
+      fprintf(fout, "\tL1T_total_cache_miss_rate = %.4lf\n",
+              (double)total_css.misses / (double)total_css.accesses);
+    }
+    fprintf(fout, "\tL1T_total_cache_pending_hits = %llu\n",
+            total_css.pending_hits);
+    fprintf(fout, "\tL1T_total_cache_reservation_fails = %llu\n",
+            total_css.res_fails);
+  }
+}
+
+void opu_sim::shader_print_l1_miss_stat(FILE *fout) const {
+  unsigned total_d1_misses = 0, total_d1_accesses = 0;
+  for (unsigned i = 0; i < m_shader_config->n_simt_clusters; ++i) {
+    unsigned custer_d1_misses = 0, cluster_d1_accesses = 0;
+    m_cluster[i]->print_cache_stats(fout, cluster_d1_accesses,
+                                    custer_d1_misses);
+    total_d1_misses += custer_d1_misses;
+    total_d1_accesses += cluster_d1_accesses;
+  }
+  fprintf(fout, "total_dl1_misses=%d\n", total_d1_misses);
+  fprintf(fout, "total_dl1_accesses=%d\n", total_d1_accesses);
+  fprintf(fout, "total_dl1_miss_rate= %f\n",
+          (float)total_d1_misses / (float)total_d1_accesses);
+  /*
+  fprintf(fout, "THD_INSN_AC: ");
+  for (unsigned i=0; i<m_shader_config->n_thread_per_shader; i++)
+     fprintf(fout, "%d ", m_sc[0]->get_thread_n_insn_ac(i));
+  fprintf(fout, "\n");
+  fprintf(fout, "T_L1_Mss: "); //l1 miss rate per thread
+  for (unsigned i=0; i<m_shader_config->n_thread_per_shader; i++)
+     fprintf(fout, "%d ", m_sc[0]->get_thread_n_l1_mis_ac(i));
+  fprintf(fout, "\n");
+  fprintf(fout, "T_L1_Mgs: "); //l1 merged miss rate per thread
+  for (unsigned i=0; i<m_shader_config->n_thread_per_shader; i++)
+     fprintf(fout, "%d ", m_sc[0]->get_thread_n_l1_mis_ac(i) -
+  m_sc[0]->get_thread_n_l1_mrghit_ac(i)); fprintf(fout, "\n"); fprintf(fout,
+  "T_L1_Acc: "); //l1 access per thread for (unsigned i=0;
+  i<m_shader_config->n_thread_per_shader; i++) fprintf(fout, "%d ",
+  m_sc[0]->get_thread_n_l1_access_ac(i)); fprintf(fout, "\n");
+
+  //per warp
+  int temp =0;
+  fprintf(fout, "W_L1_Mss: "); //l1 miss rate per warp
+  for (unsigned i=0; i<m_shader_config->n_thread_per_shader; i++) {
+     temp += m_sc[0]->get_thread_n_l1_mis_ac(i);
+     if (i%m_shader_config->warp_size ==
+  (unsigned)(m_shader_config->warp_size-1)) { fprintf(fout, "%d ", temp); temp =
+  0;
+     }
+  }
+  fprintf(fout, "\n");
+  temp=0;
+  fprintf(fout, "W_L1_Mgs: "); //l1 merged miss rate per warp
+  for (unsigned i=0; i<m_shader_config->n_thread_per_shader; i++) {
+     temp += (m_sc[0]->get_thread_n_l1_mis_ac(i) -
+  m_sc[0]->get_thread_n_l1_mrghit_ac(i) ); if (i%m_shader_config->warp_size ==
+  (unsigned)(m_shader_config->warp_size-1)) { fprintf(fout, "%d ", temp); temp =
+  0;
+     }
+  }
+  fprintf(fout, "\n");
+  temp =0;
+  fprintf(fout, "W_L1_Acc: "); //l1 access per warp
+  for (unsigned i=0; i<m_shader_config->n_thread_per_shader; i++) {
+     temp += m_sc[0]->get_thread_n_l1_access_ac(i);
+     if (i%m_shader_config->warp_size ==
+  (unsigned)(m_shader_config->warp_size-1)) { fprintf(fout, "%d ", temp); temp =
+  0;
+     }
+  }
+  fprintf(fout, "\n");
+  */
+}
+

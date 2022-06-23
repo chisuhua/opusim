@@ -120,7 +120,8 @@ OpuCore::unserialize(CheckpointIn &cp)
 
 void OpuCore::initialize()
 {
-    coreImpl = opuTop->getTheGPU()->getCore(id);
+    coreImpl = opuTop->getOpuUsim()->getCore(id);
+    coreImpl->setup_cb_icacheFetch(std::bind(&OpuCore::icacheFetch, this, std::placeholders::_1, std::placeholder::_2));
 }
 
 int OpuCore::instCacheResourceAvailable(Addr addr)

@@ -25,6 +25,7 @@
 #include "opustats.h"
 #include "opndcoll.h"
 #include "opuconfig.h"
+#include "l0_ccache.h"
 // #include "stats.h"
 
 #define NO_OP_FLAG 0xFF
@@ -572,7 +573,7 @@ class shader_core_ctx : public core_t {
   // shader_core_mem_fetch_allocator *m_mem_fetch_allocator;
 
   // fetch
-  read_only_cache *m_L1I;  // instruction cache
+  l0_ccache *m_L1I;  // instruction cache
   int m_last_warp_fetched;
 
   // decode/dispatch

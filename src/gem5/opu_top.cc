@@ -122,26 +122,26 @@ OpuTop::OpuTop(const OpuTopParams &p) :
     opu_ctx = new OpuContext();
 
     // Initialize GPGPU-Sim
-    theGPU = opu_ctx->gem5_opu_sim_init(&streamManager, this, getConfigPath());
+    theOpuUsim = opu_ctx->gem5_opu_sim_init(&streamManager, this, getConfigPath());
     // FIXME
-    theGPU->init();
+    theOpuUsim->init();
 
-    g_the_opu = theGPU;
+    g_the_opu = theOpuUsim;
 
     // Set up the component wrappers in order to cycle the GPGPU-Sim
     // shader cores, interconnect, L2 cache and DRAM
     // TODO: Eventually, we want to remove the need for the GPGPU-Sim L2 cache
     // and DRAM. Currently, these are necessary to handle parameter memory
     // accesses.
-    coresWrapper.setGPU(theGPU);
+    coresWrapper.setGPU(theOpuUsim);
     coresWrapper.setStartCycleFunction(&OpuSimBase::core_cycle_start);
     coresWrapper.setEndCycleFunction(&OpuSimBase::core_cycle_end);
-    // icntWrapper.setGPU(theGPU);
+    // icntWrapper.setGPU(theOpuUsim);
     // icntWrapper.setStartCycleFunction(&OpuSimBase::icnt_cycle_start);
     // icntWrapper.setEndCycleFunction(&OpuSimBase::icnt_cycle_end);
-    // l2Wrapper.setGPU(theGPU);
+    // l2Wrapper.setGPU(theOpuUsim);
     // l2Wrapper.setStartCycleFunction(&OpuSimBase::l2_cycle);
-    // dramWrapper.setGPU(theGPU);
+    // dramWrapper.setGPU(theOpuUsim);
     // dramWrapper.setStartCycleFunction(&OpuSimBase::dram_cycle);
 
     // Setup the device properties for this GPU
@@ -160,12 +160,12 @@ OpuTop::OpuTop(const OpuTopParams &p) :
     deviceProperties.totalConstMem = gpuMemoryRange.size();
     deviceProperties.textureAlignment = 0;
     deviceProperties.multiProcessorCount = opuCores.size();
-    deviceProperties.sharedMemPerBlock = theGPU->shared_mem_size();
-    deviceProperties.regsPerBlock = theGPU->num_registers_per_core();
-    deviceProperties.warpSize = theGPU->wrp_size();
-    deviceProperties.clockRate = theGPU->shader_clock();
+    deviceProperties.sharedMemPerBlock = theOpuUsim->shared_mem_size();
+    deviceProperties.regsPerBlock = theOpuUsim->num_registers_per_core();
+    deviceProperties.warpSize = theOpuUsim->wrp_size();
+    deviceProperties.clockRate = theOpuUsim->shader_clock();
 #if (CUDART_VERSION >= 2010)
-    // FIXME deviceProperties.multiProcessorCount = theGPU->get_config().num_shader();
+    // FIXME deviceProperties.multiProcessorCount = theOpuUsim->get_config().num_shader();
 #endif
     OutputStream *os = simout.find(p.stats_filename);
     if (!os) {
@@ -274,7 +274,7 @@ void OpuTop::streamTick() {
 #if 0
     // launch operation on device if one is pending and can be run
     stream_operation op = streamManager->front();
-    bool kickoff = op.do_operation(theGPU);
+    bool kickoff = op.do_operation(theOpuUsim);
 
     if (!kickoff) {
         //cancel operation
@@ -439,7 +439,7 @@ void OpuTop::memcpy_to_symbol(const char *hostVar, const void *src, size_t count
     beginStreamOperation(_stream);
 
 #if 0
-    unsigned dst = gpgpu_ctx->func_sim->gpgpu_ptx_hostvar_to_sym_address(hostVar, theGPU);
+    unsigned dst = gpgpu_ctx->func_sim->gpgpu_ptx_hostvar_to_sym_address(hostVar, theOpuUsim);
     // Lookup destination address for transfer:
     std::string sym_name = gpgpu_ctx->gpgpu_ptx_sim_hostvar_to_sym_name(hostVar);
     std::map<std::string,symbol_table*>::iterator st = g_sym_name_to_symbol_table.find(sym_name.c_str());
@@ -460,7 +460,7 @@ void OpuTop::memcpy_from_symbol(void *dst, const char *hostVar, size_t count, si
     // First, initialize the stream operation
     beginStreamOperation(_stream);
 #if 0
-    unsigned src = gpgpu_ctx->func_sim->gpgpu_ptx_hostvar_to_sym_address(hostVar, theGPU);
+    unsigned src = gpgpu_ctx->func_sim->gpgpu_ptx_hostvar_to_sym_address(hostVar, theOpuUsim);
     // Lookup destination address for transfer:
     std::string sym_name = gpgpu_ptx_sim_hostvar_to_sym_name(hostVar);
     std::map<std::string,symbol_table*>::iterator st = g_sym_name_to_symbol_table.find(sym_name.c_str());

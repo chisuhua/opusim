@@ -1,5 +1,6 @@
 #pragma once
 #include "simt_common.h"
+#include "cache_base.h"
 #include <algorithm>
 #include <sstream>
 #include <cstring>
@@ -268,5 +269,9 @@ class shader_core_config : public core_config {
   char *specialized_unit_string[SPECIALIZED_UNIT_NUM];
   mutable std::vector<specialized_unit_params> m_specialized_unit;
   unsigned m_specialized_unit_num;
+
+  mutable cache_config m_L0C_config;
+  mutable cache_config m_L0V_config;
+  mutable cache_config m_L0S_config;
 };
 

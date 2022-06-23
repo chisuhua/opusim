@@ -68,21 +68,21 @@ class OpuCp;
 class OpuSimComponentWrapper : public ClockedObject
 {
   private:
-    OpuSimBase *theGPU;
+    OpuSimBase *theOpuUsim;
     typedef void (OpuSimBase::*CycleFunc)();
     CycleFunc startCycleFunction;
     CycleFunc endCycleFunction;
 
   public:
     OpuSimComponentWrapper(const OpuSimComponentWrapperParams &p) :
-        ClockedObject(p), theGPU(NULL), startCycleFunction(NULL),
+        ClockedObject(p), theOpuUsim(NULL), startCycleFunction(NULL),
         endCycleFunction(NULL), componentCycleStartEvent(this),
         // End cycle events must happen after all other components are cycled
         componentCycleEndEvent(this, false, Event::Progress_Event_Pri) {}
 
     void setGPU(OpuSimBase *_gpu) {
-        assert(!theGPU);
-        theGPU = _gpu;
+        assert(!theOpuUsim);
+        theOpuUsim = _gpu;
     }
 
     void setStartCycleFunction(CycleFunc _cycle_func) {
@@ -118,11 +118,11 @@ class OpuSimComponentWrapper : public ClockedObject
     void componentCycleStart() {
         assert(startCycleFunction);
 
-        if (theGPU->active()) {
-            (theGPU->*startCycleFunction)();
+        if (theOpuUsim->active()) {
+            (theOpuUsim->*startCycleFunction)();
         }
 
-        if (theGPU->active()) {
+        if (theOpuUsim->active()) {
             // Reschedule the start cycle event
             schedule(componentCycleStartEvent, nextCycle());
         }
@@ -131,11 +131,11 @@ class OpuSimComponentWrapper : public ClockedObject
     void componentCycleEnd() {
         assert(endCycleFunction);
 
-        if (theGPU->active()) {
-            (theGPU->*endCycleFunction)();
+        if (theOpuUsim->active()) {
+            (theOpuUsim->*endCycleFunction)();
         }
 
-        if (theGPU->active()) {
+        if (theOpuUsim->active()) {
             // Reschedule the end cycle event
             schedule(componentCycleEndEvent, nextCycle());
         }
@@ -370,7 +370,7 @@ class OpuTop : public ClockedObject
     bool dumpKernelStats;
 
     /// Pointers to GPGPU-Sim objects
-    OpuSimBase *theGPU;
+    OpuSimBase *theOpuUsim;
     OpuStream *streamManager;
     OpuContext *opu_ctx;
 
@@ -460,7 +460,7 @@ class OpuTop : public ClockedObject
     int getSharedMemDelay() { return sharedMemDelay; }
     const char* getConfigPath() { return gpgpusimConfigPath.c_str(); }
     ruby::RubySystem* getRubySystem() { return ruby; }
-    OpuSimBase* getTheGPU() { return theGPU; }
+    OpuSimBase* getTheGPU() { return theOpuUsim; }
 
     /// Called at the beginning of each kernel launch to start the statistics
     void beginRunning(Tick stream_queued_time, struct Stream_st *_stream);
@@ -575,7 +575,7 @@ class OpuTop : public ClockedObject
     Stats::Scalar numKernelsCompleted;
     void regStats();
 
-    bool is_active() { return theGPU->active(); }
+    bool is_active() { return theOpuUsim->active(); }
 
     void callback();
 

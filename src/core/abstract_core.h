@@ -2,6 +2,7 @@
 
 #include "simt_stack.h"
 #include "warp_inst.h"
+#include "opucore_base.h"
 
 class warp_exec_t;
 class WarpState;
@@ -12,12 +13,12 @@ class opu_sim;
  * simulation, it has basic functional simulation data structures and
  * procedures.
  */
-class core_t {
+class core_t : public gem5::OpuCoreBase {
  public:
-  core_t(opu_sim *opu,
+  core_t(opu_sim *opuusim,
          unsigned warp_size,
          unsigned threads_per_shader)
-      : m_opu(opu),
+      : m_opuusim(opuusim),
         m_simt_stack(NULL),
         // m_thread(NULL),
         m_warp_size(warp_size) {
@@ -74,9 +75,9 @@ class core_t {
   unsigned get_reduction_value(unsigned ctaid, unsigned barid) {
     return reduction_storage[ctaid][barid];
   }
-  opu_sim* get_opu() { return m_opu;}
+  opu_sim* get_opuusim() { return m_opuusim;}
  protected:
-  opu_sim *m_opu;
+  opu_sim *m_opuusim;
   simt_stack **m_simt_stack;  // pdom based reconvergence context for each warp
   // class ptx_thread_info **m_thread;
   unsigned m_warp_size;

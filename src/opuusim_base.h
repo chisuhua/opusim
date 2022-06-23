@@ -30,7 +30,8 @@ public:
     virtual bool cycle_insn_cta_max_hit() = 0;
     // virtual void set_cache_config() = 0;
 
-    uint32_t gpu_tot_sim_cycle;
+    unsigned long long gpu_sim_cycle;
+    unsigned long long gpu_tot_sim_cycle;
     OpuTop* get_opu() {return opu_top;}
 
     OpuTop *opu_top;

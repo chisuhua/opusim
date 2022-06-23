@@ -37,7 +37,7 @@ public:
   void Execute(WarpState* warp_state, uint32_t lane);
   uint32_t warp_id() const { return m_warp_id;};
 
-  uint32_t GetSize();
+  uint32_t GetSize() const;
   std::shared_ptr<Instruction> m_instruction;
 
   uint32_t m_uid;

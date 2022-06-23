@@ -1,6 +1,7 @@
 #pragma once
 #include "mem_common.h"
 #include "core/warp_inst.h"
+#include "opucore_base.h"
 
 enum mf_type {
   READ_REQUEST = 0,
@@ -40,7 +41,7 @@ enum mem_fetch_status {
     NUM_MEM_REQ_STAT
 };
 
-class mem_fetch {
+class mem_fetch : public gem5::OpuMemfetch {
  public:
   mem_fetch(const mem_access_t &access, const warp_inst_t *inst,
             unsigned ctrl_size, unsigned wid, unsigned sid, unsigned tpc,

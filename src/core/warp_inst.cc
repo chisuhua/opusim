@@ -52,7 +52,7 @@ void warp_inst_t::Execute(WarpState* warp_state, uint32_t lane) {
   return m_instruction->Execute(warp_state, lane);
 }
 
-uint32_t warp_inst_t::GetSize() {
+uint32_t warp_inst_t::GetSize() const {
   return m_instruction->GetSize();
 }
 
@@ -598,5 +598,19 @@ void warp_inst_t::completed(unsigned long long cycle) const {
   assert(latency <= cycle);  // underflow detection
   m_config->gpgpu_ctx->stats->ptx_file_line_stats_add_latency(
       pc, latency * active_count());
+}
+
+void warp_inst_t::print(FILE *fout) const {
+  if (empty()) {
+    fprintf(fout, "bubble\n");
+    return;
+  } else
+    fprintf(fout, "0x%04x ", pc);
+  fprintf(fout, "w%02d[", m_warp_id);
+  for (unsigned j = 0; j < m_config->warp_size; j++)
+    fprintf(fout, "%c", (active(j) ? '1' : '0'));
+  fprintf(fout, "]: ");
+  m_config->opu_ctx->func_sim->ptx_print_insn(pc, fout);
+  fprintf(fout, "\n");
 }
 #endif

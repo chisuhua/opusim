@@ -2,11 +2,14 @@
 #include <list>
 #include <assert.h>
 #include <cstring>
+#include <unordered_map>
 #include "intmath.h"
 
 #include "simt_common.h"
 #include "mem_common.h"
 #include "mem_fetch.h"
+
+enum cache_access_logger_types { NORMALS, TEXTURE, CONSTANT, INSTRUCTION };
 
 #define MAX_DEFAULT_CACHE_SIZE_MULTIBLIER 4
 enum cache_block_state { INVALID = 0, RESERVED, VALID, MODIFIED };
@@ -847,11 +850,11 @@ class cache_config {
   friend class tag_array;
   friend class baseline_cache;
   friend class read_only_cache;
-  friend class l1icache_gem5;
   friend class tex_cache;
   friend class data_cache;
-  friend class l1_cache;
-  friend class l2_cache;
+  friend class l0_ccache;
+  friend class l0_scache;
+  friend class l0_vcache;
   friend class memory_sub_partition;
 };
 

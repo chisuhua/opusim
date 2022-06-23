@@ -1,5 +1,6 @@
 #pragma once
 #include "coasm.h"
+#include <functional>
 
 class OpuWarpinst;
 
@@ -14,11 +15,15 @@ class OpuMemfetch {
   uint64_t pc;
 };
 
+using icacheFetch_ftype = std::function<void(uint64_t, OpuMemfetch*)>;
 
 class OpuCoreBase {
  public:
-  explicit OpuCoreBase(class OpuSimBase *gpu);
+  // explicit OpuCoreBase(class OpuSimBase *gpu);
   virtual void cycle() = 0;
+  virtual void setup_cb_icacheFetch(icacheFetch_ftype f) {
+      m_gem5_icacheFetch = f;
+  }
   virtual void accept_fetch_response(OpuMemfetch *mf) = 0;
   virtual bool ldst_unit_wb_inst(OpuWarpinst &inst) = 0;
 
@@ -31,6 +36,8 @@ class OpuCoreBase {
   virtual void complete_fence(unsigned warp_id) = 0;
 
   virtual void finish_kernel() = 0;
+
+  icacheFetch_ftype m_gem5_icacheFetch;
 };
 
 
