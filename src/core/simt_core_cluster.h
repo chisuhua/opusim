@@ -23,6 +23,10 @@ class simt_core_cluster {
   unsigned max_cta(const KernelInfo &kernel);
   unsigned get_n_active_sms() const;
   shader_core_ctx *get_core(int id_in_cluster) { return m_core[id_in_cluster]; }
+
+ protected:
+  unsigned m_cluster_id;
+  unsigned m_cta_issue_next_core;
 #if 0
   bool icnt_injection_buffer_full(unsigned size, bool write);
   void icnt_inject_request_packet(class mem_fetch *mf);
@@ -53,14 +57,9 @@ class simt_core_cluster {
   float get_current_occupancy(unsigned long long &active,
                               unsigned long long &total) const;
 
- protected:
-  unsigned m_cluster_id;
-
-  unsigned m_cta_issue_next_core;
   std::list<mem_fetch *> m_response_fifo;
 #endif
   opu_sim *m_opu;
-  unsigned m_cluster_id;
   std::list<unsigned> m_core_sim_order;
 
   const shader_core_config *m_config;

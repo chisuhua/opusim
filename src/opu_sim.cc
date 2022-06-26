@@ -1381,8 +1381,8 @@ void opu_sim::core_cycle_start() {
         last_gpu_sim_insn = gpu_sim_insn;
       }
     }
-    try_snap_shot(gpu_sim_cycle);
-    spill_log_to_file(stdout, 0, gpu_sim_cycle);
+    // try_snap_shot(gpu_sim_cycle);
+    // spill_log_to_file(stdout, 0, gpu_sim_cycle);
 
 #if (CUDART_VERSION >= 5000)
     // launch device kernel
@@ -1675,8 +1675,8 @@ opu_sim::l2_cycle()
 void shader_core_ctx::dump_warp_state(FILE *fout) const {
   fprintf(fout, "\n");
   fprintf(fout, "per warp functional simulation status:\n");
-  for (unsigned w = 0; w < m_config->max_warps_per_shader; w++)
-    m_warp[w]->print(fout);
+  //for (unsigned w = 0; w < m_config->max_warps_per_shader; w++)
+  //  m_warp[w]->print(fout);
 }
 
 #if 0

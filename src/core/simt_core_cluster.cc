@@ -1,5 +1,6 @@
 #include "simt_core_cluster.h"
 #include "simt_core.h"
+#include "opu_sim.h"
 
 void exec_simt_core_cluster::create_shader_core_ctx() {
   m_core = new shader_core_ctx *[m_config->n_simt_cores_per_cluster];
@@ -93,7 +94,7 @@ unsigned simt_core_cluster::issue_block2core() {
 
     KernelInfo *kernel;
     // Jin: fetch kernel according to concurrent kernel setting
-    if (m_config->gpgpu_concurrent_kernel_sm) {  // concurrent kernel on sm
+    if (m_config->opu_concurrent_kernel_sm) {  // concurrent kernel on sm
       // always select latest issued kernel
       KernelInfo *k = m_opu->select_kernel();
       kernel = k;
