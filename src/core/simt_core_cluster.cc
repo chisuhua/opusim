@@ -24,7 +24,18 @@ simt_core_cluster::simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
   // m_memory_stats = mstats;
 }
 
-#if 0
+unsigned simt_core_cluster::get_not_completed() const { unsigned not_completed = 0;
+  for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++)
+    not_completed += m_core[i]->get_not_completed();
+  return not_completed;
+}
+
+void simt_core_cluster::reinit() {
+  for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++)
+    m_core[i]->reinit(0, m_config->n_thread_per_shader, true);
+}
+
+
 void simt_core_cluster::core_cycle() {
   for (std::list<unsigned>::iterator it = m_core_sim_order.begin();
        it != m_core_sim_order.end(); ++it) {
@@ -37,20 +48,11 @@ void simt_core_cluster::core_cycle() {
   }
 }
 
-void simt_core_cluster::reinit() {
-  for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++)
-    m_core[i]->reinit(0, m_config->n_thread_per_shader, true);
-}
-
-unsigned simt_core_cluster::max_cta(const kernel_info_t &kernel) {
+unsigned simt_core_cluster::max_cta(const KernelInfo &kernel) {
   return m_config->n_simt_cores_per_cluster * m_config->max_cta(kernel);
 }
-unsigned simt_core_cluster::get_not_completed() const { unsigned not_completed = 0;
-  for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++)
-    not_completed += m_core[i]->get_not_completed();
-  return not_completed;
-}
 
+#if 0
 void simt_core_cluster::print_not_completed(FILE *fp) const {
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++) {
     unsigned not_completed = m_core[i]->get_not_completed();
@@ -74,6 +76,7 @@ unsigned simt_core_cluster::get_n_active_cta() const {
     n += m_core[i]->get_n_active_cta();
   return n;
 }
+#endif
 
 unsigned simt_core_cluster::get_n_active_sms() const {
   unsigned n = 0;
@@ -88,11 +91,11 @@ unsigned simt_core_cluster::issue_block2core() {
     unsigned core =
         (i + m_cta_issue_next_core + 1) % m_config->n_simt_cores_per_cluster;
 
-    kernel_info_t *kernel;
+    KernelInfo *kernel;
     // Jin: fetch kernel according to concurrent kernel setting
     if (m_config->gpgpu_concurrent_kernel_sm) {  // concurrent kernel on sm
       // always select latest issued kernel
-      kernel_info_t *k = m_opu->select_kernel();
+      KernelInfo *k = m_opu->select_kernel();
       kernel = k;
     } else {
       // first select core kernel, if no more cta, get a new kernel
@@ -101,7 +104,7 @@ unsigned simt_core_cluster::issue_block2core() {
       if (!m_opu->kernel_more_cta_left(kernel)) {
         // wait till current kernel finishes
         if (m_core[core]->get_not_completed() == 0) {
-          kernel_info_t *k = m_opu->select_kernel();
+          KernelInfo *k = m_opu->select_kernel();
           if (k) m_core[core]->set_kernel(k);
           kernel = k;
         }
@@ -121,6 +124,7 @@ unsigned simt_core_cluster::issue_block2core() {
   return num_blocks_issued;
 }
 
+#if 0
 void simt_core_cluster::cache_flush() {
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++)
     m_core[i]->cache_flush();

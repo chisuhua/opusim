@@ -5,10 +5,12 @@
 #include <sstream>
 #include <cstring>
 #include <cassert>
+#include "inc/ExecContext.h"
 
 namespace gem5 {
   class OpuContext;
 }
+class KernelInfo;
 
 class core_config {
  public:
@@ -145,7 +147,7 @@ class shader_core_config : public core_config {
     }
   }
   void reg_options(class OptionParser *opp);
-  // unsigned max_cta(const kernel_info_t &k) const;
+  unsigned max_cta(const KernelInfo &k) const;
   unsigned num_shader() const {
     return n_simt_clusters * n_simt_cores_per_cluster;
   }
@@ -167,7 +169,7 @@ class shader_core_config : public core_config {
   bool opu_perfect_mem;
   bool opu_clock_gated_reg_file;
   bool opu_clock_gated_lanes;
-  // enum divergence_support_t model;
+  enum divergence_support_t model;
   unsigned n_thread_per_shader;
   unsigned n_regfile_gating_group;
   unsigned max_warps_per_shader;

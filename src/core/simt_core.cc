@@ -559,7 +559,7 @@ void shader_core_ctx::reinit(unsigned start_thread, unsigned end_thread,
 
 void shader_core_ctx::init_warps(unsigned cta_id, unsigned start_thread,
                                  unsigned end_thread, unsigned ctaid,
-                                 int cta_size, kernel_info_t &kernel) {
+                                 int cta_size, KernelInfo &kernel) {
   //
   address_type start_pc = 0; // next_pc(start_thread);
   // unsigned kernel_id = kernel.get_uid();
@@ -1061,7 +1061,7 @@ void shader_core_ctx::writeback() {
 
 #if 0
 void shader_core_ctx::register_cta_thread_exit(unsigned cta_num,
-                                               kernel_info_t *kernel) {
+                                               KernelInfo *kernel) {
   assert(m_cta_status[cta_num] > 0);
   m_cta_status[cta_num]--;
   if (!m_cta_status[cta_num]) {
@@ -1357,8 +1357,8 @@ bool shader_core_ctx::warp_waiting_at_mem_barrier(unsigned warp_id) {
   return true;
 }
 
-#if 0
-void shader_core_ctx::set_max_cta(const kernel_info_t &kernel) {
+#if 1
+void shader_core_ctx::set_max_cta(const KernelInfo &kernel) {
   // calculate the max cta count and cta size for local memory address mapping
   kernel_max_cta_per_shader = m_config->max_cta(kernel);
   unsigned int gpu_cta_size = kernel.threads_per_cta();
@@ -1499,5 +1499,103 @@ void shader_core_ctx::set_kernel(KernelInfo *k) {
     k->inc_running();
     // printf("GPGPU-Sim uArch: Shader %d bind to kernel %u \'%s\'\n", m_sid,
     //       m_kernel->get_uid(), m_kernel->name().c_str());
+}
+void shader_core_ctx::issue_block2core(KernelInfo &kernel) {
+  if (!m_config->opu_concurrent_kernel_sm)
+    set_max_cta(kernel);
+  else
+    assert(occupy_shader_resource_1block(kernel, true));
+
+  kernel.inc_running();
+
+  // find a free CTA context
+  unsigned free_cta_hw_id = (unsigned)-1;
+
+  unsigned max_cta_per_core;
+  if (!m_config->opu_concurrent_kernel_sm)
+    max_cta_per_core = kernel_max_cta_per_shader;
+  else
+    max_cta_per_core = m_config->max_cta_per_core;
+  for (unsigned i = 0; i < max_cta_per_core; i++) {
+    if (m_cta_status[i] == 0) {
+      free_cta_hw_id = i;
+      break;
+    }
+  }
+  assert(free_cta_hw_id != (unsigned)-1);
+
+  // determine hardware threads and warps that will be used for this CTA
+  int cta_size = kernel.threads_per_cta();
+
+  // hw warp id = hw thread id mod warp size, so we need to find a range
+  // of hardware thread ids corresponding to an integral number of hardware
+  // thread ids
+  int padded_cta_size = cta_size;
+  if (cta_size % m_config->warp_size)
+    padded_cta_size =
+        ((cta_size / m_config->warp_size) + 1) * (m_config->warp_size);
+
+  unsigned int start_thread, end_thread;
+
+  if (!m_config->opu_concurrent_kernel_sm) {
+    start_thread = free_cta_hw_id * padded_cta_size;
+    end_thread = start_thread + cta_size;
+  } else {
+    start_thread = find_available_hwtid(padded_cta_size, true);
+    assert((int)start_thread != -1);
+    end_thread = start_thread + cta_size;
+    assert(m_occupied_cta_to_hwtid.find(free_cta_hw_id) ==
+           m_occupied_cta_to_hwtid.end());
+    m_occupied_cta_to_hwtid[free_cta_hw_id] = start_thread;
+  }
+
+  // reset the microarchitecture state of the selected hardware thread and warp
+  // contexts
+  reinit(start_thread, end_thread, false);
+
+  // initalize scalar threads and determine which hardware warps they are
+  // allocated to bind functional simulation state of threads to hardware
+  // resources (simulation)
+  warp_set_t warps;
+  unsigned nthreads_in_block = 0;
+  unsigned ctaid = kernel.get_next_cta_id_single();
+#if 0
+  function_info *kernel_func_info = kernel.entry();
+  symbol_table *symtab = kernel_func_info->get_symtab();
+  checkpoint *g_checkpoint = new checkpoint();
+  for (unsigned i = start_thread; i < end_thread; i++) {
+    m_threadState[i].m_cta_id = free_cta_hw_id;
+    unsigned warp_id = i / m_config->warp_size;
+    nthreads_in_block += sim_init_thread(
+        kernel, &m_thread[i], m_sid, i, cta_size - (i - start_thread),
+        m_config->n_thread_per_shader, this, free_cta_hw_id, warp_id,
+        m_cluster->get_gpu());
+    m_threadState[i].m_active = true;
+    //
+    warps.set(warp_id);
+  }
+  assert(nthreads_in_block > 0 &&
+         nthreads_in_block <=
+             m_config->n_thread_per_shader);  // should be at least one, but
+                                              // less than max
+  m_cta_status[free_cta_hw_id] = nthreads_in_block;
+#endif
+
+  // now that we know which warps are used in this CTA, we can allocate
+  // resources for use in CTA-wide barrier operations
+  m_barriers.allocate_barrier(free_cta_hw_id, warps);
+
+  // initialize the SIMT stacks and fetch hardware
+  init_warps(free_cta_hw_id, start_thread, end_thread, ctaid, cta_size, kernel);
+  m_n_active_cta++;
+
+  //shader_CTA_count_log(m_sid, 1);
+  //SHADER_DPRINTF(LIVENESS,
+  //               "GPGPU-Sim uArch: cta:%2u, start_tid:%4u, end_tid:%4u, "
+  //               "initialized @(%lld,%lld)\n",
+  //               free_cta_hw_id, start_thread, end_thread, m_gpu->gpu_sim_cycle,
+  //               m_gpu->gpu_tot_sim_cycle);
+  // m_gpu->gem5OpuTop->getCudaCore(m_sid)->record_block_issue(free_cta_hw_id);
+
 }
 

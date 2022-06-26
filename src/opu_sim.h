@@ -11,6 +11,7 @@
 //#include "gpu-cache.h"
 #include "core/simt_core.h"
 #include "opuusim_base.h"
+#include "inc/ExecContext.h"
 
 // constants for statistics printouts
 #define GPU_RSTAT_SHD_INFO 0x1
@@ -50,6 +51,35 @@ class opu_sim_config {
     m_valid = false;
     opu_ctx = ctx;
   }
+  void reg_options(class OptionParser *opp);
+  void init() {
+      /*
+    gpu_stat_sample_freq = 10000;
+    gpu_runtime_stat_flag = 0;
+    sscanf(gpgpu_runtime_stat, "%d:%x", &gpu_stat_sample_freq,
+           &gpu_runtime_stat_flag);
+           */
+    m_shader_config.init();
+    init_clock_domains();
+    // Trace_gpgpu::init();
+
+    // initialize file name if it is not set
+    time_t curr_time;
+    time(&curr_time);
+    char *date = ctime(&curr_time);
+    char *s = date;
+    while (*s) {
+      if (*s == ' ' || *s == '\t' || *s == ':') *s = '-';
+      if (*s == '\n' || *s == '\r') *s = 0;
+      s++;
+    }
+    char buf[1024];
+    snprintf(buf, 1024, "gpgpusim_visualizer__%s.log.gz", date);
+    // g_visualizer_filename = strdup(buf);
+
+    m_valid = true;
+  }
+
   unsigned get_core_freq() const { return core_freq; }
   unsigned num_shader() const { return m_shader_config.num_shader(); }
   unsigned num_cluster() const { return m_shader_config.n_simt_clusters; }
@@ -60,6 +90,7 @@ class opu_sim_config {
   }
 
  private:
+  void init_clock_domains(void);
   // backward pointer
   gem5::OpuContext *opu_ctx;
   bool m_valid;
@@ -73,7 +104,23 @@ class opu_sim_config {
   double dram_period;
   double l2_period;
 
+  // GPGPU-Sim timing model options
+  unsigned long long gpu_max_cycle_opt;
+  unsigned long long gpu_max_insn_opt;
+  unsigned gpu_max_cta_opt;
+  unsigned gpu_max_completed_cta_opt;
+  bool opu_flush_l1_cache;
+  bool opu_flush_l2_cache;
+  bool opu_deadlock_detect;
+  char *opu_clock_domains;
+  int opu_cflog_interval;
+
   unsigned max_concurrent_kernel;
+
+  // visualizer
+  bool g_visualizer_enabled;
+  char *g_visualizer_filename;
+  int g_visualizer_zlevel;
 
 
   // Device Limits
@@ -125,6 +172,8 @@ namespace gem5 {
 class OpuContext;
 class OpuTop;
 }
+class KernelInfo;
+
 
 class opu_sim : public gem5::OpuSimBase {
  public:
@@ -132,10 +181,10 @@ class opu_sim : public gem5::OpuSimBase {
 
   void set_prop(struct cudaDeviceProp *prop);
 
-  void launch(kernel_info_t *kinfo);
+  void launch(KernelInfo *kinfo);
   bool can_start_kernel();
   unsigned finished_kernel();
-  void set_kernel_done(kernel_info_t *kernel);
+  void set_kernel_done(KernelInfo *kernel);
   void stop_all_running_kernels();
 
   void init();
@@ -177,15 +226,15 @@ class opu_sim : public gem5::OpuSimBase {
   int wrp_size() const;
   int shader_clock() const;
   int max_cta_per_core() const;
-  int get_max_cta(const kernel_info_t &k) const;
+  int get_max_cta(const KernelInfo &k) const;
   const struct cudaDeviceProp *get_prop() const;
-  // enum divergence_support_t simd_model() const;
+  enum divergence_support_t simd_model() const;
 
   unsigned threads_per_core() const;
   bool get_more_cta_left() const;
-  bool kernel_more_cta_left(kernel_info_t *kernel) const;
+  bool kernel_more_cta_left(KernelInfo *kernel) const;
   bool hit_max_cta_count() const;
-  // kernel_info_t *select_kernel();
+  KernelInfo *select_kernel();
   // PowerscalingCoefficients *get_scaling_coeffs();
   void decrement_kernel_latency();
 
@@ -196,7 +245,7 @@ class opu_sim : public gem5::OpuSimBase {
   // TODO schi add
   shader_core_ctx* get_shader(int id);
 
-  void perf_memcpy_to_gpu(size_t dst_start_addr, size_t count);
+  // void perf_memcpy_to_gpu(size_t dst_start_addr, size_t count);
 
   // The next three functions added to be used by the functional simulation
   // function
@@ -239,7 +288,7 @@ class opu_sim : public gem5::OpuSimBase {
   class memory_partition_unit **m_memory_partition_unit;
   class memory_sub_partition **m_memory_sub_partition;
 
-  std::vector<kernel_info_t *> m_running_kernels;
+  std::vector<KernelInfo *> m_running_kernels;
   unsigned m_last_issued_kernel;
 
   std::list<unsigned> m_finished_kernel;
@@ -283,10 +332,10 @@ class opu_sim : public gem5::OpuSimBase {
   std::vector<unsigned> m_executed_kernel_uids;  //< uids of kernel launches for stat printout
   // std::map<unsigned, watchpoint_event> g_watchpoint_hits;
 
-  std::string executed_kernel_info_string();  //< format the kernel information
+  // std::string executed_kernel_info_string();  //< format the kernel information
                                               // into a string for stat printout
-  std::string executed_kernel_name();
-  void clear_executed_kernel_info();  //< clear the kernel information after
+  // std::string executed_kernel_name();
+  // void clear_executed_kernel_info();  //< clear the kernel information after
                                       // stat printout
   virtual void createSIMTCluster() = 0;
 
@@ -320,16 +369,16 @@ class opu_sim : public gem5::OpuSimBase {
  private:
   // set by stream operation every time a functoinal simulation is done
   bool m_functional_sim;
-  kernel_info_t *m_functional_sim_kernel;
+  KernelInfo *m_functional_sim_kernel;
 
  public:
   bool is_functional_sim() { return m_functional_sim; }
-  kernel_info_t *get_functional_kernel() { return m_functional_sim_kernel; }
-  void functional_launch(kernel_info_t *k) {
+  KernelInfo *get_functional_kernel() { return m_functional_sim_kernel; }
+  void functional_launch(KernelInfo *k) {
     m_functional_sim = true;
     m_functional_sim_kernel = k;
   }
-  void finish_functional_sim(kernel_info_t *k) {
+  void finish_functional_sim(KernelInfo *k) {
     assert(m_functional_sim);
     assert(m_functional_sim_kernel == k);
     m_functional_sim = false;

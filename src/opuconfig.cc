@@ -1,6 +1,12 @@
 #include "opuconfig.h"
 #include "option_parser.h"
 
+#define TMPHACK
+#include "inc/KernelInfo.h"
+
+unsigned int shader_core_config::max_cta(const KernelInfo &k) const {
+    assert(false);
+}
 #if 0
 unsigned int shader_core_config::max_cta(const kernel_info_t &k) const {
   unsigned threads_per_cta = k.threads_per_cta();

@@ -10,14 +10,20 @@ class simt_core_cluster {
   simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
                     const shader_core_config *config,
                     shader_core_stats *stats);
-#if 0
-  void core_cycle();
-  void icnt_cycle();
-
+  unsigned get_not_completed() const;
   void reinit();
+
+  void get_pdom_stack_top_info(unsigned sid, unsigned tid, unsigned *pc,
+                               unsigned *rpc) const;
   unsigned issue_block2core();
+  void core_cycle();
+
   void cache_flush();
   void cache_invalidate();
+  unsigned max_cta(const KernelInfo &kernel);
+  unsigned get_n_active_sms() const;
+  shader_core_ctx *get_core(int id_in_cluster) { return m_core[id_in_cluster]; }
+#if 0
   bool icnt_injection_buffer_full(unsigned size, bool write);
   void icnt_inject_request_packet(class mem_fetch *mf);
 
@@ -29,13 +35,8 @@ class simt_core_cluster {
     m_response_fifo.push_back(mf);
   }
 
-  void get_pdom_stack_top_info(unsigned sid, unsigned tid, unsigned *pc,
-                               unsigned *rpc) const;
-  unsigned max_cta(const kernel_info_t &kernel);
-  unsigned get_not_completed() const;
   void print_not_completed(FILE *fp) const;
   unsigned get_n_active_cta() const;
-  unsigned get_n_active_sms() const;
   opu_sim *get_gpu() { return m_opu; }
 
   void display_pipeline(unsigned sid, FILE *fout, int print_mem, int mask);
@@ -52,7 +53,6 @@ class simt_core_cluster {
   float get_current_occupancy(unsigned long long &active,
                               unsigned long long &total) const;
 
-  shader_core_ctx *get_core(int id_in_cluster) { return m_core[id_in_cluster]; }
  protected:
   unsigned m_cluster_id;
 

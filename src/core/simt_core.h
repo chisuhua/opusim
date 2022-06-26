@@ -144,7 +144,7 @@ class shader_core_ctx : public core_t {
   void cycle();
   void reinit(unsigned start_thread, unsigned end_thread,
               bool reset_not_completed);
-  void issue_block2core(class kernel_info_t &kernel);
+  void issue_block2core(class KernelInfo &kernel);
 
   void cache_flush();
   void cache_invalidate();
@@ -208,7 +208,7 @@ class shader_core_ctx : public core_t {
   void dec_inst_in_pipeline(unsigned warp_id) ;
   // void store_ack(class mem_fetch *mf);
   bool warp_waiting_at_mem_barrier(unsigned warp_id);
-  // void set_max_cta(const kernel_info_t &kernel);
+  void set_max_cta(const KernelInfo &kernel);
   void warp_inst_complete(const warp_inst_t &inst);
 
   // accessors
@@ -481,7 +481,7 @@ class shader_core_ctx : public core_t {
   int test_res_bus(int latency);
   // address_type next_pc(int tid) const;
   void fetch();
-  void register_cta_thread_exit(unsigned cta_num, kernel_info_t *kernel);
+  void register_cta_thread_exit(unsigned cta_num, KernelInfo *kernel);
 
   void decode();
 
@@ -502,12 +502,12 @@ class shader_core_ctx : public core_t {
   // (execution-driven vs trace-driven)
   void init_warps(unsigned cta_id, unsigned start_thread,
                           unsigned end_thread, unsigned ctaid, int cta_size,
-                          kernel_info_t &kernel);
+                          KernelInfo &kernel);
   virtual void checkExecutionStatusAndUpdate(warp_inst_t &inst, unsigned t,
                                              unsigned tid) = 0;
   virtual void func_exec_inst(warp_inst_t &inst) = 0;
 /*
-  virtual unsigned sim_init_thread(kernel_info_t &kernel,
+  virtual unsigned sim_init_thread(KernelInfo &kernel,
                                    ptx_thread_info **thread_info, int sid,
                                    unsigned tid, unsigned threads_left,
                                    unsigned num_threads, core_t *core,
@@ -610,9 +610,9 @@ class shader_core_ctx : public core_t {
 
   // Jin: concurrent kernels on a sm
  public:
-  bool can_issue_1block(kernel_info_t &kernel);
-  bool occupy_shader_resource_1block(kernel_info_t &kernel, bool occupy);
-  void release_shader_resource_1block(unsigned hw_ctaid, kernel_info_t &kernel);
+  bool can_issue_1block(KernelInfo &kernel);
+  bool occupy_shader_resource_1block(KernelInfo &kernel, bool occupy);
+  void release_shader_resource_1block(unsigned hw_ctaid, KernelInfo &kernel);
   int find_available_hwtid(unsigned int cta_size, bool occupy);
 
  private:
@@ -642,7 +642,7 @@ class exec_shader_core_ctx : public shader_core_ctx {
                                              unsigned tid);
   virtual void func_exec_inst(warp_inst_t &inst);
   /*
-  virtual unsigned sim_init_thread(kernel_info_t &kernel,
+  virtual unsigned sim_init_thread(KernelInfo &kernel,
                                    ptx_thread_info **thread_info, int sid,
                                    unsigned tid, unsigned threads_left,
                                    unsigned num_threads, core_t *core,
