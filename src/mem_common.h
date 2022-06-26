@@ -98,13 +98,12 @@ class mem_access_t {
     }
   }
 
-  gem5::OpuContext *gpgpu_ctx;
+  gem5::OpuContext *m_ctx;
 
 private:
-  void init(gem5::OpuContext *ctx);
-
-  void init()
+  void init(gem5::OpuContext *ctx)
   {
+      m_ctx = ctx;
       m_uid=++sm_next_access_uid;
       m_addr=0;
       m_req_size=0;

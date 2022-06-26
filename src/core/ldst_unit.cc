@@ -535,8 +535,8 @@ void ldst_unit::issue(register_set &reg_set) {
 
   inst->op_pipe = opu_pipeline_t::MEM__OP;
   // stat collection
-  m_core->mem_instruction_stats(*inst);
-  m_core->incmem_stat(m_core->get_config()->warp_size, 1);
+  // m_core->mem_instruction_stats(*inst);
+  // m_core->incmem_stat(m_core->get_config()->warp_size, 1);
   pipelined_simd_unit::issue(reg_set);
 }
 

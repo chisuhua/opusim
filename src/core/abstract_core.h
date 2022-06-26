@@ -40,12 +40,15 @@ class core_t : public gem5::OpuCoreBase {
       }
     }
   }
+
   virtual ~core_t() { /*free(m_thread);*/ }
-  virtual warp_exec_t* get_warp(uint32_t warp_id);
-  virtual WarpState* get_warp_state(uint32_t warp_id) const;
+  virtual warp_exec_t* get_warp(uint32_t warp_id) {};
+  virtual WarpState* get_warp_state(uint32_t warp_id) const = 0;
   // virtual void warp_exit(unsigned warp_id) = 0;
   virtual active_mask_t warp_active_mask(unsigned warp_id) = 0;
   virtual bool warp_waiting_at_barrier(unsigned warp_id) const = 0;
+
+
   // virtual void checkExecutionStatusAndUpdate(warp_inst_t &inst, unsigned t,
   //                                           unsigned tid) = 0;
   void execute_warp_inst_t(warp_inst_t &inst, unsigned warpId = (unsigned)-1);
@@ -61,8 +64,12 @@ class core_t : public gem5::OpuCoreBase {
   // }
   unsigned get_warp_size() const { return m_warp_size; }
 
-  // TODO schi add
-  void writeRegister(const warp_inst_t &inst, unsigned warpSize, unsigned lane_id, char* data);
+  virtual void cycle() {}; // = 0;
+  virtual bool ldst_unit_wb_inst(warp_inst_t &inst) = 0;
+  virtual void writeRegister(const warp_inst_t &inst, unsigned warpSize, unsigned lane_id, char* data);
+  virtual void warp_reaches_barrier(warp_inst_t &inst) = 0;
+  virtual bool fence_unblock_needed(unsigned warp_id)  = 0;
+  virtual void complete_fence(unsigned warp_id) = 0;
 
   void and_reduction(unsigned ctaid, unsigned barid, bool value) {
     reduction_storage[ctaid][barid] &= value;

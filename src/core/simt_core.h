@@ -137,6 +137,8 @@ class shader_core_ctx : public core_t {
                   const shader_core_config *config,
                   shader_core_stats *stats);
 
+  virtual ~shader_core_ctx() {};
+
   // used by simt_core_cluster:
   // modifiers
   void cycle();
@@ -178,12 +180,12 @@ class shader_core_ctx : public core_t {
   unsigned get_sid() const { return m_sid; }
 
   virtual warp_exec_t* get_warp(uint32_t warp_id);
-  virtual WarpState* get_warp_state(uint32_t warp_id);
+  virtual WarpState* get_warp_state(uint32_t warp_id) const;
 
   // used by functional simulation:
   // modifiers
   // virtual void warp_exit(unsigned warp_id);
-  // virtual active_mask_t warp_active_mask(unsigned warp_id);
+  virtual active_mask_t warp_active_mask(unsigned warp_id);
 
   // accessors
   virtual bool warp_waiting_at_barrier(unsigned warp_id) const;
@@ -488,7 +490,7 @@ class shader_core_ctx : public core_t {
   friend class TwoLevelScheduler;
   friend class LooseRoundRobbinScheduler;
     friend class ldst_unit;
-  virtual void issue_warp(register_set &warp, const warp_inst_t *pI,
+  void issue_warp(register_set &warp, const warp_inst_t *pI,
                           const active_mask_t &active_mask, unsigned warp_id,
                           unsigned sch_id);
 
@@ -498,7 +500,7 @@ class shader_core_ctx : public core_t {
 
   // pure virtual methods implemented based on the current execution mode
   // (execution-driven vs trace-driven)
-  virtual void init_warps(unsigned cta_id, unsigned start_thread,
+  void init_warps(unsigned cta_id, unsigned start_thread,
                           unsigned end_thread, unsigned ctaid, int cta_size,
                           kernel_info_t &kernel);
   virtual void checkExecutionStatusAndUpdate(warp_inst_t &inst, unsigned t,

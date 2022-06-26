@@ -1,9 +1,16 @@
+#pragma once
+#include "opuconfig.h"
+
+class shader_core_stats;
+class shader_core_config;
+class shader_core_ctx;
+
 class simt_core_cluster {
  public:
   simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
                     const shader_core_config *config,
                     shader_core_stats *stats);
-
+#if 0
   void core_cycle();
   void icnt_cycle();
 
@@ -44,19 +51,23 @@ class simt_core_cluster {
   //void get_icnt_stats(long &n_simt_to_mem, long &n_mem_to_simt) const;
   float get_current_occupancy(unsigned long long &active,
                               unsigned long long &total) const;
-  virtual void create_shader_core_ctx() = 0;
 
   shader_core_ctx *get_core(int id_in_cluster) { return m_core[id_in_cluster]; }
  protected:
   unsigned m_cluster_id;
+
+  unsigned m_cta_issue_next_core;
+  std::list<mem_fetch *> m_response_fifo;
+#endif
   opu_sim *m_opu;
+  unsigned m_cluster_id;
+  std::list<unsigned> m_core_sim_order;
+
   const shader_core_config *m_config;
   shader_core_stats *m_stats;
   shader_core_ctx **m_core;
 
-  unsigned m_cta_issue_next_core;
-  std::list<unsigned> m_core_sim_order;
-  std::list<mem_fetch *> m_response_fifo;
+  virtual void create_shader_core_ctx() = 0;
 };
 
 class exec_simt_core_cluster : public simt_core_cluster {

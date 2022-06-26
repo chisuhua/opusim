@@ -1,31 +1,30 @@
 #include "simt_core_cluster.h"
+#include "simt_core.h"
 
 void exec_simt_core_cluster::create_shader_core_ctx() {
   m_core = new shader_core_ctx *[m_config->n_simt_cores_per_cluster];
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++) {
     unsigned sid = m_config->cid_to_sid(i, m_cluster_id);
     m_core[i] = new exec_shader_core_ctx(m_opu, this, sid, m_cluster_id,
-                                         m_config, m_mem_config, m_stats);
+                                         m_config, m_stats);
     m_core_sim_order.push_back(i);
   }
 }
 
 
 simt_core_cluster::simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
-                                     const gem5::core_config *config,
-                                     const memory_config *mem_config,
-                                     shader_core_stats *stats,
-                                     class memory_stats_t *mstats) {
+                                     const shader_core_config *config,
+                                     shader_core_stats *stats) {
   m_config = config;
-  m_cta_issue_next_core = m_config->n_simt_cores_per_cluster -
-                          1;  // this causes first launch to use hw cta 0
+  // m_cta_issue_next_core = m_config->n_simt_cores_per_cluster -
+  //                        1;  // this causes first launch to use hw cta 0
   m_cluster_id = cluster_id;
   m_opu = gpu;
   m_stats = stats;
-  m_memory_stats = mstats;
-  m_mem_config = mem_config;
+  // m_memory_stats = mstats;
 }
 
+#if 0
 void simt_core_cluster::core_cycle() {
   for (std::list<unsigned>::iterator it = m_core_sim_order.begin();
        it != m_core_sim_order.end(); ++it) {
@@ -46,9 +45,7 @@ void simt_core_cluster::reinit() {
 unsigned simt_core_cluster::max_cta(const kernel_info_t &kernel) {
   return m_config->n_simt_cores_per_cluster * m_config->max_cta(kernel);
 }
-
-unsigned simt_core_cluster::get_not_completed() const {
-  unsigned not_completed = 0;
+unsigned simt_core_cluster::get_not_completed() const { unsigned not_completed = 0;
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++)
     not_completed += m_core[i]->get_not_completed();
   return not_completed;
@@ -220,7 +217,7 @@ void simt_core_cluster::icnt_cycle() {
       // data response
       if (!m_core[cid]->ldst_unit_response_buffer_full()) {
         m_response_fifo.pop_front();
-        m_memory_stats->memlatstat_read_done(mf);
+        // m_memory_stats->memlatstat_read_done(mf);
         m_core[cid]->accept_ldst_unit_response(mf);
       }
     }
@@ -334,4 +331,4 @@ void simt_core_cluster::get_L1T_sub_stats(struct cache_sub_stats &css) const {
   }
   css = total_css;
 }
-
+#endif

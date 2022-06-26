@@ -37,36 +37,34 @@
 #include <stdlib.h>
 #include "zlib.h"
 
-#include "dram.h"
+// #include "dram.h"
 #include "mem_fetch.h"
-#include "shader.h"
-#include "shader_trace.h"
+#include "core/simt_core.h"
+#include "core/simt_core_cluster.h"
+//#include "shader_trace.h"
+#include "cache_base.h"
 
 #include <time.h>
-#include "addrdec.h"
+//#include "addrdec.h"
 #include "delayqueue.h"
-#include "dram.h"
-#include "gpu-cache.h"
-#include "gpu-misc.h"
-#include "icnt_wrapper.h"
-#include "l2cache.h"
-#include "shader.h"
-#include "stat-tool.h"
+//#include "dram.h"
+//#include "gpu-cache.h"
+//#include "gpu-misc.h"
+//#include "icnt_wrapper.h"
+//#include "l2cache.h"
+//#include "shader.h"
+//#include "stat-tool.h"
 
-#include "opu_context.h"
-#include "abstract_core.h"
-#include "../statwrapper.h"
-#include "../trace.h"
-#include "mem_latency_stat.h"
-#include "power_stat.h"
+// #include "opu_context.h"
+#include "core/abstract_core.h"
+#include "statwrapper.h"
+//#include "../trace.h"
+//#include "mem_latency_stat.h"
+//#include "power_stat.h"
 #include "stats.h"
-#include "visualizer.h"
+//#include "visualizer.h"
 
-#ifdef GPGPUSIM_POWER_MODEL
-#include "power_interface.h"
-#else
 class opu_sim_wrapper {};
-#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -91,9 +89,9 @@ opu_sim* g_the_gpu;
 
 #define MEM_LATENCY_STAT_IMPL
 
-#include "mem_latency_stat.h"
+// #include "mem_latency_stat.h"
 
-
+#if 0
 void power_config::reg_options(class OptionParser *opp) {
   option_parser_register(opp, "-accelwattch_xml_file", OPT_CSTR,
                          &g_power_config_name, "AccelWattch XML file",
@@ -213,6 +211,7 @@ void power_config::reg_options(class OptionParser *opp) {
                          "allowed deviation:number of samples", "8:4");
 }
 
+
 void memory_config::reg_options(class OptionParser *opp) {
   option_parser_register(opp, "-gpgpu_perf_sim_memcpy", OPT_BOOL,
                          &m_perf_sim_memcpy, "Fill the L2 cache on memcpy",
@@ -302,6 +301,7 @@ void memory_config::reg_options(class OptionParser *opp) {
                          "icnt_flit_size", "32");
   m_address_mapping.addrdec_setoption(opp);
 }
+#endif
 
 
 void opu_sim_config::reg_options(option_parser_t opp) {
@@ -415,18 +415,6 @@ void opu_sim_config::reg_options(option_parser_t opp) {
 }
 
 /////////////////////////////////////////////////////////////////////////////
-
-void increment_x_then_y_then_z(dim3 &i, const dim3 &bound) {
-  i.x++;
-  if (i.x >= bound.x) {
-    i.x = 0;
-    i.y++;
-    if (i.y >= bound.y) {
-      i.y = 0;
-      if (i.z < bound.z) i.z++;
-    }
-  }
-}
 
 void opu_sim::launch(kernel_info_t *kinfo) {
   unsigned cta_size = kinfo->threads_per_cta();

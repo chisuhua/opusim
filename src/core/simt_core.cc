@@ -1292,7 +1292,7 @@ warp_exec_t* shader_core_ctx::get_warp(unsigned warp_id) {
     return m_warp[warp_id];
 }
 
-WarpState* shader_core_ctx::get_warp_state(unsigned warp_id) {
+WarpState* shader_core_ctx::get_warp_state(unsigned warp_id) const {
     return m_warp_state[warp_id];
 }
 
@@ -1312,11 +1312,11 @@ void shader_core_ctx::warp_exit(unsigned warp_id) {
   // if (this->m_simt_stack[warp_id]->get_num_entries() == 0)
   if (done) m_barriers.warp_exit(warp_id);
 }
+#endif
 
 active_mask_t shader_core_ctx::warp_active_mask(uint32_t warp_id) {
     return m_warp[warp_id]->m_active_threads;
 }
-#endif
 
 bool shader_core_ctx::check_if_non_released_reduction_barrier(
     warp_inst_t &inst) {

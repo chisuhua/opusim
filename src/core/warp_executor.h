@@ -149,6 +149,7 @@ class warp_exec_t {
     return m_shader;
   }
 
+  active_mask_t m_active_threads;
  private:
   static const unsigned IBUFFER_SIZE = 2;
   class shader_core_ctx *m_shader;
@@ -159,7 +160,6 @@ class warp_exec_t {
 
   address_type m_next_pc;
   unsigned n_completed;  // number of threads in warp completed
-  active_mask_t m_active_threads;
 
   bool m_imiss_pending;
 
