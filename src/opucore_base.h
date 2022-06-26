@@ -16,6 +16,16 @@ class OpuMemfetch {
 };
 
 using icacheFetch_ftype = std::function<void(uint64_t, OpuMemfetch*)>;
+using getLocalBaseVaddr_ftype = std::function<uint64_t()>;
+using record_block_commit_ftype = std::function<void(uint32_t)>;
+using executeMemOp_ftype = std::function<bool(const OpuWarpinst &)>;
+using writebackClear_ftype = std::function<void()>;
+
+#define CB(name) \
+  virtual void setup_cb_##name(name##_ftype f) { \
+      m_gem5_##name = f;                         \
+  }                                              \
+  name##_ftype m_gem5_##name;
 
 class OpuCoreBase {
  public:
@@ -24,6 +34,13 @@ class OpuCoreBase {
   virtual void setup_cb_icacheFetch(icacheFetch_ftype f) {
       m_gem5_icacheFetch = f;
   }
+  virtual void setup_cb_getLocalBaseVaddr(getLocalBaseVaddr_ftype f) {
+      m_gem5_getLocalBaseVaddr = f;
+  }
+  CB(record_block_commit)
+  CB(executeMemOp)
+  CB(writebackClear)
+
   virtual void accept_fetch_response(OpuMemfetch *mf) = 0;
   virtual bool ldst_unit_wb_inst(OpuWarpinst &inst) = 0;
 
@@ -38,6 +55,7 @@ class OpuCoreBase {
   virtual void finish_kernel() = 0;
 
   icacheFetch_ftype m_gem5_icacheFetch;
+  getLocalBaseVaddr_ftype m_gem5_getLocalBaseVaddr;
 };
 
 

@@ -52,6 +52,7 @@ class ldst_unit;
 class inst_t;
 class Scoreboard;
 class opndcoll_rfu_t;
+class KernelInfo;
 
 enum exec_unit_type_t {
   NONE = 0,
@@ -153,21 +154,13 @@ class shader_core_ctx : public core_t {
   // TODO schi add
   bool ldst_unit_wb_inst(warp_inst_t &inst);
 
-#if 0
-  void set_kernel(kernel_info_t *k) {
-    assert(k);
-    m_kernel = k;
-    //        k->inc_running();
-    printf("GPGPU-Sim uArch: Shader %d bind to kernel %u \'%s\'\n", m_sid,
-           m_kernel->get_uid(), m_kernel->name().c_str());
-  }
-#endif
+  void set_kernel(KernelInfo *k) ;
 
   // TODO schi 
   // Callback from gem5
   bool m_kernel_finishing;
-  void start_kernel_finish();
-  void finish_kernel();
+  // void start_kernel_finish();
+  // void finish_kernel();
   bool kernel_finish_issued() { return m_kernel_finishing; }
   // PowerscalingCoefficients *scaling_coeffs;
   // accessors
@@ -181,7 +174,7 @@ class shader_core_ctx : public core_t {
     else
       return 0;
   }
-  // kernel_info_t *get_kernel() { return m_kernel; }
+  KernelInfo *get_kernel() { return m_kernel; }
   unsigned get_sid() const { return m_sid; }
 
   virtual warp_exec_t* get_warp(uint32_t warp_id);
@@ -189,8 +182,8 @@ class shader_core_ctx : public core_t {
 
   // used by functional simulation:
   // modifiers
-  virtual void warp_exit(unsigned warp_id);
-  virtual active_mask_t warp_active_mask(unsigned warp_id);
+  // virtual void warp_exit(unsigned warp_id);
+  // virtual active_mask_t warp_active_mask(unsigned warp_id);
 
   // accessors
   virtual bool warp_waiting_at_barrier(unsigned warp_id) const;
@@ -213,7 +206,7 @@ class shader_core_ctx : public core_t {
   void dec_inst_in_pipeline(unsigned warp_id) ;
   // void store_ack(class mem_fetch *mf);
   bool warp_waiting_at_mem_barrier(unsigned warp_id);
-  void set_max_cta(const kernel_info_t &kernel);
+  // void set_max_cta(const kernel_info_t &kernel);
   void warp_inst_complete(const warp_inst_t &inst);
 
   // accessors
@@ -435,7 +428,7 @@ class shader_core_ctx : public core_t {
           m_stats->m_num_mem_acesses[m_sid] + (double)active_count*latency;
     }
   }
-  void incexecstat(warp_inst_t *&inst);
+  // void incexecstat(warp_inst_t *&inst);
 
   void incregfile_reads(unsigned active_count) {
     m_stats->m_read_regfile_acesses[m_sid] =

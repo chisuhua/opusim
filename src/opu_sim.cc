@@ -1206,6 +1206,12 @@ unsigned opu_sim::threads_per_core() const {
   return m_shader_config->n_thread_per_shader;
 }
 
+void opu_sim::get_pdom_stack_top_info(unsigned sid, unsigned tid,
+                                        unsigned *pc, unsigned *rpc) {
+  unsigned cluster_id = m_shader_config->sid_to_cluster(sid);
+  m_cluster[cluster_id]->get_pdom_stack_top_info(sid, tid, pc, rpc);
+}
+
 void shader_core_ctx::mem_instruction_stats(const warp_inst_t &inst) {
   unsigned active_count = inst.active_count();
   // this breaks some encapsulation: the is_[space] functions, if you change

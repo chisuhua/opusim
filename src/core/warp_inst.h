@@ -1,4 +1,7 @@
 #pragma once
+#ifndef __WARP_INST_H__
+#define __WARP_INST_H__
+
 #include "opuinst_base.h"
 #include "coasm.h"
 #include <vector>
@@ -6,24 +9,19 @@
 #include <assert.h>
 #include <stdint.h>
 #include <memory>
+#include <list>
 
 #include "simt_common.h"
-class Instruction;
+#include "mem_common.h"
 
+class Instruction;
 class WarpState;
+class shader_core_config;
 
 
 class warp_inst_t : public OpuWarpinst {
 public:
-  warp_inst_t() {
-    m_uid = 0;
-    m_empty = true;
-    m_isatomic = false;
-    m_per_scalar_thread_valid = false;
-    m_mem_accesses_created = false;
-    m_cache_hit = false;
-    should_do_atomic = true;
-  }
+  warp_inst_t();
 
   uint32_t get_uid() const {};
   uint32_t get_schd_id() const {};
@@ -49,7 +47,6 @@ public:
   uint64_t cycles;
   bool m_empty;
   bool m_isatomic;
-  bool m_mem_accesses_created;
   bool m_cache_hit;
   bool should_do_atomic;
   uint32_t m_scheduler_id;  //the scheduler that issues this inst
@@ -115,14 +112,14 @@ public:
     return cycles > 0;
   }
   bool has_dispatch_delay() { return cycles > 0; }
-/*
+
   bool accessq_empty() const { return m_accessq.empty(); }
   unsigned accessq_count() const { return m_accessq.size(); }
   const mem_access_t &accessq_back() { return m_accessq.back(); }
   void accessq_pop_back() { m_accessq.pop_back(); }
   bool m_mem_accesses_created;
   std::list<mem_access_t> m_accessq;
-*/
+
   // special_ops sp_op;  // code (uarch visible) identify if int_alu, fp_alu, int_mul ....
 
   uint32_t get_num_operands() const ;
@@ -134,7 +131,15 @@ public:
   int32_t incount() const;
   int32_t outcount() const;
 
+  void generate_mem_accesses();
+  void memory_coalescing_arch(bool is_write,
+                                         mem_access_type access_type) ;
+
   opu_pipeline_t op_pipe;
+  shader_core_config *m_config;
+  void completed(unsigned long long cycle) const;
+  void print(FILE *fout) const;
+  void broadcast_barrier_reduction(const active_mask_t &access_mask);
 };
 
 void move_warp(warp_inst_t *&dst, warp_inst_t *&src);
@@ -296,4 +301,4 @@ private:
 };
 
 
-
+#endif

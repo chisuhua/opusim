@@ -45,10 +45,10 @@ extern bool g_interactive_debugger_enabled;
 
 class opu_sim_config {
  public:
-  opu_sim_config(OpuContext *ctx)
+  opu_sim_config(gem5::OpuContext *ctx)
       : m_shader_config() {
     m_valid = false;
-    gpgpu_ctx = ctx;
+    opu_ctx = ctx;
   }
   unsigned get_core_freq() const { return core_freq; }
   unsigned num_shader() const { return m_shader_config.num_shader(); }
@@ -61,7 +61,7 @@ class opu_sim_config {
 
  private:
   // backward pointer
-  class OpuContext *gpgpu_ctx;
+  gem5::OpuContext *opu_ctx;
   bool m_valid;
   shader_core_config m_shader_config;
   double core_freq;
@@ -83,8 +83,8 @@ class opu_sim_config {
   size_t runtime_pending_launch_count_limit;
 
   // gpu compute capability options
-  unsigned int gpgpu_compute_capability_major;
-  unsigned int gpgpu_compute_capability_minor;
+  unsigned int opu_compute_capability_major;
+  unsigned int opu_compute_capability_minor;
   unsigned long long liveness_message_freq;
 
   friend class opu_sim;
@@ -231,7 +231,7 @@ class opu_sim : public gem5::OpuSimBase {
   void visualizer_printstat();
   void print_shader_cycle_distro(FILE *fout) const;
 
-  void gpgpu_debug();
+  void opu_debug();
 
  protected:
   ///// data /////

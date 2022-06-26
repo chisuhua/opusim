@@ -1,20 +1,23 @@
 #pragma once
 #include "funit.h"
+#include "stats.h"
 #include <list>
 
 class shader_core_config;
 class Scoreboard;
 class opndcoll_rfu_t;
 class shader_core_stats;
+class l0_ccache;
+class l1_cache;
 
 class ldst_unit: public pipelined_simd_unit {
 public:
   ldst_unit(/*mem_fetch_interface *icnt,
             shader_core_mem_fetch_allocator *mf_allocator,*/
             shader_core_ctx *core, opndcoll_rfu_t *operand_collector,
-            Scoreboard *scoreboard,
-            /*class shader_core_stats *stats,*/
-            unsigned sid, unsigned tpc);
+            Scoreboard *scoreboard, uint32_t smem_latency,
+            shader_core_stats *stats,
+            unsigned sid, unsigned tpc, bool sub_core_model = true);
 
   // modifiers
   virtual void issue(register_set &inst);
@@ -22,8 +25,8 @@ public:
   virtual void cycle();
 
   //void fill(mem_fetch *mf);
-  //void flush();
-  //void invalidate();
+  void flush();
+  void invalidate();
   void writeback();
 
   // TODO schi add
@@ -74,8 +77,8 @@ protected:
 
 
  protected:
-  bool shared_cycle(warp_inst_t &inst/*, mem_stage_stall_type &rc_fail,
-                    mem_stage_access_type &fail_type*/);
+  bool shared_cycle(warp_inst_t &inst, mem_stage_stall_type &rc_fail,
+                    mem_stage_access_type &fail_type);
   // bool constant_cycle(warp_inst_t &inst, mem_stage_stall_type &rc_fail,
   //                    mem_stage_access_type &fail_type);
   // bool texture_cycle(warp_inst_t &inst, mem_stage_stall_type &rc_fail,
@@ -83,7 +86,7 @@ protected:
   // bool memory_cycle(warp_inst_t &inst, mem_stage_stall_type &rc_fail,
   //                  mem_stage_access_type &fail_type);
 
-   bool memory_cycle_gem5( warp_inst_t &inst/*, mem_stage_stall_type &rc_fail, mem_stage_access_type &fail_type*/);
+   bool memory_cycle_gem5( warp_inst_t &inst, mem_stage_stall_type &rc_fail, mem_stage_access_type &fail_type);
 
 #if 0
   virtual mem_stage_stall_type process_cache_access(
@@ -95,12 +98,17 @@ protected:
   mem_stage_stall_type process_memory_access_queue_l1cache(l1_cache *cache,
                                                            warp_inst_t &inst);
 #endif
+  shader_core_config *m_config;
   // const memory_config *m_memory_config;
   // class mem_fetch_interface *m_icnt;
   // shader_core_mem_fetch_allocator *m_mf_allocator;
   class shader_core_ctx *m_core;
   unsigned m_sid;
   unsigned m_tpc;
+
+  l0_ccache *m_L0C; // constant cache
+  l1_cache *m_L0S; // data cache
+  l1_cache *m_L0V; // data cache
 
   std::map<unsigned /*warp_id*/,
            std::map<unsigned /*regnum*/, unsigned /*count*/>>

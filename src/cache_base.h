@@ -1211,9 +1211,11 @@ class baseline_cache : public cache_t {
                  int type_id, mem_fetch_interface *memport,
                  enum mem_fetch_status status)
       : m_config(config),
+        m_stats(),
         m_tag_array(new tag_array(config, core_id, type_id)),
         m_mshrs(config.m_mshr_entries, config.m_mshr_max_merge),
-        m_bandwidth_management(config) {
+        m_bandwidth_management(config)
+    {
     init(name, config, memport, status);
   }
 

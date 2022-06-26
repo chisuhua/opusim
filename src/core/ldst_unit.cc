@@ -3,6 +3,10 @@
 #include "warp_inst.h"
 #include "scoreboard.h"
 #include "coasm.h"
+#include "stats.h"
+#include "opuconfig.h"
+#include "opu_sim.h"
+#include <cassert>
 
 
 bool ldst_unit::shared_cycle(warp_inst_t &inst, mem_stage_stall_type &rc_fail,
@@ -356,19 +360,19 @@ bool ldst_unit::memory_cycle_gem5( warp_inst_t &inst, mem_stage_stall_type &stal
     }
 
     // GPGPU-Sim should NOT have generated accesses for gem5-gpu requests
-    assert( inst.accessq_empty() );
+    // assert( inst.accessq_empty() );
     mem_stage_stall_type stall_cond = NO_RC_FAIL;
 
     // bool rc_fail = m_core->get_opu()->gem5CudaGPU->getCudaCore(m_core->m_sid)->executeMemOp(inst);
-    bool rc_fail = m_core->get_opu()->gem5CudaGPU->getCudaCore(m_sid)->executeMemOp(inst);
+    bool rc_fail = m_core->m_gem5_executeMemOp(inst);
 
     if (rc_fail) {
         stall_cond = ICNT_RC_FAIL;
     } else {
         if ( inst.is_load() ) {
             for ( unsigned r=0; r < 4; r++) {
-                if (inst.out[r] > 0) {
-                    m_pending_writes[inst.warp_id()][inst.out[r]]++;
+                if (inst.out(r) > 0) {
+                    m_pending_writes[inst.warp_id()][inst.out(r)]++;
                 }
             }
         }
@@ -377,7 +381,7 @@ bool ldst_unit::memory_cycle_gem5( warp_inst_t &inst, mem_stage_stall_type &stal
     if (stall_cond != NO_RC_FAIL) {
         stall_reason = stall_cond;
         bool iswrite = inst.is_store();
-        if (inst.get_space() == opu_mspace_t::PRIVATE()) {
+        if (inst.get_space() == opu_mspace_t::PRIVATE) {
             access_type = (iswrite)?L_MEM_ST:L_MEM_LD;
         } else {
             access_type = (iswrite)?G_MEM_ST:G_MEM_LD;
@@ -399,16 +403,16 @@ void ldst_unit::fill(mem_fetch *mf) {
       m_core->get_opu()->gpu_sim_cycle + m_core->get_opu()->gpu_tot_sim_cycle);
   m_response_fifo.push_back(mf);
 }
+*/
 void ldst_unit::flush() {
   // Flush L1D cache
-  m_L1D->flush();
+  m_L0V->flush();
 }
 
 void ldst_unit::invalidate() {
   // Flush L1D cache
-  m_L1D->invalidate();
+  m_L0V->invalidate();
 }
-*/
 
 void ldst_unit::active_lanes_in_pipeline() {
   unsigned active_count = pipelined_simd_unit::get_active_lanes_in_pipeline();
@@ -441,6 +445,7 @@ void ldst_unit::init(/*mem_fetch_interface *icnt,
   m_stats = stats;
   m_sid = sid;
   m_tpc = tpc;
+  m_config = shader_core_config::getInstance();
 #define STRSIZE 1024
 #if 0
   char L1T_name[STRSIZE];
@@ -450,12 +455,15 @@ void ldst_unit::init(/*mem_fetch_interface *icnt,
   m_L1T = new tex_cache(L1T_name, m_config->m_L1T_config, m_sid,
                         get_shader_texture_cache_id(), icnt, IN_L1T_MISS_QUEUE,
                         IN_SHADER_L1T_ROB);
-  m_L1C = new read_only_cache(L1C_name, m_config->m_L1C_config, m_sid,
-                              get_shader_constant_cache_id(), icnt,
-                              IN_L1C_MISS_QUEUE);
-  m_L1D = NULL;
 #endif
-  m_mem_rc = NO_RC_FAIL;
+  char L0C_name[STRSIZE];
+  snprintf(L0C_name, STRSIZE, "L1C_%03d", m_sid);
+  m_L0C = new l0_ccache(m_core, L0C_name, m_config->m_L0C_config, m_sid,
+                              CONSTANT, nullptr,
+                              IN_L1C_MISS_QUEUE);
+  m_L0S = NULL;
+  m_L0V = NULL;
+  // m_mem_rc = NO_RC_FAIL;
   m_num_writeback_clients =
       5;  // = shared memory, global/local (uncached), L1D, L1T, L1C
   m_writeback_arb = 0;
@@ -469,12 +477,12 @@ ldst_unit::ldst_unit(/*mem_fetch_interface *icnt,
                      shader_core_ctx *core, opndcoll_rfu_t *operand_collector,
                      Scoreboard *scoreboard, uint32_t smem_latency,
                      /*const memory_config *mem_config,*/ shader_core_stats *stats,
-                     unsigned sid, unsigned tpc)
-    : pipelined_simd_unit(NULL, smem_latency, core, 0),
+                     unsigned sid, unsigned tpc, bool sub_core_model)
+    : pipelined_simd_unit(NULL, smem_latency, core, 0, sub_core_model),
       m_next_wb() {
   assert(smem_latency > 1);
-  init(/*icnt, mf_allocator,*/ core, operand_collector, scoreboard, 
-       mem_config, stats, sid, tpc);
+  init(/*icnt, mf_allocator,*/ core, operand_collector, scoreboard,
+       stats, sid, tpc);
 /*
   if (!m_config->m_L1D_config.disabled()) {
     char L1D_name[STRSIZE];
@@ -494,18 +502,20 @@ ldst_unit::ldst_unit(/*mem_fetch_interface *icnt,
   m_name = "MEM ";
 }
 
+#if 0
 ldst_unit::ldst_unit(/*mem_fetch_interface *icnt,
                      shader_core_mem_fetch_allocator *mf_allocator,*/
                      shader_core_ctx *core, opndcoll_rfu_t *operand_collector,
                      Scoreboard *scoreboard, const shader_core_config *config,
-                     /*const memory_config *mem_config*/, shader_core_stats *stats,
-                     unsigned sid, unsigned tpc/*, l1_cache *new_l1d_cache*/)
-    : pipelined_simd_unit(NULL, config, 3, core, 0),
+                     /*const memory_config *mem_config*/ shader_core_stats *stats,
+                     unsigned sid, unsigned tpc, bool sub_core_model/*, l1_cache *new_l1d_cache*/)
+    : pipelined_simd_unit(NULL, config, 3, core, 0, sub_core_model),
       // m_L1D(new_l1d_cache),
       m_next_wb(config) {
   init(/*icnt, mf_allocator,*/ core, operand_collector, scoreboard, config,
        /*mem_config,*/ stats, sid, tpc);
 }
+#endif
 
 void ldst_unit::issue(register_set &reg_set) {
   warp_inst_t *inst = *(reg_set.get_ready());
@@ -537,7 +547,7 @@ void ldst_unit::writeback() {
       bool insn_completed = false;
       for (unsigned r = 0; r < MAX_OUTPUT_VALUES; r++) {
         if (m_next_wb.out(r) > 0) {
-          if (m_next_wb.get_space() != opu_pipeline_t::SHARED) {
+          if (m_next_wb.get_space() != opu_mspace_t::SHARED) {
             assert(m_pending_writes[m_next_wb.warp_id()][m_next_wb.out(r)] > 0);
             unsigned still_pending =
                 --m_pending_writes[m_next_wb.warp_id()][m_next_wb.out(r)];
@@ -561,9 +571,9 @@ void ldst_unit::writeback() {
 
       // signal gem5 that the wb hazard has cleared
       // m_core->get_opu()->gem5CudaGPU->getCudaCore(m_core->m_sid)->writebackClear();
-      m_core->get_opu()->getCore(m_sid)->writebackClear();
-      m_last_inst_gpu_sim_cycle = m_core->get_opu()->gpu_sim_cycle;
-      m_last_inst_gpu_tot_sim_cycle = m_core->get_opu()->gpu_tot_sim_cycle;
+      m_core->m_gem5_writebackClear();
+      m_last_inst_gpu_sim_cycle = m_core->get_opuusim()->gpu_sim_cycle;
+      m_last_inst_gpu_tot_sim_cycle = m_core->get_opuusim()->gpu_tot_sim_cycle;
     }
   }
 
@@ -575,16 +585,19 @@ void ldst_unit::writeback() {
       case 0:  // shared memory
         if (!m_pipeline_reg[0]->empty()) {
           m_next_wb = *m_pipeline_reg[0];
+          /* FIXME
           if (m_next_wb.isatomic()) {
             m_next_wb.do_atomic();
             m_core->decrement_atomic_count(m_next_wb.warp_id(),
                                            m_next_wb.active_count());
           }
+          */
           m_core->dec_inst_in_pipeline(m_pipeline_reg[0]->warp_id());
           m_pipeline_reg[0]->clear();
           serviced_client = next_client;
         }
         break;
+        /*
       case 1:  // texture response
         if (m_L1T->access_ready()) {
           mem_fetch *mf = m_L1T->next_access();
@@ -593,9 +606,10 @@ void ldst_unit::writeback() {
           serviced_client = next_client;
         }
         break;
+        */
       case 2:  // const cache response
-        if (m_L1C->access_ready()) {
-          mem_fetch *mf = m_L1C->next_access();
+        if (m_L0C->access_ready()) {
+          mem_fetch *mf = m_L0C->next_access();
           m_next_wb = mf->get_inst();
           delete mf;
           serviced_client = next_client;
@@ -603,7 +617,7 @@ void ldst_unit::writeback() {
         break;
       case 3:  // global/local
         if (m_next_global) {
-                panic("This should never execute in gem5-gpu! Writebacks from CudaCore must occur with writebackInst()!");
+                assert("This should never execute in gem5-gpu! Writebacks from CudaCore must occur with writebackInst()!");
           m_next_wb = m_next_global->get_inst();
           if (m_next_global->isatomic()) {
             m_core->decrement_atomic_count(
@@ -616,8 +630,8 @@ void ldst_unit::writeback() {
         }
         break;
       case 4:
-        if (m_L1D && m_L1D->access_ready()) {
-          mem_fetch *mf = m_L1D->next_access();
+        if (m_L0V && m_L0V->access_ready()) {
+          mem_fetch *mf = m_L0V->next_access();
           m_next_wb = mf->get_inst();
           delete mf;
           serviced_client = next_client;
@@ -753,14 +767,14 @@ void ldst_unit::cycle() {
   }
 #endif
   warp_inst_t &pipe_reg = *m_dispatch_reg;
-  //enum mem_stage_stall_type rc_fail = NO_RC_FAIL;
-  //mem_stage_access_type type;
+  enum mem_stage_stall_type rc_fail = NO_RC_FAIL;
+  mem_stage_access_type type;
   bool done = true;
-  done &= shared_cycle(pipe_reg/*, rc_fail, type*/);
+  done &= shared_cycle(pipe_reg, rc_fail, type);
   // done &= constant_cycle(pipe_reg, rc_fail, type);
   // done &= texture_cycle(pipe_reg, rc_fail, type);
   // TODO schi done &= memory_cycle(pipe_reg, rc_fail, type);
-  done &= memory_cycle_gem5(pipe_reg/*, rc_fail, type*/);
+  done &= memory_cycle_gem5(pipe_reg, rc_fail, type);
   // m_mem_rc = rc_fail;
 
   if (!done) {  // log stall types and return
@@ -789,7 +803,7 @@ void ldst_unit::cycle() {
 
         bool pending_requests = false;
         for (unsigned r = 0; r < MAX_OUTPUT_VALUES; r++) {
-          unsigned reg_id = pipe_reg.out[r];
+          unsigned reg_id = pipe_reg.out(r);
           if (reg_id > 0) {
             if (m_pending_writes[warp_id].find(reg_id) !=
                 m_pending_writes[warp_id].end()) {

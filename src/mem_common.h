@@ -102,14 +102,13 @@ class mem_access_t {
 
 private:
   void init(gem5::OpuContext *ctx);
-  /*
-   void init() 
-   {
+
+  void init()
+  {
       m_uid=++sm_next_access_uid;
       m_addr=0;
       m_req_size=0;
-   }
-   */
+  }
 
   unsigned m_uid;
   address_type m_addr;  // request address

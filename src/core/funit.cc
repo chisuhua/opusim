@@ -44,7 +44,7 @@ void pipelined_simd_unit::issue(register_set &source_reg) {
   bool partition_issue = /*m_config->sub_core_model && */this->is_issue_partitioned();
   warp_inst_t **ready_reg =
       source_reg.get_ready(partition_issue, m_issue_reg_id);
-  m_core->incexecstat((*ready_reg));
+  // m_core->incexecstat((*ready_reg));
   // source_reg.move_out_to(m_dispatch_reg);
   simd_function_unit::issue(source_reg);
 }

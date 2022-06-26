@@ -89,7 +89,7 @@ core_src = [
   'src/core/scoreboard.cc',
   'src/core/tbsync.cc',
   'src/core/opndcoll.cc',
-  #'src/core/ldst_unit.cc',
+  'src/core/ldst_unit.cc',
   'src/core/sf_unit.cc',
   'src/core/sp_unit.cc',
   'src/core/int_unit.cc',

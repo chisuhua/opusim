@@ -161,7 +161,7 @@ class shader_core_config : public core_config {
   void set_pipeline_latency();
 
   // backward pointer
-  class OpuContext *opu_ctx;
+  gem5::OpuContext *opu_ctx;
   // data
   char *opu_shader_core_pipeline_opt;
   bool opu_perfect_mem;

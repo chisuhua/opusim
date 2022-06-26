@@ -7,6 +7,7 @@
 class warp_exec_t;
 class WarpState;
 class opu_sim;
+class KernelInfo;
 
 /*
  * This abstract class used as a base for functional and performance and
@@ -42,7 +43,7 @@ class core_t : public gem5::OpuCoreBase {
   virtual ~core_t() { /*free(m_thread);*/ }
   virtual warp_exec_t* get_warp(uint32_t warp_id);
   virtual WarpState* get_warp_state(uint32_t warp_id) const;
-  virtual void warp_exit(unsigned warp_id) = 0;
+  // virtual void warp_exit(unsigned warp_id) = 0;
   virtual active_mask_t warp_active_mask(unsigned warp_id) = 0;
   virtual bool warp_waiting_at_barrier(unsigned warp_id) const = 0;
   // virtual void checkExecutionStatusAndUpdate(warp_inst_t &inst, unsigned t,
@@ -60,8 +61,8 @@ class core_t : public gem5::OpuCoreBase {
   // }
   unsigned get_warp_size() const { return m_warp_size; }
 
-        // TODO schi add
-        void writeRegister(const warp_inst_t &inst, unsigned warpSize, unsigned lane_id, char* data);
+  // TODO schi add
+  void writeRegister(const warp_inst_t &inst, unsigned warpSize, unsigned lane_id, char* data);
 
   void and_reduction(unsigned ctaid, unsigned barid, bool value) {
     reduction_storage[ctaid][barid] &= value;
@@ -78,6 +79,7 @@ class core_t : public gem5::OpuCoreBase {
   opu_sim* get_opuusim() { return m_opuusim;}
  protected:
   opu_sim *m_opuusim;
+  KernelInfo *m_kernel;
   simt_stack **m_simt_stack;  // pdom based reconvergence context for each warp
   // class ptx_thread_info **m_thread;
   unsigned m_warp_size;
