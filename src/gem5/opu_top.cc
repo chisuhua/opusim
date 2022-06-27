@@ -50,7 +50,7 @@
 // #include "../libcuda_sim/gpgpu_context.h"
 #include "opu_context.hh"
 #include "opu_top.hh"
-#include "opusim_base.hh"
+#include "../opuusim_base.hh"
 #include "mem/ruby/system/RubySystem.hh"
 #include "params/OpuTop.hh"
 #include "params/OpuSimComponentWrapper.hh"

@@ -148,13 +148,13 @@ class shader_core_ctx : public core_t {
 
   void cache_flush();
   void cache_invalidate();
-  // void accept_fetch_response(mem_fetch *mf);
+  void accept_fetch_response(OpuMemfetch *mf);
   // void accept_ldst_unit_response(class mem_fetch *mf);
   void broadcast_barrier_reduction(unsigned cta_id, unsigned bar_id,
                                    warp_set_t warps);
 
   // TODO schi add
-  bool ldst_unit_wb_inst(warp_inst_t &inst);
+  bool ldst_unit_wb_inst(OpuWarpinst &inst);
 
   void set_kernel(KernelInfo *k) ;
 
@@ -162,7 +162,7 @@ class shader_core_ctx : public core_t {
   // Callback from gem5
   bool m_kernel_finishing;
   // void start_kernel_finish();
-  // void finish_kernel();
+  void finish_kernel();
   bool kernel_finish_issued() { return m_kernel_finishing; }
   // PowerscalingCoefficients *scaling_coeffs;
   // accessors
@@ -191,7 +191,7 @@ class shader_core_ctx : public core_t {
   virtual bool warp_waiting_at_barrier(unsigned warp_id) const;
 
   // TODO schi add
-  void warp_reaches_barrier(warp_inst_t &inst);
+  void warp_reaches_barrier(OpuWarpinst &inst);
   bool fence_unblock_needed(unsigned warp_id) ;
   void complete_fence(unsigned warp_id) ;
 

@@ -460,7 +460,7 @@ class OpuTop : public ClockedObject
     int getSharedMemDelay() { return sharedMemDelay; }
     const char* getConfigPath() { return gpgpusimConfigPath.c_str(); }
     ruby::RubySystem* getRubySystem() { return ruby; }
-    OpuSimBase* getTheGPU() { return theOpuUsim; }
+    OpuSimBase* getOpuUsim() { return theOpuUsim; }
 
     /// Called at the beginning of each kernel launch to start the statistics
     void beginRunning(Tick stream_queued_time, struct Stream_st *_stream);

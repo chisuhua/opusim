@@ -121,8 +121,8 @@ OpuCore::unserialize(CheckpointIn &cp)
 void OpuCore::initialize()
 {
     coreImpl = opuTop->getOpuUsim()->getCore(id);
-    coreImpl->setup_cb_icacheFetch(std::bind(&OpuCore::icacheFetch, this, std::placeholders::_1, std::placeholder::_2));
-    coreImpl->setup_cb_getLocalBaseVaddr(std::bind(&OpuTop::getLocalBaseVaddr, this));
+    coreImpl->setup_cb_icacheFetch(std::bind(&OpuCore::icacheFetch, this, std::placeholders::_1, std::placeholders::_2));
+    coreImpl->setup_cb_getLocalBaseVaddr(std::bind(&OpuTop::getLocalBaseVaddr, opuTop));
 }
 
 int OpuCore::instCacheResourceAvailable(Addr addr)

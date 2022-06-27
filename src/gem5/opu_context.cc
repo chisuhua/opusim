@@ -1,6 +1,6 @@
 #include "opu_context.hh"
 #include "opu_stream.hh"
-#include "../opusim_base.h"
+#include "../opuusim_base.h"
 #include <cstdio>
 #include <dlfcn.h>
 

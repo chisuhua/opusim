@@ -796,7 +796,8 @@ void exec_shader_core_ctx::func_exec_inst(warp_inst_t &inst) {
 }
 
 // TODO schi add
-void shader_core_ctx::warp_reaches_barrier(warp_inst_t &inst) {
+void shader_core_ctx::warp_reaches_barrier(OpuWarpinst &inst_) {
+    auto inst = dynamic_cast<warp_inst_t>(inst_);
     m_barriers.warp_reaches_barrier(m_warp[inst.warp_id()]->get_cta_id(), inst.warp_id(), &inst);
 }
 
@@ -1120,6 +1121,7 @@ void shader_core_ctx::start_kernel_finish()
     m_kernel_finishing = true;
     m_opuusim->gem5CudaGPU->getCudaCore(m_sid)->finishKernel();
 }
+#endif
 
 void shader_core_ctx::finish_kernel()
 {
@@ -1138,12 +1140,12 @@ void shader_core_ctx::finish_kernel()
   fflush(stdout);
 }
 
+#if 0
 void shader_core_ctx::incexecstat(warp_inst_t *&inst)
 {
   if(inst->mem_op==TEX)
     inctex_stat(inst->active_count(),1);
 }
-#endif
 
 void shader_core_ctx::print_stage(unsigned int stage, FILE *fout) const {
   // m_pipeline_reg[stage].print(fout);
@@ -1389,13 +1391,13 @@ void shader_core_ctx::broadcast_barrier_reduction(unsigned cta_id,
 
 bool shader_core_ctx::fetch_unit_response_buffer_full() const { return false; }
 
+void shader_core_ctx::accept_fetch_response(OpuMemfetch *mf) {
 #if 0
-void shader_core_ctx::accept_fetch_response(mem_fetch *mf) {
   mf->set_status(IN_SHADER_FETCHED,
                  m_opuusim->gpu_sim_cycle + m_opuusim->gpu_tot_sim_cycle);
   m_L1I->fill(mf, m_opuusim->gpu_sim_cycle + m_opuusim->gpu_tot_sim_cycle);
-}
 #endif
+}
 
 bool shader_core_ctx::ldst_unit_response_buffer_full() const {
   return m_ldst_unit->response_buffer_full();
@@ -1485,7 +1487,9 @@ void shader_core_ctx::complete_fence(unsigned warp_id) {
     m_warp[warp_id]->clear_membar();
 }
 
-bool shader_core_ctx::ldst_unit_wb_inst(warp_inst_t &inst) { return m_ldst_unit->writebackInst(inst); }
+bool shader_core_ctx::ldst_unit_wb_inst(OpuWarpinst &inst) {
+    return m_ldst_unit->writebackInst(dynamic_cast<warp_inst_t>(inst));
+}
 
 void shader_core_ctx::inc_store_req(unsigned warp_id) { m_warp[warp_id]->inc_store_req(); }
 
