@@ -94,6 +94,9 @@ class simt_core_cluster;
 class shader_memory_interface;
 class shader_core_mem_fetch_allocator;
 class cache_t;
+namespace gem5 {
+class OpuMemfetch;
+}
 
 #if 0
 class shader_core_mem_fetch_allocator : public mem_fetch_allocator {
@@ -148,7 +151,7 @@ class shader_core_ctx : public core_t {
 
   void cache_flush();
   void cache_invalidate();
-  void accept_fetch_response(OpuMemfetch *mf);
+  void accept_fetch_response(gem5::OpuMemfetch *mf);
   // void accept_ldst_unit_response(class mem_fetch *mf);
   void broadcast_barrier_reduction(unsigned cta_id, unsigned bar_id,
                                    warp_set_t warps);

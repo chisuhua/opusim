@@ -21,7 +21,7 @@ void core_t::execute_warp_inst_t(warp_inst_t &inst, unsigned warpId) {
 
 // TODO schi add
 void core_t::writeRegister(const OpuWarpinst &inst_, unsigned warpSize, unsigned lane_id, char *data) {
-    auto inst = dynamic_cast<warp_inst_t>(inst_);
+    auto inst = dynamic_cast<const warp_inst_t&>(inst_);
     // assert(inst.active(lane_id));
     int warp_id = inst.warp_id();
     assert(warp_active_mask(warp_id).test(lane_id));
