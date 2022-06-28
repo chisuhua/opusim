@@ -1059,11 +1059,13 @@ unsigned opu_sim::threads_per_core() const {
   return m_shader_config->n_thread_per_shader;
 }
 
+/*
 void opu_sim::get_pdom_stack_top_info(unsigned sid, unsigned tid,
                                         unsigned *pc, unsigned *rpc) {
   unsigned cluster_id = m_shader_config->sid_to_cluster(sid);
   m_cluster[cluster_id]->get_pdom_stack_top_info(sid, tid, pc, rpc);
 }
+*/
 
 void shader_core_ctx::mem_instruction_stats(const warp_inst_t &inst) {
 #if 0
@@ -1103,114 +1105,6 @@ void shader_core_ctx::mem_instruction_stats(const warp_inst_t &inst) {
 #endif
 }
 
-#if 0
-bool shader_core_ctx::can_issue_1block(KernelInfo &kernel) {
-  // Jin: concurrent kernels on one SM
-  if (m_config->gpgpu_concurrent_kernel_sm) {
-    if (m_config->max_cta(kernel) < 1) return false;
-
-    return occupy_shader_resource_1block(kernel, false);
-  } else {
-    return (get_n_active_cta() < m_config->max_cta(kernel));
-  }
-}
-
-int shader_core_ctx::find_available_hwtid(unsigned int cta_size, bool occupy) {
-  unsigned int step;
-  for (step = 0; step < m_config->n_thread_per_shader; step += cta_size) {
-    unsigned int hw_tid;
-    for (hw_tid = step; hw_tid < step + cta_size; hw_tid++) {
-      if (m_occupied_hwtid.test(hw_tid)) break;
-    }
-    if (hw_tid == step + cta_size)  // consecutive non-active
-      break;
-  }
-  if (step >= m_config->n_thread_per_shader)  // didn't find
-    return -1;
-  else {
-    if (occupy) {
-      for (unsigned hw_tid = step; hw_tid < step + cta_size; hw_tid++)
-        m_occupied_hwtid.set(hw_tid);
-    }
-    return step;
-  }
-}
-
-bool shader_core_ctx::occupy_shader_resource_1block(KernelInfo &k,
-                                                    bool occupy) {
-  unsigned threads_per_cta = k.threads_per_cta();
-  const class function_info *kernel = k.entry();
-  unsigned int padded_cta_size = threads_per_cta;
-  unsigned int warp_size = m_config->warp_size;
-  if (padded_cta_size % warp_size)
-    padded_cta_size = ((padded_cta_size / warp_size) + 1) * (warp_size);
-
-  if (m_occupied_n_threads + padded_cta_size > m_config->n_thread_per_shader)
-    return false;
-
-  if (find_available_hwtid(padded_cta_size, false) == -1) return false;
-
-  const struct gpgpu_ptx_sim_info *kernel_info = ptx_sim_kernel_info(kernel);
-
-  if (m_occupied_shmem + kernel_info->smem > m_config->opu_shmem_size)
-    return false;
-
-  unsigned int used_regs = padded_cta_size * ((kernel_info->regs + 3) & ~3);
-  if (m_occupied_regs + used_regs > m_config->gpgpu_shader_registers)
-    return false;
-
-  if (m_occupied_ctas + 1 > m_config->max_cta_per_core) return false;
-
-  if (occupy) {
-    m_occupied_n_threads += padded_cta_size;
-    m_occupied_shmem += kernel_info->smem;
-    m_occupied_regs += (padded_cta_size * ((kernel_info->regs + 3) & ~3));
-    m_occupied_ctas++;
-
-    SHADER_DPRINTF(LIVENESS,
-                   "GPGPU-Sim uArch: Occupied %u threads, %u shared mem, %u "
-                   "registers, %u ctas\n",
-                   m_occupied_n_threads, m_occupied_shmem, m_occupied_regs,
-                   m_occupied_ctas);
-  }
-
-  return true;
-}
-
-void shader_core_ctx::release_shader_resource_1block(unsigned hw_ctaid,
-                                                     KernelInfo &k) {
-  if (m_config->gpgpu_concurrent_kernel_sm) {
-    unsigned threads_per_cta = k.threads_per_cta();
-    const class function_info *kernel = k.entry();
-    unsigned int padded_cta_size = threads_per_cta;
-    unsigned int warp_size = m_config->warp_size;
-    if (padded_cta_size % warp_size)
-      padded_cta_size = ((padded_cta_size / warp_size) + 1) * (warp_size);
-
-    assert(m_occupied_n_threads >= padded_cta_size);
-    m_occupied_n_threads -= padded_cta_size;
-
-    int start_thread = m_occupied_cta_to_hwtid[hw_ctaid];
-
-    for (unsigned hwtid = start_thread; hwtid < start_thread + padded_cta_size;
-         hwtid++)
-      m_occupied_hwtid.reset(hwtid);
-    m_occupied_cta_to_hwtid.erase(hw_ctaid);
-
-    const struct gpgpu_ptx_sim_info *kernel_info = ptx_sim_kernel_info(kernel);
-
-    assert(m_occupied_shmem >= (unsigned int)kernel_info->smem);
-    m_occupied_shmem -= kernel_info->smem;
-
-    unsigned int used_regs = padded_cta_size * ((kernel_info->regs + 3) & ~3);
-    assert(m_occupied_regs >= used_regs);
-    m_occupied_regs -= used_regs;
-
-    assert(m_occupied_ctas >= 1);
-    m_occupied_ctas--;
-  }
-}
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1278,7 +1172,8 @@ unsigned long long g_single_step =
     0;  // set this in gdb to single step the pipeline
 
 void opu_sim::core_cycle_start() {
-  int clock_mask = next_clock_domain();
+  // int clock_mask = next_clock_domain();
+  int clock_mask = CORE;
 
   if (clock_mask & CORE) {
     // L1 cache + shader core pipeline stages

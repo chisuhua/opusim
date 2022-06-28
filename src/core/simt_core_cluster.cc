@@ -125,7 +125,6 @@ unsigned simt_core_cluster::issue_block2core() {
   return num_blocks_issued;
 }
 
-#if 0
 void simt_core_cluster::cache_flush() {
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++)
     m_core[i]->cache_flush();
@@ -136,6 +135,7 @@ void simt_core_cluster::cache_invalidate() {
     m_core[i]->cache_invalidate();
 }
 
+#if 0
 bool simt_core_cluster::icnt_injection_buffer_full(unsigned size, bool write) {
   unsigned request_size = size;
   if (!write) request_size = READ_PACKET_SIZE;

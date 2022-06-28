@@ -214,8 +214,8 @@ class opu_sim : public gem5::OpuSimBase {
   void update_stats();
   void deadlock_check();
   void inc_completed_cta() { gpu_completed_cta++; }
-  void get_pdom_stack_top_info(unsigned sid, unsigned tid, unsigned *pc,
-                               unsigned *rpc);
+  // void get_pdom_stack_top_info(unsigned sid, unsigned tid, unsigned *pc,
+  //                             unsigned *rpc);
 
   int shared_mem_size() const;
   int shared_mem_per_block() const;
