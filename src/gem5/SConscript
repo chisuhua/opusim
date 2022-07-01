@@ -33,12 +33,13 @@ import os
 design_root = os.environ['DESIGN_ROOT']
 env.Append(CCFLAGS=['-I'+design_root+'/opu/coasm'])
 
-SimObject('OpuCore.py')
-SimObject('OpuTop.py')
 SimObject('OpuTlb.py')
 SimObject('OpuMMU.py')
 SimObject('OpuDma.py')
 SimObject('OpuCp.py')
+SimObject('OpuCore.py')
+SimObject('OpuTop.py')
+SimObject('OpuLsq.py')
 
 Source('opu_context.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
 Source('opu_stream.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
@@ -47,6 +48,7 @@ Source('opu_top.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
 Source('opu_dma.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
 Source('opu_cp.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
 Source('opu_tlb.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
+Source('opu_lsq.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
 Source('opu_mmu.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
 #Source('opusim_base.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
 
@@ -61,3 +63,4 @@ DebugFlag('OpuTlb')
 DebugFlag('OpuCp')
 DebugFlag('OpuDma')
 DebugFlag('OpuMMU')
+DebugFlag('OpuLSQ')

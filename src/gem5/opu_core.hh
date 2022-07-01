@@ -209,7 +209,7 @@ class OpuCore : public ClockedObject
     std::list<PacketPtr> retryInstPkts;
 
     // The TLB to translate instruction addresses
-    ShaderTLB *itb;
+    OpuTLB *itb;
 
     // Point to GPU this CUDA core is part of
     OpuTop *opuTop;

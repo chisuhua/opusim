@@ -1,4 +1,4 @@
-# Copyright (c) 2011 Mark D. Hill and David A. Wood
+# Copyright (c) 2012 Mark D. Hill and David A. Wood
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,29 +25,40 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from m5.defines import buildEnv
+
 from m5.params import *
-from m5.proxy import *
 #from m5.objects.MemObject import MemObject
 from m5.objects.ClockedObject import ClockedObject
 from m5.objects.OpuTlb import OpuTLB
 
-class OpuCore(ClockedObject):
-    type = 'OpuCore'
-    cxx_class = 'gem5::OpuCore'
-    cxx_header = "opu_core.hh"
+class OpuLSQ(ClockedObject):
+    type = 'OpuLSQ'
+    cxx_class = 'gem5::OpuLSQ'
+    cxx_header = "opu_lsq.hh"
 
-    inst_port = MasterPort("The instruction cache port for this SC")
+    cache_port = MasterPort("The data cache port for this LSQ")
 
-    lsq_port = VectorMasterPort("the load/store queue coalescer ports")
+    lane_port = VectorSlavePort("the ports back to the shader core")
 
-    lsq_ctrl_port = MasterPort("The load/store queue control port")
+    data_tlb = Param.OpuTLB(OpuTLB(), "Data TLB")
 
-    sys = Param.System(Parent.any, "system sc will run on")
-    gpu = Param.OpuTop(Parent.any, "The GPU this core is part of")
+    control_port = SlavePort("The control port for this LSQ")
 
-    itb = Param.OpuTLB(OpuTLB(), "Instruction TLB")
+    inject_width = Param.Int(1, "Max requests sent to L1 per cycle")
+    eject_width = Param.Int(1, "Max cache lines to receive per cycle")
 
-    id = Param.Int(-1, "ID of the SP")
-
+    warp_size = Param.Int(32, "Size of the warp")
+    cache_line_size = Param.Int("Cache line size in bytes")
+    subline_bytes = Param.Int(32, "Bytes per cache subline (e.g. Fermi = 32")
     warp_contexts = Param.Int(48, "Number of warps possible per GPU core")
+    num_warp_inst_buffers = Param.Int(64, "Maximum number of in-flight warp instructions")
+    atoms_per_subline = Param.Int(3, "Maximum atomic ops to send per cache subline in a single access (Fermi = 3)")
+
+    # Notes: Fermi back-to-back dependent warp load L1 hits are 19 SM cycles
+    # GPGPU-Sim models 5 cycles between LSQ completion and next issued load
+    latency = Param.Cycles(14, "Cycles of latency for single uncontested L1 hit")
+    l1_tag_cycles = Param.Cycles(4, "Cycles of latency L1 tag access")
+
+    # currently only VI_hammer cache protocol supports flushing.
+    # In VI_hammer only the L1 is flushed.
+    forward_flush = Param.Bool("Issue a flush all to caches whenever the LSQ is flushed")
