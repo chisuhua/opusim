@@ -2,7 +2,7 @@
 #include "warp_inst.h"
 #include "simt_core.h"
 
-simd_function_unit::simd_function_unit(/*const shader_core_config *config*/) {
+simd_function_unit::simd_function_unit(/*const simtcore_config *config*/) {
   // m_config = config;
   m_dispatch_reg = new warp_inst_t();
 }
@@ -65,7 +65,7 @@ unsigned pipelined_simd_unit::get_active_lanes_in_pipeline() {
 
 
 pipelined_simd_unit::pipelined_simd_unit(register_set *result_port,
-                                         /*const shader_core_config *config,*/
+                                         /*const simtcore_config *config,*/
                                          unsigned max_latency,
                                          shader_core_ctx *core,
                                          unsigned issue_reg_id,

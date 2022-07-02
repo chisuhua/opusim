@@ -1,10 +1,10 @@
 #pragma once
 #include "funit.h"
-class shader_core_config;
+class simtcore_config;
 
 class sp_unit : public pipelined_simd_unit {
  public:
-  sp_unit(register_set *result_port, const shader_core_config *config,
+  sp_unit(register_set *result_port, const simtcore_config *config,
           shader_core_ctx *core, unsigned issue_reg_id, bool sub_core_model = true);
   virtual bool can_issue(const warp_inst_t &inst) const {
     switch (inst.op) {

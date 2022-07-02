@@ -56,16 +56,16 @@ class core_config {
   bool adaptive_cache_config;
 };
 
-class shader_core_config : public core_config {
+class simtcore_config : public core_config {
  public:
-  shader_core_config() : core_config() {
+  simtcore_config() : core_config() {
     pipeline_widths_string = NULL;
   }
 
-  static shader_core_config* getInstance() {
-    static shader_core_config* config = nullptr;
+  static simtcore_config* getInstance() {
+    static simtcore_config* config = nullptr;
     if (config == nullptr) {
-      config = new shader_core_config();
+      config = new simtcore_config();
       config->init();
     }
     return config;

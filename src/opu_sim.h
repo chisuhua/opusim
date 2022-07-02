@@ -28,114 +28,15 @@
 #define CONST_MSHR_MERGE 0x2
 #define GLOBAL_MSHR_MERGE 0x1
 
-// clock constants
-#define MhZ *1000000
-
 #define CREATELOG 111
 #define SAMPLELOG 222
 #define DUMPLOG 333
-
-namespace gem5 {
-class OpuContext;
-}
 
 // extern tr1_hash_map<address_type, unsigned> address_random_interleaving;
 
 
 extern bool g_interactive_debugger_enabled;
 
-class opu_sim_config {
- public:
-  opu_sim_config(gem5::OpuContext *ctx)
-      : m_shader_config() {
-    m_valid = false;
-    opu_ctx = ctx;
-  }
-  void reg_options(class OptionParser *opp);
-  void init() {
-      /*
-    gpu_stat_sample_freq = 10000;
-    gpu_runtime_stat_flag = 0;
-    sscanf(gpgpu_runtime_stat, "%d:%x", &gpu_stat_sample_freq,
-           &gpu_runtime_stat_flag);
-           */
-    m_shader_config.init();
-    init_clock_domains();
-    // Trace_gpgpu::init();
-
-    // initialize file name if it is not set
-    time_t curr_time;
-    time(&curr_time);
-    char *date = ctime(&curr_time);
-    char *s = date;
-    while (*s) {
-      if (*s == ' ' || *s == '\t' || *s == ':') *s = '-';
-      if (*s == '\n' || *s == '\r') *s = 0;
-      s++;
-    }
-    char buf[1024];
-    snprintf(buf, 1024, "gpgpusim_visualizer__%s.log.gz", date);
-    // g_visualizer_filename = strdup(buf);
-
-    m_valid = true;
-  }
-
-  unsigned get_core_freq() const { return core_freq; }
-  unsigned num_shader() const { return m_shader_config.num_shader(); }
-  unsigned num_cluster() const { return m_shader_config.n_simt_clusters; }
-  unsigned get_max_concurrent_kernel() const { return max_concurrent_kernel; }
-
-  shader_core_config *get_shader_config() {
-      return &m_shader_config;
-  }
-
- private:
-  void init_clock_domains(void);
-  // backward pointer
-  gem5::OpuContext *opu_ctx;
-  bool m_valid;
-  shader_core_config m_shader_config;
-  double core_freq;
-  double icnt_freq;
-  double dram_freq;
-  double l2_freq;
-  double core_period;
-  double icnt_period;
-  double dram_period;
-  double l2_period;
-
-  // GPGPU-Sim timing model options
-  unsigned long long gpu_max_cycle_opt;
-  unsigned long long gpu_max_insn_opt;
-  unsigned gpu_max_cta_opt;
-  unsigned gpu_max_completed_cta_opt;
-  bool opu_flush_l1_cache;
-  bool opu_flush_l2_cache;
-  bool opu_deadlock_detect;
-  char *opu_clock_domains;
-  int opu_cflog_interval;
-
-  unsigned max_concurrent_kernel;
-
-  // visualizer
-  bool g_visualizer_enabled;
-  char *g_visualizer_filename;
-  int g_visualizer_zlevel;
-
-
-  // Device Limits
-  size_t stack_size_limit;
-  size_t heap_size_limit;
-  size_t runtime_sync_depth_limit;
-  size_t runtime_pending_launch_count_limit;
-
-  // gpu compute capability options
-  unsigned int opu_compute_capability_major;
-  unsigned int opu_compute_capability_minor;
-  unsigned long long liveness_message_freq;
-
-  friend class opu_sim;
-};
 
 #if 0
 struct occupancy_stats {
@@ -171,17 +72,19 @@ struct occupancy_stats {
 namespace gem5 {
 class OpuContext;
 class OpuTop;
+class OpuCoreBase;
+class KernelInfoBase;
 }
 class KernelInfo;
 
 
 class opu_sim : public gem5::OpuSimBase {
  public:
-  opu_sim(const opu_sim_config &config, gem5::OpuContext *ctx, gem5::OpuTop *opu_top = NULL );
+  opu_sim(opu_sim_config *config, gem5::OpuContext *ctx, gem5::OpuTop *opu_top = NULL );
 
   void set_prop(struct cudaDeviceProp *prop);
 
-  void launch(KernelInfo *kinfo);
+  void launch(gem5::KernelInfoBase *kinfo);
   bool can_start_kernel();
   unsigned finished_kernel();
   void set_kernel_done(KernelInfo *kernel);
@@ -217,14 +120,14 @@ class opu_sim : public gem5::OpuSimBase {
   // void get_pdom_stack_top_info(unsigned sid, unsigned tid, unsigned *pc,
   //                             unsigned *rpc);
 
-  int shared_mem_size() const;
+  uint32_t shared_mem_size() const;
   int shared_mem_per_block() const;
   int compute_capability_major() const;
   int compute_capability_minor() const;
-  int num_registers_per_core() const;
+  uint32_t num_registers_per_core() const;
   int num_registers_per_block() const;
-  int wrp_size() const;
-  int shader_clock() const;
+  int warp_size() const;
+  uint32_t shader_clock() const;
   int max_cta_per_core() const;
   int get_max_cta(const KernelInfo &k) const;
   const struct cudaDeviceProp *get_prop() const;
@@ -238,12 +141,12 @@ class opu_sim : public gem5::OpuSimBase {
   // PowerscalingCoefficients *get_scaling_coeffs();
   void decrement_kernel_latency();
 
-  const opu_sim_config &get_config() const { return m_config; }
+  const opu_sim_config *get_config() const { return &m_config; }
   void gpu_print_stat();
   void dump_pipeline(int mask, int s, int m) const;
 
   // TODO schi add
-  shader_core_ctx* get_shader(int id);
+  gem5::OpuCoreBase* getSIMTCore(uint32_t id) override;
 
   // void perf_memcpy_to_gpu(size_t dst_start_addr, size_t count);
 
@@ -255,7 +158,7 @@ class opu_sim : public gem5::OpuSimBase {
    * Returning the configuration of the shader core, used by the functional
    * simulation only so far
    */
-  const shader_core_config *getShaderCoreConfig();
+  const simtcore_config *getShaderCoreConfig();
 
   //! Get shader core SIMT cluster
   /*!
@@ -311,10 +214,10 @@ class opu_sim : public gem5::OpuSimBase {
   bool gpu_deadlock;
 
   //// configuration parameters ////
-  const opu_sim_config &m_config;
+  opu_sim_config &m_config;
 
   const struct cudaDeviceProp *m_cuda_properties;
-  const shader_core_config *m_shader_config;
+  const simtcore_config *m_shader_config;
   // const memory_config *m_memory_config;
 
   // stats
@@ -388,10 +291,10 @@ class opu_sim : public gem5::OpuSimBase {
 
 class exec_opu_sim : public opu_sim {
  public:
-  exec_opu_sim(const opu_sim_config &config, gem5::OpuContext *ctx, gem5::OpuTop *opu_gpu = NULL )
+  exec_opu_sim(opu_sim_config *config, gem5::OpuContext *ctx, gem5::OpuTop *opu_top = NULL )
       : opu_sim(config, ctx, opu_top) {
     createSIMTCluster();
   }
 
-  virtual void createSIMTCluster();
+  virtual void createSIMTCluster() override;
 };

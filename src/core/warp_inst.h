@@ -16,7 +16,7 @@
 
 class Instruction;
 class WarpState;
-class shader_core_config;
+class simtcore_config;
 
 
 class warp_inst_t : public OpuWarpinst {
@@ -136,7 +136,7 @@ public:
                                          mem_access_type access_type) ;
 
   opu_pipeline_t op_pipe;
-  shader_core_config *m_config;
+  simtcore_config *m_config;
   void completed(unsigned long long cycle) const;
   void print(FILE *fout) const;
   void broadcast_barrier_reduction(const active_mask_t &access_mask);

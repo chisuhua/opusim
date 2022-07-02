@@ -496,7 +496,7 @@ void shader_core_ctx::create_exec_pipeline() {
 shader_core_ctx::shader_core_ctx(class opu_sim *opu,
                                  class simt_core_cluster *cluster,
                                  unsigned shader_id, unsigned tpc_id,
-                                 const shader_core_config *config,
+                                 const simtcore_config *config,
                                  /*const memory_config *mem_config,*/
                                  shader_core_stats *stats)
     : core_t(opu, config->warp_size, config->n_thread_per_shader),
@@ -1127,11 +1127,11 @@ void shader_core_ctx::finish_kernel()
 {
   assert( m_kernel != NULL );
   m_kernel->dec_running();
-  printf("GPGPU-Sim uArch: Shader %u empty (release kernel %u \'%s\').\n", m_sid, m_kernel->get_uid(),
-         m_kernel->name().c_str() );
+  printf("GPGPU-Sim uArch: Shader %u empty (release kernel %u ).\n", m_sid, m_kernel->get_uid()
+         /*m_kernel->name().c_str()*/ );
   if ( m_kernel->no_more_ctas_to_run() ) {
       if ( !m_kernel->running() ) {
-          printf("GPGPU-Sim uArch: GPU detected kernel \'%s\' finished on shader %u.\n", m_kernel->name().c_str(), m_sid );
+          printf("GPGPU-Sim uArch: GPU detected kernel finished on shader %u.\n"/*, m_kernel->name().c_str()*/, m_sid );
           m_opuusim->set_kernel_done( m_kernel );
       }
   }

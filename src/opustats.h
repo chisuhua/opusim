@@ -103,7 +103,7 @@ struct shader_core_stats_pod {
 
 class shader_core_stats : public shader_core_stats_pod {
  public:
-  shader_core_stats(const shader_core_config *config) {
+  shader_core_stats(const simtcore_config *config) {
     m_config = config;
     shader_core_stats_pod *pod = reinterpret_cast<shader_core_stats_pod *>(
         this->shader_core_stats_pod_start);
@@ -293,7 +293,7 @@ class shader_core_stats : public shader_core_stats_pod {
   }
 
  private:
-  const shader_core_config *m_config;
+  const simtcore_config *m_config;
 
   // Counts the instructions issued for each dynamic warp.
   std::vector<std::vector<unsigned>> m_shader_dynamic_warp_issue_distro;

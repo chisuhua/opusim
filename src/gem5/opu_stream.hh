@@ -34,8 +34,8 @@
 // #include "abstract_core.h"
 
 namespace gem5 {
-class KernelInfoBase;
 class OpuSimBase;
+class KernelInfoBase;
 
 //class stream_barrier {
 //public:

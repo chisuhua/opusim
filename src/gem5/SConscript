@@ -32,6 +32,8 @@ Import('*')
 import os
 design_root = os.environ['DESIGN_ROOT']
 env.Append(CCFLAGS=['-I'+design_root+'/opu/coasm'])
+env.Append(CCFLAGS=['-I'+design_root+'/opu/isasim/model'])
+env.Append(CCFLAGS=['-I'+design_root+'/opu/isasim/isa'])
 
 SimObject('OpuTlb.py')
 SimObject('OpuMMU.py')

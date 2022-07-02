@@ -2,13 +2,13 @@
 #include "opuconfig.h"
 
 class shader_core_stats;
-class shader_core_config;
+class simtcore_config;
 class shader_core_ctx;
 
 class simt_core_cluster {
  public:
   simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
-                    const shader_core_config *config,
+                    const simtcore_config *config,
                     shader_core_stats *stats);
   unsigned get_not_completed() const;
   void reinit();
@@ -62,7 +62,7 @@ class simt_core_cluster {
   opu_sim *m_opu;
   std::list<unsigned> m_core_sim_order;
 
-  const shader_core_config *m_config;
+  const simtcore_config *m_config;
   shader_core_stats *m_stats;
   shader_core_ctx **m_core;
 
@@ -72,7 +72,7 @@ class simt_core_cluster {
 class exec_simt_core_cluster : public simt_core_cluster {
  public:
   exec_simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
-                         const shader_core_config *config,
+                         const simtcore_config *config,
                          class shader_core_stats *stats)
       : simt_core_cluster(gpu, cluster_id, config, stats) {
     create_shader_core_ctx();

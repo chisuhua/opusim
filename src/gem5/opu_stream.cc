@@ -31,6 +31,7 @@
 // #include "gpgpusim_entrypoint.h"
 #include "opu_top.hh"
 #include "opu_context.hh"
+// #include "inc/KernelInfo.h"
 
 namespace gem5 {
 unsigned Stream_st::sm_next_stream_uid = 0;
@@ -168,10 +169,11 @@ bool stream_operation::do_operation( OpuSimBase *gpu )
     case stream_kernel_launch:
         if( gpu->can_start_kernel() && m_kernel->m_launch_latency == 0) {
             if(g_debug_execution >= 3) {
-                printf("kernel %d: \'%s\' transfer to GPU hardware scheduler\n", m_kernel->get_uid(), m_kernel->name().c_str() );
+                printf("kernel %d: transfer to GPU hardware scheduler\n", m_kernel->get_uid()/*, m_kernel->name().c_str()*/ );
                 m_kernel->print_parent_info();
             }
             // gpu->set_cache_config(m_kernel->name());
+            // gpu->launch( dynamic_cast<KernelInfo*>(m_kernel ));
             gpu->launch( m_kernel );
             gpu->opu_top->beginRunning(launchTime, m_stream);
         }
@@ -179,8 +181,8 @@ bool stream_operation::do_operation( OpuSimBase *gpu )
             if(m_kernel->m_launch_latency)
                 m_kernel->m_launch_latency--;
             if(g_debug_execution >= 3)
-                printf("kernel %d: \'%s\', latency %u not ready to transfer to GPU hardware scheduler\n",
-                    m_kernel->get_uid(), m_kernel->name().c_str(), m_kernel->m_launch_latency);
+                printf("kernel %d:  latency %u not ready to transfer to GPU hardware scheduler\n",
+                    m_kernel->get_uid()/*, m_kernel->name().c_str()*/, m_kernel->m_launch_latency);
             return false;
         }
         break;

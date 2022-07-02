@@ -14,7 +14,7 @@ void exec_simt_core_cluster::create_shader_core_ctx() {
 
 
 simt_core_cluster::simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
-                                     const shader_core_config *config,
+                                     const simtcore_config *config,
                                      shader_core_stats *stats) {
   m_config = config;
   // m_cta_issue_next_core = m_config->n_simt_cores_per_cluster -

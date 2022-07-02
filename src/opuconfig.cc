@@ -4,11 +4,11 @@
 #define TMPHACK
 #include "inc/KernelInfo.h"
 
-unsigned int shader_core_config::max_cta(const KernelInfo &k) const {
+unsigned int simtcore_config::max_cta(const KernelInfo &k) const {
     assert(false);
 }
 #if 0
-unsigned int shader_core_config::max_cta(const kernel_info_t &k) const {
+unsigned int simtcore_config::max_cta(const kernel_info_t &k) const {
   unsigned threads_per_cta = k.threads_per_cta();
   const class function_info *kernel = k.entry();
   unsigned int padded_cta_size = threads_per_cta;
@@ -123,9 +123,9 @@ unsigned int shader_core_config::max_cta(const kernel_info_t &k) const {
 }
 #endif
 
-void shader_core_config::set_pipeline_latency() {
+void simtcore_config::set_pipeline_latency() {
   // calculate the max latency  based on the input
-
+#if 0
   unsigned int_latency[6];
   unsigned fp_latency[5];
   unsigned dp_latency[5];
@@ -160,8 +160,9 @@ void shader_core_config::set_pipeline_latency() {
   max_int_latency = std::max(int_latency[1], int_latency[5]);
   max_dp_latency = dp_latency[1];
   max_tensor_latency = tensor_latency;
+#endif
 }
-void shader_core_config::reg_options(class OptionParser *opp) {
+void simtcore_config::reg_options(class OptionParser *opp) {
   //option_parser_register(opp, "-opu_simd_model", OPT_INT32, &model,
   //                       "1 = post-dominator", "1");
   option_parser_register(

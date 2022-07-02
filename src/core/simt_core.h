@@ -137,7 +137,7 @@ class shader_core_ctx : public core_t {
   // creator:
   shader_core_ctx(class opu_sim *gpu, class simt_core_cluster *cluster,
                   unsigned shader_id, unsigned tpc_id,
-                  const shader_core_config *config,
+                  const simtcore_config *config,
                   shader_core_stats *stats);
 
   virtual ~shader_core_ctx() {};
@@ -216,7 +216,7 @@ class shader_core_ctx : public core_t {
 
   // accessors
   std::list<unsigned> get_regs_written(const warp_inst_t &fvt) const;
-  const shader_core_config *get_config() const { return m_config; }
+  const simtcore_config *get_config() const { return m_config; }
 
   // debug:
   void display_simt_state(FILE *fout, int mask) const;
@@ -548,7 +548,7 @@ class shader_core_ctx : public core_t {
   unsigned m_sid;  // shader id
   unsigned m_tpc;  // texture processor cluster id (aka, node id when using
                    // interconnect concentration)
-  const shader_core_config *m_config;
+  const simtcore_config *m_config;
   // const memory_config *m_memory_config;
   class simt_core_cluster *m_cluster;
 
@@ -631,7 +631,7 @@ class exec_shader_core_ctx : public shader_core_ctx {
  public:
   exec_shader_core_ctx(class opu_sim *gpu, class simt_core_cluster *cluster,
                        unsigned shader_id, unsigned tpc_id,
-                       const shader_core_config *config,
+                       const simtcore_config *config,
                        shader_core_stats *stats)
       : shader_core_ctx(gpu, cluster, shader_id, tpc_id, config,
                         stats) {

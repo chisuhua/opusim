@@ -1,10 +1,16 @@
 #include "opu_context.hh"
 #include "opu_stream.hh"
 #include "../opuusim_base.h"
+#include "../opusim_config.h"
 #include <cstdio>
 #include <dlfcn.h>
 
+opu_sim_config *g_config {nullptr};
+
 namespace gem5 {
+OpuSimBase *g_the_opu {nullptr};
+
+
 #if 0
 typedef IsaSim* (*pfn_make_isasim)(gpgpu_t* gpu, OpuContext *ctx);
 
@@ -92,7 +98,7 @@ gpgpu_sim *OpuContext::gpgpu_ptx_sim_init_perf() {
 }
 #endif
 
-typedef OpuSimBase* (*pfn_make_opusim)(OpuSimConfig* config, OpuContext *ctx, gem5::OpuTop *);
+typedef OpuSimBase* (*pfn_make_opusim)(opu_sim_config* config, OpuContext *ctx, gem5::OpuTop *);
 
 OpuSimBase *OpuContext::gem5_opu_sim_init(OpuStream **p_opu_stream, gem5::OpuTop *opu_top, const char *config_path)
 {
@@ -109,12 +115,13 @@ OpuSimBase *OpuContext::gem5_opu_sim_init(OpuStream **p_opu_stream, gem5::OpuTop
         printf("Failed to dlsym make_opusim, error - %sn\n", dlerror());
         exit(-1);
     }
+    g_config = new opu_sim_config();
     g_the_opu = make_opusim(g_config, this, opu_top);
   }
 
-  g_opu_stream = new OpuStream(g_the_opu, true);
+  m_opu_stream = new OpuStream(g_the_opu, true);
 
-  *p_opu_stream = g_opu_stream;
+  *p_opu_stream = m_opu_stream;
 
   return g_the_opu;
 }

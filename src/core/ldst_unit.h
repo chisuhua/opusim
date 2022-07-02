@@ -3,7 +3,7 @@
 #include "stats.h"
 #include <list>
 
-class shader_core_config;
+class simtcore_config;
 class Scoreboard;
 class opndcoll_rfu_t;
 class shader_core_stats;
@@ -98,7 +98,7 @@ protected:
   mem_stage_stall_type process_memory_access_queue_l1cache(l1_cache *cache,
                                                            warp_inst_t &inst);
 #endif
-  shader_core_config *m_config;
+  simtcore_config *m_config;
   // const memory_config *m_memory_config;
   // class mem_fetch_interface *m_icnt;
   // shader_core_mem_fetch_allocator *m_mf_allocator;

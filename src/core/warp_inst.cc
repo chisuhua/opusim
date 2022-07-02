@@ -16,7 +16,7 @@ warp_inst_t::warp_inst_t() {
     m_mem_accesses_created = false;
     m_cache_hit = false;
     should_do_atomic = true;
-    m_config = shader_core_config::getInstance();
+    m_config = simtcore_config::getInstance();
 }
 
 void warp_inst_t::issue(const active_mask_t &mask, unsigned warp_id,

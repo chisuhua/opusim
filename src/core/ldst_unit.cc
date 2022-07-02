@@ -445,7 +445,7 @@ void ldst_unit::init(/*mem_fetch_interface *icnt,
   m_stats = stats;
   m_sid = sid;
   m_tpc = tpc;
-  m_config = shader_core_config::getInstance();
+  m_config = simtcore_config::getInstance();
 #define STRSIZE 1024
 #if 0
   char L1T_name[STRSIZE];
@@ -506,7 +506,7 @@ ldst_unit::ldst_unit(/*mem_fetch_interface *icnt,
 ldst_unit::ldst_unit(/*mem_fetch_interface *icnt,
                      shader_core_mem_fetch_allocator *mf_allocator,*/
                      shader_core_ctx *core, opndcoll_rfu_t *operand_collector,
-                     Scoreboard *scoreboard, const shader_core_config *config,
+                     Scoreboard *scoreboard, const simtcore_config *config,
                      /*const memory_config *mem_config*/ shader_core_stats *stats,
                      unsigned sid, unsigned tpc, bool sub_core_model/*, l1_cache *new_l1d_cache*/)
     : pipelined_simd_unit(NULL, config, 3, core, 0, sub_core_model),

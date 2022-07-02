@@ -7,7 +7,7 @@ class shader_core_ctx;
 
 class simd_function_unit {
 public:
-  simd_function_unit( /*const shader_core_config *config */);
+  simd_function_unit( /*const simtcore_config *config */);
   ~simd_function_unit() { delete m_dispatch_reg; }
 
   // modifiers
@@ -31,7 +31,7 @@ public:
 
  protected:
   std::string m_name;
-  // const shader_core_config *m_config;
+  // const simtcore_config *m_config;
   warp_inst_t *m_dispatch_reg;
   static const unsigned MAX_ALU_LATENCY = 512;
   std::bitset<MAX_ALU_LATENCY> occupied;
@@ -40,7 +40,7 @@ public:
 class pipelined_simd_unit : public simd_function_unit {
  public:
   pipelined_simd_unit(register_set *result_port,
-                      /*const shader_core_config *config,*/ unsigned max_latency,
+                      /*const simtcore_config *config,*/ unsigned max_latency,
                       shader_core_ctx *core, unsigned issue_reg_id, bool sub_core_model);
 
   // modifiers

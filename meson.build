@@ -72,6 +72,7 @@ core_src = [
   'src/opustats.cc',
   'src/option_parser.cc',
   'src/opuconfig.cc',
+  'src/opusim_config.cc',
   'src/stack.cc',
   'src/hashing.cc',
   'src/mem_fetch.cc',

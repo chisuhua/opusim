@@ -67,6 +67,7 @@
 #include "stats.h"
 //#include "visualizer.h"
 #include "option_parser.h"
+#include "opusim_config.h"
 
 class opu_sim_wrapper {};
 
@@ -308,126 +309,11 @@ void memory_config::reg_options(class OptionParser *opp) {
 #endif
 
 
-void opu_sim_config::reg_options(option_parser_t opp) {
-  // gpgpu_functional_sim_config::reg_options(opp);
-  m_shader_config.reg_options(opp);
-  // m_memory_config.reg_options(opp);
-  // power_config::reg_options(opp);
-  /*
-  option_parser_register(opp, "-gpgpu_max_cycle", OPT_INT64, &gpu_max_cycle_opt,
-                         "terminates gpu simulation early (0 = no limit)", "0");
-  option_parser_register(opp, "-gpgpu_max_insn", OPT_INT64, &gpu_max_insn_opt,
-                         "terminates gpu simulation early (0 = no limit)", "0");
-  option_parser_register(opp, "-gpgpu_max_cta", OPT_INT32, &gpu_max_cta_opt,
-                         "terminates gpu simulation early (0 = no limit)", "0");
-  option_parser_register(opp, "-gpgpu_max_completed_cta", OPT_INT32,
-                         &gpu_max_completed_cta_opt,
-                         "terminates gpu simulation early (0 = no limit)", "0");
-  option_parser_register(
-      opp, "-gpgpu_runtime_stat", OPT_CSTR, &opu_runtime_stat,
-      "display runtime statistics such as dram utilization {<freq>:<flag>}",
-      "10000:0");
-                         */
-  option_parser_register(opp, "-liveness_message_freq", OPT_INT64,
-                         &liveness_message_freq,
-                         "Minimum number of seconds between simulation "
-                         "liveness messages (0 = always print)",
-                         "1");
-  option_parser_register(opp, "-opu_compute_capability_major", OPT_UINT32,
-                         &opu_compute_capability_major,
-                         "Major compute capability version number", "7");
-  option_parser_register(opp, "-opu_compute_capability_minor", OPT_UINT32,
-                         &opu_compute_capability_minor,
-                         "Minor compute capability version number", "0");
-  option_parser_register(opp, "-opu_flush_l1_cache", OPT_BOOL,
-                         &opu_flush_l1_cache,
-                         "Flush L1 cache at the end of each kernel call", "0");
-  option_parser_register(opp, "-opu_flush_l2_cache", OPT_BOOL,
-                         &opu_flush_l2_cache,
-                         "Flush L2 cache at the end of each kernel call", "0");
-  option_parser_register(
-      opp, "-gpgpu_deadlock_detect", OPT_BOOL, &opu_deadlock_detect,
-      "Stop the simulation at deadlock (1=on (default), 0=off)", "1");
-  /*
-  option_parser_register(
-      opp, "-gpgpu_ptx_instruction_classification", OPT_INT32,
-      &(opu_ctx->func_sim->gpgpu_ptx_instruction_classification),
-      "if enabled will classify ptx instruction types per kernel (Max 255 "
-      "kernels now)",
-      "0");
-  option_parser_register(
-      opp, "-gpgpu_ptx_sim_mode", OPT_INT32,
-      &(opu_ctx->func_sim->g_ptx_sim_mode),
-      "Select between Performance (default) or Functional simulation (1)", "0");
-      */
-  option_parser_register(opp, "-gpgpu_clock_domains", OPT_CSTR,
-                         &opu_clock_domains,
-                         "Clock Domain Frequencies in MhZ {<Core Clock>:<ICNT "
-                         "Clock>:<L2 Clock>:<DRAM Clock>}",
-                         "500.0:2000.0:2000.0:2000.0");
-  option_parser_register(
-      opp, "-gpgpu_max_concurrent_kernel", OPT_INT32, &max_concurrent_kernel,
-      "maximum kernels that can run concurrently on GPU", "8");
-  option_parser_register(
-      opp, "-opu_cflog_interval", OPT_INT32, &opu_cflog_interval,
-      "Interval between each snapshot in control flow logger", "0");
-  option_parser_register(opp, "-visualizer_enabled", OPT_BOOL,
-                         &g_visualizer_enabled,
-                         "Turn on visualizer output (1=On, 0=Off)", "1");
-  option_parser_register(opp, "-visualizer_outputfile", OPT_CSTR,
-                         &g_visualizer_filename,
-                         "Specifies the output log file for visualizer", NULL);
-  option_parser_register(
-      opp, "-visualizer_zlevel", OPT_INT32, &g_visualizer_zlevel,
-      "Compression level of the visualizer output log (0=no comp, 9=highest)",
-      "6");
-  option_parser_register(opp, "-gpgpu_stack_size_limit", OPT_INT32,
-                         &stack_size_limit, "GPU thread stack size", "1024");
-  option_parser_register(opp, "-gpgpu_heap_size_limit", OPT_INT32,
-                         &heap_size_limit, "GPU malloc heap size ", "8388608");
-  option_parser_register(opp, "-gpgpu_runtime_sync_depth_limit", OPT_INT32,
-                         &runtime_sync_depth_limit,
-                         "GPU device runtime synchronize depth", "2");
-  option_parser_register(opp, "-gpgpu_runtime_pending_launch_count_limit",
-                         OPT_INT32, &runtime_pending_launch_count_limit,
-                         "GPU device runtime pending launch count", "2048");
-/*
-  option_parser_register(opp, "-trace_enabled", OPT_BOOL, &Trace_gpgpu::enabled,
-                         "Turn on traces", "0");
-  option_parser_register(opp, "-trace_components", OPT_CSTR, &Trace_gpgpu::config_str,
-                         "comma seperated list of traces to enable. "
-                         "Complete list found in trace_streams.tup. "
-                         "Default none",
-                         "none");
-  option_parser_register(
-      opp, "-trace_sampling_core", OPT_INT32, &Trace_gpgpu::sampling_core,
-      "The core which is printed using CORE_DPRINTF. Default 0", "0");
-  option_parser_register(opp, "-trace_sampling_memory_partition", OPT_INT32,
-                         &Trace_gpgpu::sampling_memory_partition,
-                         "The memory partition which is printed using "
-                         "MEMPART_DPRINTF. Default -1 (i.e. all)",
-                         "-1");
-  */
-
-  // Jin: kernel launch latency
-  /*
-  option_parser_register(opp, "-gpgpu_kernel_launch_latency", OPT_INT32,
-                         &(opu_ctx->device_runtime->g_kernel_launch_latency),
-                         "Kernel launch latency in cycles. Default: 0", "0");
-  option_parser_register(opp, "-gpgpu_cdp_enabled", OPT_BOOL,
-                         &(opu_ctx->device_runtime->g_cdp_enabled),
-                         "Turn on CDP", "0");
-
-  option_parser_register(opp, "-gpgpu_TB_launch_latency", OPT_INT32,
-                         &(opu_ctx->device_runtime->g_TB_launch_latency),
-                         "thread block launch latency in cycles. Default: 0",
-                         "0");
-                         */
-}
 
 /////////////////////////////////////////////////////////////////////////////
 
-void opu_sim::launch(KernelInfo *kinfo) {
+void opu_sim::launch(gem5::KernelInfoBase *kinfo_base) {
+  auto kinfo = dynamic_cast<KernelInfo*>(kinfo_base);
   unsigned cta_size = kinfo->threads_per_cta();
   if (cta_size > m_shader_config->n_thread_per_shader) {
     printf(
@@ -506,8 +392,8 @@ KernelInfo *opu_sim::select_kernel() {
       m_running_kernels[m_last_issued_kernel]->start_cycle =
           gpu_sim_cycle + gpu_tot_sim_cycle;
       m_executed_kernel_uids.push_back(launch_uid);
-      m_executed_kernel_names.push_back(
-          m_running_kernels[m_last_issued_kernel]->name());
+      // m_executed_kernel_names.push_back(
+      //     m_running_kernels[m_last_issued_kernel]->name());
     }
     return m_running_kernels[m_last_issued_kernel];
   }
@@ -526,7 +412,7 @@ KernelInfo *opu_sim::select_kernel() {
                        m_executed_kernel_uids.end(),
                        launch_uid) == m_executed_kernel_uids.end());
       m_executed_kernel_uids.push_back(launch_uid);
-      m_executed_kernel_names.push_back(m_running_kernels[idx]->name());
+      // m_executed_kernel_names.push_back(m_running_kernels[idx]->name());
 
       return m_running_kernels[idx];
     }
@@ -570,21 +456,14 @@ void opu_sim::stop_all_running_kernels() {
   }
 }
 
-void exec_opu_sim::createSIMTCluster() {
-  m_cluster = new simt_core_cluster *[m_shader_config->n_simt_clusters];
-  for (unsigned i = 0; i < m_shader_config->n_simt_clusters; i++)
-    m_cluster[i] =
-        new exec_simt_core_cluster(this, i, m_shader_config,
-                                   m_shader_stats);
-}
 
 // TODO schi opu_sim::opu_sim( const opu_sim_config &config )
-opu_sim::opu_sim(const opu_sim_config &config, gem5::OpuContext *ctx, gem5::OpuTop *opu_top)
+opu_sim::opu_sim(opu_sim_config *config, gem5::OpuContext *ctx, gem5::OpuTop *opu_top)
     : OpuSimBase(opu_top)
-    , m_config(config)
+    , m_config(*config)
 {
   opu_ctx = ctx;
-  m_shader_config = &m_config.m_shader_config;
+  m_shader_config = m_config.m_shader_config;
   // ctx->ptx_parser->set_ptx_warp_size(m_shader_config);
   // ptx_file_line_stats_create_exposed_latency_tracker(m_config.num_shader());
 
@@ -624,7 +503,7 @@ opu_sim::opu_sim(const opu_sim_config &config, gem5::OpuContext *ctx, gem5::OpuT
   // fprintf(stdout,
   //         "GPGPU-Sim uArch: performance model initialization complete.\n");
 
-  m_running_kernels.resize(config.max_concurrent_kernel, NULL);
+  m_running_kernels.resize(m_config.max_concurrent_kernel, NULL);
   m_last_issued_kernel = 0;
   m_last_cluster_issue = m_shader_config->n_simt_clusters -
                          1;  // this causes first launch to use simt cluster 0
@@ -638,7 +517,7 @@ opu_sim::opu_sim(const opu_sim_config &config, gem5::OpuContext *ctx, gem5::OpuT
   m_functional_sim_kernel = NULL;
 }
 
-int opu_sim::shared_mem_size() const {
+uint32_t opu_sim::shared_mem_size() const {
   return m_shader_config->opu_shmem_size;
 }
 
@@ -646,7 +525,7 @@ int opu_sim::shared_mem_per_block() const {
   return m_shader_config->opu_shmem_per_block;
 }
 
-int opu_sim::num_registers_per_core() const {
+uint32_t opu_sim::num_registers_per_core() const {
   return m_shader_config->opu_shader_registers;
 }
 
@@ -654,9 +533,9 @@ int opu_sim::num_registers_per_block() const {
   return m_shader_config->opu_registers_per_block;
 }
 
-int opu_sim::wrp_size() const { return m_shader_config->warp_size; }
+int opu_sim::warp_size() const { return m_shader_config->warp_size; }
 
-int opu_sim::shader_clock() const { return m_config.core_freq / 1000; }
+uint32_t opu_sim::shader_clock() const { return m_config.core_freq / 1000; }
 
 int opu_sim::max_cta_per_core() const {
   return m_shader_config->max_cta_per_core;
@@ -684,22 +563,6 @@ enum divergence_support_t opu_sim::simd_model() const {
   return m_shader_config->model;
 }
 
-void opu_sim_config::init_clock_domains(void) {
-  sscanf(opu_clock_domains, "%lf:%lf:%lf:%lf", &core_freq, &icnt_freq,
-         &l2_freq, &dram_freq);
-  core_freq = core_freq MhZ;
-  icnt_freq = icnt_freq MhZ;
-  l2_freq = l2_freq MhZ;
-  dram_freq = dram_freq MhZ;
-  core_period = 1 / core_freq;
-  icnt_period = 1 / icnt_freq;
-  dram_period = 1 / dram_freq;
-  l2_period = 1 / l2_freq;
-  printf("GPGPU-Sim uArch: clock freqs: %lf:%lf:%lf:%lf\n", core_freq,
-         icnt_freq, l2_freq, dram_freq);
-  printf("GPGPU-Sim uArch: clock periods: %.20lf:%.20lf:%.20lf:%.20lf\n",
-         core_period, icnt_period, l2_period, dram_period);
-}
 
 void opu_sim::reinit_clock_domains(void) {
   core_time = 0;
@@ -1630,14 +1493,14 @@ void opu_sim::dump_pipeline(int mask, int s, int m) const {
 simt_core_cluster *opu_sim::getSIMTCluster() { return *m_cluster; }
 
 // TODO schi add
-shader_core_ctx* opu_sim::get_shader(int id)
+gem5::OpuCoreBase* opu_sim::getSIMTCore(uint32_t id)
 {
 //    int clusters = m_config.m_shader_config.n_simt_clusters;
-    int shaders_per_cluster = m_config.m_shader_config.n_simt_cores_per_cluster;
+    int shaders_per_cluster = m_config.m_shader_config->n_simt_cores_per_cluster;
     int cluster = id/shaders_per_cluster;
     int shader_in_cluster = id%shaders_per_cluster;
     assert(shader_in_cluster < shaders_per_cluster);
-    assert(cluster < m_config.m_shader_config.n_simt_clusters);
+    assert(cluster < m_config.m_shader_config->n_simt_clusters);
 
     return m_cluster[cluster]->get_core(shader_in_cluster);
 }
@@ -1868,5 +1731,36 @@ void opu_sim::shader_print_l1_miss_stat(FILE *fout) const {
   }
   fprintf(fout, "\n");
   */
+}
+
+void exec_opu_sim::createSIMTCluster() {
+  m_cluster = new simt_core_cluster *[m_shader_config->n_simt_clusters];
+  for (unsigned i = 0; i < m_shader_config->n_simt_clusters; i++)
+    m_cluster[i] =
+        new exec_simt_core_cluster(this, i, m_shader_config,
+                                   m_shader_stats);
+}
+
+static int sg_argc = 3;
+static const char *sg_argv[] = {"", "-config", "opusim.config"};
+
+extern "C" {
+
+opu_sim* make_opusim(opu_sim_config *config, gem5::OpuContext *ctx, gem5::OpuTop *opu_top) {
+  option_parser_t opp = option_parser_create();
+  config->reg_options(opp);
+
+  option_parser_cmdline(opp, sg_argc, sg_argv);  // parse configuration options
+  fprintf(stdout, "GPGPU-Sim: Configuration options:\n\n");
+  option_parser_print(opp, stdout);
+
+  assert(setlocale(LC_NUMERIC, "C"));
+  config->init();
+
+  g_the_gpu = new exec_opu_sim(config, ctx, opu_top);
+
+  return g_the_gpu;
+}
+
 }
 
