@@ -110,10 +110,12 @@ std::list<unsigned> simt_core_ctx::get_regs_written(const warp_inst_t &fvt) cons
 
 void exec_simt_core_ctx::create_shd_warp() {
   m_warp.resize(m_config->max_warps_per_shader);
-  m_warp_state.resize(m_config->max_warps_per_shader);
+  m_warp_statetest.resize(m_config->max_warps_per_shader);
   for (unsigned k = 0; k < m_config->max_warps_per_shader; ++k) {
-    m_warp_state[k] = new WarpState(512, 512, m_config->warp_size);
-    m_warp[k] = new warp_exec_t(this, m_config->warp_size);
+    // m_warp[k] = std::make_shared<warp_exec_t>(this, m_config->warp_size);
+    m_warp.emplace_back(std::move(std::make_shared<warp_exec_t>(this, m_config->warp_size)));
+    // m_warp[k] = new warp_exec_t(this, m_config->warp_size);
+    // m_warp_statetest[k] = new WarpStateTest(512, 512, m_config->warp_size);
   }
 }
 
@@ -1292,7 +1294,7 @@ void simt_core_ctx::cache_invalidate() { m_ldst_unit->invalidate(); }
 
 
 warp_exec_t* simt_core_ctx::get_warp(unsigned warp_id) {
-    return m_warp[warp_id];
+    return m_warp[warp_id].get();
 }
 
 WarpState* simt_core_ctx::get_warp_state(unsigned warp_id) const {

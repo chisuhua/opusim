@@ -5,7 +5,7 @@
 #include "opustats.h"
 #include <algorithm>
 
-warp_exec_t &scheduler_unit::warp(int i) { return *((*m_warp)[i]); }
+std::shared_ptr<warp_exec_t> scheduler_unit::warp(int i) { return (*m_warp)[i]; }
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
@@ -56,10 +56,10 @@ void scheduler_unit::order_rrr(
     unsigned num_warps_to_add) {
   result_list.clear();
 
-  if (m_num_issued_last_cycle > 0 || warp(m_current_turn_warp).done_exit() ||
-      warp(m_current_turn_warp).waiting()) {
-    std::vector<warp_exec_t *>::const_iterator iter =
-      (last_issued_from_input == input_list.end()) ? 
+  if (m_num_issued_last_cycle > 0 || warp(m_current_turn_warp)->done_exit() ||
+      warp(m_current_turn_warp)->waiting()) {
+    std::vector<std::shared_ptr<warp_exec_t>>::const_iterator iter =
+      (last_issued_from_input == input_list.end()) ?
         input_list.begin() : last_issued_from_input + 1;
     for (unsigned count = 0; count < num_warps_to_add; ++iter, ++count) {
       if (iter == input_list.end()) {
@@ -73,7 +73,7 @@ void scheduler_unit::order_rrr(
       }
     }
   } else {
-    result_list.push_back(&warp(m_current_turn_warp));
+    result_list.push_back(warp(m_current_turn_warp));
   }
 }
 /**
@@ -130,7 +130,7 @@ void scheduler_unit::cycle() {
   bool issued_inst = false;  // of these we issued one
 
   order_warps();
-  for (std::vector<warp_exec_t *>::const_iterator iter =
+  for (std::vector<std::shared_ptr<warp_exec_t>>::const_iterator iter =
            m_next_cycle_prioritized_warps.begin();
        iter != m_next_cycle_prioritized_warps.end(); iter++) {
     // Don't consider warps that are not yet valid
@@ -151,21 +151,21 @@ void scheduler_unit::cycle() {
                                                  // units (as in Maxwell and
                                                  // Pascal)
 
-    if (warp(warp_id).ibuffer_empty())
+    if (warp(warp_id)->ibuffer_empty())
       SCHED_DPRINTF(
           "Warp (warp_id %u, dynamic_warp_id %u) fails as ibuffer_empty\n",
           (*iter)->get_warp_id(), (*iter)->get_dynamic_warp_id());
 
-    if (warp(warp_id).waiting())
+    if (warp(warp_id)->waiting())
       SCHED_DPRINTF(
           "Warp (warp_id %u, dynamic_warp_id %u) fails as waiting for "
           "barrier\n",
           (*iter)->get_warp_id(), (*iter)->get_dynamic_warp_id());
 
-    while (!warp(warp_id).waiting() && !warp(warp_id).ibuffer_empty() &&
+    while (!warp(warp_id)->waiting() && !warp(warp_id)->ibuffer_empty() &&
            (checked < max_issue) && (checked <= issued) &&
            (issued < max_issue)) {
-      const warp_inst_t *pI = warp(warp_id).ibuffer_next_inst();
+      const warp_inst_t *pI = warp(warp_id)->ibuffer_next_inst();
       // Jin: handle cdp latency;
 #if 0
       if (pI && pI->m_is_cdp && warp(warp_id).m_cdp_latency > 0) {
@@ -174,7 +174,7 @@ void scheduler_unit::cycle() {
         break;
       }
 #endif
-      bool valid = warp(warp_id).ibuffer_next_valid();
+      bool valid = warp(warp_id)->ibuffer_next_valid();
       bool warp_inst_issued = false;
       unsigned pc, rpc;
       m_shader->get_pdom_stack_top_info(warp_id, pI, &pc, &rpc);
@@ -191,8 +191,8 @@ void scheduler_unit::cycle() {
               "instruction flush\n",
               (*iter)->get_warp_id(), (*iter)->get_dynamic_warp_id(), pc, pI->pc);
           // control hazard
-          warp(warp_id).set_next_pc(pc);
-          warp(warp_id).ibuffer_flush();
+          warp(warp_id)->set_next_pc(pc);
+          warp(warp_id)->ibuffer_flush();
         } else {
           valid_inst = true;
           if (!m_scoreboard->checkCollision(warp_id, pI)) {
@@ -204,7 +204,7 @@ void scheduler_unit::cycle() {
             const active_mask_t &active_mask =
                 m_shader->get_active_mask(warp_id, pI);
 
-            assert(warp(warp_id).inst_in_pipeline());
+            assert(warp(warp_id)->inst_in_pipeline());
 
             if ((pI->op == opu_op_t::LOAD_OP) || (pI->op == opu_op_t::STORE_OP) ||
                 (pI->op == opu_op_t::MEMORY_BARRIER_OP) ||
@@ -385,8 +385,8 @@ void scheduler_unit::cycle() {
             "Warp (warp_id %u, dynamic_warp_id %u) return from diverged warp "
             "flush\n",
             (*iter)->get_warp_id(), (*iter)->get_dynamic_warp_id());
-        warp(warp_id).set_next_pc(pc);
-        warp(warp_id).ibuffer_flush();
+        warp(warp_id)->set_next_pc(pc);
+        warp(warp_id)->ibuffer_flush();
       }
       if (warp_inst_issued) {
         SCHED_DPRINTF(
@@ -403,7 +403,7 @@ void scheduler_unit::cycle() {
       // supervised_is index with each entry in the
       // m_next_cycle_prioritized_warps vector. For now, just run through until
       // you find the right warp_id
-      for (std::vector<warp_exec_t *>::const_iterator supervised_iter =
+      for (std::vector<std::shared_ptr<warp_exec_t>>::const_iterator supervised_iter =
                m_supervised_warps.begin();
            supervised_iter != m_supervised_warps.end(); ++supervised_iter) {
         if (*iter == *supervised_iter) {
@@ -434,14 +434,14 @@ void scheduler_unit::cycle() {
 
 void scheduler_unit::do_on_warp_issued(
     unsigned warp_id, unsigned num_issued,
-    const std::vector<warp_exec_t *>::const_iterator &prioritized_iter) {
+    const std::vector<std::shared_ptr<warp_exec_t>>::const_iterator &prioritized_iter) {
   m_stats->event_warp_issued(m_shader->get_sid(), warp_id, num_issued,
-                             warp(warp_id).get_dynamic_warp_id());
-  warp(warp_id).ibuffer_step();
+                             warp(warp_id)->get_dynamic_warp_id());
+  warp(warp_id)->ibuffer_step();
 }
 
-bool scheduler_unit::sort_warps_by_oldest_dynamic_id(warp_exec_t *lhs,
-                                                     warp_exec_t *rhs) {
+bool scheduler_unit::sort_warps_by_oldest_dynamic_id(std::shared_ptr<warp_exec_t> lhs,
+                                                     std::shared_ptr<warp_exec_t> rhs) {
   if (rhs && lhs) {
     if (lhs->done_exit() || lhs->waiting()) {
       return false;
@@ -480,10 +480,10 @@ void oldest_scheduler::order_warps() {
 
 void two_level_active_scheduler::do_on_warp_issued(
     unsigned warp_id, unsigned num_issued,
-    const std::vector<warp_exec_t *>::const_iterator &prioritized_iter) {
+    const std::vector<std::shared_ptr<warp_exec_t>>::const_iterator &prioritized_iter) {
   scheduler_unit::do_on_warp_issued(warp_id, num_issued, prioritized_iter);
   if (SCHEDULER_PRIORITIZATION_LRR == m_inner_level_prioritization) {
-    std::vector<warp_exec_t *> new_active;
+    std::vector<std::shared_ptr<warp_exec_t>> new_active;
     order_lrr(new_active, m_next_cycle_prioritized_warps, prioritized_iter,
               m_next_cycle_prioritized_warps.size());
     m_next_cycle_prioritized_warps = new_active;
@@ -497,7 +497,7 @@ void two_level_active_scheduler::do_on_warp_issued(
 void two_level_active_scheduler::order_warps() {
   // Move waiting warps to m_pending_warps
   unsigned num_demoted = 0;
-  for (std::vector<warp_exec_t *>::iterator iter =
+  for (std::vector<std::shared_ptr<warp_exec_t>>::iterator iter =
            m_next_cycle_prioritized_warps.begin();
        iter != m_next_cycle_prioritized_warps.end();) {
     bool waiting = (*iter)->waiting();
@@ -544,7 +544,7 @@ void two_level_active_scheduler::order_warps() {
 
 swl_scheduler::swl_scheduler(simt_core_stats *stats, simt_core_ctx *shader,
                              Scoreboard *scoreboard, simt_stack **simt,
-                             std::vector<warp_exec_t *> *warp,
+                             std::vector<std::shared_ptr<warp_exec_t>> *warp,
                              register_set *sp_out, register_set *dp_out,
                              register_set *sfu_out, register_set *int_out,
                              register_set *tensor_core_out,

@@ -27,6 +27,8 @@
 #include "opuconfig.h"
 #include "l0_ccache.h"
 // #include "stats.h"
+class WarpState;
+class WarpStateTest;
 
 #define NO_OP_FLAG 0xFF
 
@@ -575,8 +577,9 @@ class simt_core_ctx : public core_t {
   int m_last_warp_fetched;
 
   // decode/dispatch
-  std::vector<warp_exec_t *> m_warp;  // per warp information array
+  std::vector<std::shared_ptr<warp_exec_t>> m_warp;  // per warp information array
   std::vector<WarpState *> m_warp_state;  // per warp information array
+  std::vector<WarpStateTest *> m_warp_statetest;  // per warp information array
   barrier_set_t m_barriers;
   ifetch_buffer_t m_inst_fetch_buffer;
   std::vector<register_set> m_pipeline_reg;
