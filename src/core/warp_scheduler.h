@@ -31,7 +31,7 @@ enum concrete_scheduler {
 class scheduler_unit {  // this can be copied freely, so can be used in std
                         // containers.
  public:
-  scheduler_unit(shader_core_stats *stats, shader_core_ctx *shader,
+  scheduler_unit(simt_core_stats *stats, simt_core_ctx *shader,
                  Scoreboard *scoreboard, simt_stack **simt,
                  std::vector<warp_exec_t *> *warp, register_set *sp_out,
                  register_set *dp_out, register_set *sfu_out,
@@ -123,10 +123,10 @@ class scheduler_unit {  // this can be copied freely, so can be used in std
   std::vector<warp_exec_t *> m_supervised_warps;
   // This is the iterator pointer to the last supervised warp you issued
   std::vector<warp_exec_t *>::const_iterator m_last_supervised_issued;
-  shader_core_stats *m_stats;
-  shader_core_ctx *m_shader;
+  simt_core_stats *m_stats;
+  simt_core_ctx *m_shader;
   // these things should become accessors: but would need a bigger rearchitect
-  // of how shader_core_ctx interacts with its parts.
+  // of how simt_core_ctx interacts with its parts.
   Scoreboard *m_scoreboard;
   simt_stack **m_simt_stack;
   // warp_inst_t** m_pipeline_reg;
@@ -146,7 +146,7 @@ class scheduler_unit {  // this can be copied freely, so can be used in std
 
 class lrr_scheduler : public scheduler_unit {
  public:
-  lrr_scheduler(shader_core_stats *stats, shader_core_ctx *shader,
+  lrr_scheduler(simt_core_stats *stats, simt_core_ctx *shader,
                 Scoreboard *scoreboard, simt_stack **simt,
                 std::vector<warp_exec_t *> *warp, register_set *sp_out,
                 register_set *dp_out, register_set *sfu_out,
@@ -165,7 +165,7 @@ class lrr_scheduler : public scheduler_unit {
 
 class rrr_scheduler : public scheduler_unit {
  public:
-  rrr_scheduler(shader_core_stats *stats, shader_core_ctx *shader,
+  rrr_scheduler(simt_core_stats *stats, simt_core_ctx *shader,
                 Scoreboard *scoreboard, simt_stack **simt,
                 std::vector<warp_exec_t *> *warp, register_set *sp_out,
                 register_set *dp_out, register_set *sfu_out,
@@ -184,7 +184,7 @@ class rrr_scheduler : public scheduler_unit {
 
 class gto_scheduler : public scheduler_unit {
  public:
-  gto_scheduler(shader_core_stats *stats, shader_core_ctx *shader,
+  gto_scheduler(simt_core_stats *stats, simt_core_ctx *shader,
                 Scoreboard *scoreboard, simt_stack **simt,
                 std::vector<warp_exec_t *> *warp, register_set *sp_out,
                 register_set *dp_out, register_set *sfu_out,
@@ -203,7 +203,7 @@ class gto_scheduler : public scheduler_unit {
 
 class oldest_scheduler : public scheduler_unit {
  public:
-  oldest_scheduler(shader_core_stats *stats, shader_core_ctx *shader,
+  oldest_scheduler(simt_core_stats *stats, simt_core_ctx *shader,
                    Scoreboard *scoreboard, simt_stack **simt,
                    std::vector<warp_exec_t *> *warp, register_set *sp_out,
                    register_set *dp_out, register_set *sfu_out,
@@ -222,7 +222,7 @@ class oldest_scheduler : public scheduler_unit {
 
 class two_level_active_scheduler : public scheduler_unit {
  public:
-  two_level_active_scheduler(shader_core_stats *stats, shader_core_ctx *shader,
+  two_level_active_scheduler(simt_core_stats *stats, simt_core_ctx *shader,
                              Scoreboard *scoreboard, simt_stack **simt,
                              std::vector<warp_exec_t *> *warp,
                              register_set *sp_out, register_set *dp_out,
@@ -273,7 +273,7 @@ class two_level_active_scheduler : public scheduler_unit {
 // Static Warp Limiting Scheduler
 class swl_scheduler : public scheduler_unit {
  public:
-  swl_scheduler(shader_core_stats *stats, shader_core_ctx *shader,
+  swl_scheduler(simt_core_stats *stats, simt_core_ctx *shader,
                 Scoreboard *scoreboard, simt_stack **simt,
                 std::vector<warp_exec_t *> *warp, register_set *sp_out,
                 register_set *dp_out, register_set *sfu_out,

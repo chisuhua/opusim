@@ -5,7 +5,7 @@ class simtcore_config;
 class dp_unit : public pipelined_simd_unit {
  public:
   dp_unit(register_set *result_port, const simtcore_config *config,
-          shader_core_ctx *core, unsigned issue_reg_id, bool sub_core_model = true);
+          simt_core_ctx *core, unsigned issue_reg_id, bool sub_core_model = true);
   virtual bool can_issue(const warp_inst_t &inst) const {
     switch (inst.op) {
         case opu_op_t::DP_OP:

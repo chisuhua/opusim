@@ -2,11 +2,11 @@
 #include "abstract_core.h"
 #include "simt_common.h"
 
-class shader_core_ctx;
+class simt_core_ctx;
 
 class barrier_set_t {
 public:
-  barrier_set_t(shader_core_ctx *shader, unsigned max_warps_per_core,
+  barrier_set_t(simt_core_ctx *shader, unsigned max_warps_per_core,
                 unsigned max_cta_per_core, unsigned max_barriers_per_cta,
                 unsigned warp_size);
 
@@ -42,7 +42,7 @@ public:
   bar_id_to_warp_t m_bar_id_to_warps;
   warp_set_t m_warp_active;
   warp_set_t m_warp_at_barrier;
-  shader_core_ctx *m_shader;
+  simt_core_ctx *m_shader;
 };
 
 struct insn_latency_info {

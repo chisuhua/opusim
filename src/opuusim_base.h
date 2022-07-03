@@ -31,6 +31,8 @@ public:
     virtual void print_stats() = 0;
     virtual bool cycle_insn_cta_max_hit() = 0;
     // virtual void set_cache_config() = 0;
+    //
+    virtual uint32_t num_cores() = 0;
 
     unsigned long long gpu_sim_cycle;
     unsigned long long gpu_tot_sim_cycle;

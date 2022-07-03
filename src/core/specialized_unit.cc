@@ -13,7 +13,7 @@ void specialized_unit::active_lanes_in_pipeline() {
 
 specialized_unit::specialized_unit(register_set *result_port,
                                    const simtcore_config *config,
-                                   shader_core_ctx *core, unsigned supported_op,
+                                   simt_core_ctx *core, unsigned supported_op,
                                    char *unit_name, unsigned latency,
                                    unsigned issue_reg_id, bool sub_core_model)
     : pipelined_simd_unit(result_port, latency, core, issue_reg_id, sub_core_model) {

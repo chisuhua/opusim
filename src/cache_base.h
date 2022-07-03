@@ -830,21 +830,21 @@ class cache_config {
   friend class memory_sub_partition;
 };
 
-class l1d_cache_config : public cache_config {
+class l0d_cache_config : public cache_config {
  public:
-  l1d_cache_config() : cache_config() {}
+  l0d_cache_config() : cache_config() {}
   unsigned set_bank(address_type addr) const;
   void init(char *config, FuncCache status) {
-    l1_banks_byte_interleaving_log2 = LOGB2(l1_banks_byte_interleaving);
-    l1_banks_log2 = LOGB2(l1_banks);
+    l0_banks_byte_interleaving_log2 = LOGB2(l0_banks_byte_interleaving);
+    l0_banks_log2 = LOGB2(l0_banks);
     cache_config::init(config, status);
   }
-  unsigned l1_latency;
-  unsigned l1_banks;
-  unsigned l1_banks_log2;
-  unsigned l1_banks_byte_interleaving;
-  unsigned l1_banks_byte_interleaving_log2;
-  unsigned l1_banks_hashing_function;
+  unsigned l0_latency;
+  unsigned l0_banks;
+  unsigned l0_banks_log2;
+  unsigned l0_banks_byte_interleaving;
+  unsigned l0_banks_byte_interleaving_log2;
+  unsigned l0_banks_hashing_function;
   unsigned m_unified_cache_size;
   virtual unsigned get_max_cache_multiplier() const {
     // set * assoc * cacheline size. Then convert Byte to KB

@@ -6,17 +6,17 @@
 class simtcore_config;
 class Scoreboard;
 class opndcoll_rfu_t;
-class shader_core_stats;
+class simt_core_stats;
 class l0_ccache;
 class l1_cache;
 
 class ldst_unit: public pipelined_simd_unit {
 public:
   ldst_unit(/*mem_fetch_interface *icnt,
-            shader_core_mem_fetch_allocator *mf_allocator,*/
-            shader_core_ctx *core, opndcoll_rfu_t *operand_collector,
+            simt_core_mem_fetch_allocator *mf_allocator,*/
+            simt_core_ctx *core, opndcoll_rfu_t *operand_collector,
             Scoreboard *scoreboard, uint32_t smem_latency,
-            shader_core_stats *stats,
+            simt_core_stats *stats,
             unsigned sid, unsigned tpc, bool sub_core_model = true);
 
   // modifiers
@@ -62,17 +62,17 @@ public:
 protected:
 #if 0
   ldst_unit(/*mem_fetch_interface *icnt,
-            shader_core_mem_fetch_allocator *mf_allocator,*/
-            shader_core_ctx *core, opndcoll_rfu_t *operand_collector,
+            simt_core_mem_fetch_allocator *mf_allocator,*/
+            simt_core_ctx *core, opndcoll_rfu_t *operand_collector,
             Scoreboard *scoreboard,
-            /*shader_core_stats *stats,*/
+            /*simt_core_stats *stats,*/
             unsigned sid, unsigned tpc);
 #endif
   void init(/*mem_fetch_interface *icnt,
-            shader_core_mem_fetch_allocator *mf_allocator,*/
-            shader_core_ctx *core, opndcoll_rfu_t *operand_collector,
+            simt_core_mem_fetch_allocator *mf_allocator,*/
+            simt_core_ctx *core, opndcoll_rfu_t *operand_collector,
             Scoreboard *scoreboard,
-            shader_core_stats *stats,
+            simt_core_stats *stats,
             unsigned sid, unsigned tpc);
 
 
@@ -101,8 +101,8 @@ protected:
   simtcore_config *m_config;
   // const memory_config *m_memory_config;
   // class mem_fetch_interface *m_icnt;
-  // shader_core_mem_fetch_allocator *m_mf_allocator;
-  class shader_core_ctx *m_core;
+  // simt_core_mem_fetch_allocator *m_mf_allocator;
+  class simt_core_ctx *m_core;
   unsigned m_sid;
   unsigned m_tpc;
 
@@ -125,7 +125,7 @@ protected:
 
   // enum mem_stage_stall_type m_mem_rc;
 
-  shader_core_stats *m_stats;
+  simt_core_stats *m_stats;
 
   // for debugging
   unsigned long long m_last_inst_gpu_sim_cycle;

@@ -542,7 +542,7 @@ void two_level_active_scheduler::order_warps() {
   assert(num_promoted == num_demoted);
 }
 
-swl_scheduler::swl_scheduler(shader_core_stats *stats, shader_core_ctx *shader,
+swl_scheduler::swl_scheduler(simt_core_stats *stats, simt_core_ctx *shader,
                              Scoreboard *scoreboard, simt_stack **simt,
                              std::vector<warp_exec_t *> *warp,
                              register_set *sp_out, register_set *dp_out,

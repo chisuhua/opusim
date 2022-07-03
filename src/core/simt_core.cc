@@ -70,7 +70,7 @@
 
 #if 0
 // extern opu_sim *g_the_gpu;
-mem_fetch *shader_core_mem_fetch_allocator::alloc(
+mem_fetch *simt_core_mem_fetch_allocator::alloc(
     address_type addr, mem_access_type type, unsigned size, bool wr,
     unsigned long long cycle) const {
   mem_access_t access(type, addr, size, wr, m_memory_config->opu_ctx);
@@ -80,7 +80,7 @@ mem_fetch *shader_core_mem_fetch_allocator::alloc(
   return mf;
 }
 
-mem_fetch *shader_core_mem_fetch_allocator::alloc(
+mem_fetch *simt_core_mem_fetch_allocator::alloc(
     address_type addr, mem_access_type type, const active_mask_t &active_mask,
     const mem_access_byte_mask_t &byte_mask,
     const mem_access_sector_mask_t &sector_mask, unsigned size, bool wr,
@@ -96,7 +96,7 @@ mem_fetch *shader_core_mem_fetch_allocator::alloc(
 #endif
 /////////////////////////////////////////////////////////////////////////////
 
-std::list<unsigned> shader_core_ctx::get_regs_written(const warp_inst_t &fvt) const {
+std::list<unsigned> simt_core_ctx::get_regs_written(const warp_inst_t &fvt) const {
   std::list<unsigned> result;
   for (unsigned op = 0; op < MAX_REG_OPERANDS; op++) {
     // int reg_num = fvt.arch_reg.dst[op];  // this math needs to match that used
@@ -108,7 +108,7 @@ std::list<unsigned> shader_core_ctx::get_regs_written(const warp_inst_t &fvt) co
   return result;
 }
 
-void exec_shader_core_ctx::create_shd_warp() {
+void exec_simt_core_ctx::create_shd_warp() {
   m_warp.resize(m_config->max_warps_per_shader);
   m_warp_state.resize(m_config->max_warps_per_shader);
   for (unsigned k = 0; k < m_config->max_warps_per_shader; ++k) {
@@ -117,7 +117,7 @@ void exec_shader_core_ctx::create_shd_warp() {
   }
 }
 
-void shader_core_ctx::create_front_pipeline() {
+void simt_core_ctx::create_front_pipeline() {
   // pipeline_stages is the sum of normal pipeline stages and specialized_unit
   // stages * 2 (for ID and EX)
   unsigned total_pipeline_stages =
@@ -191,7 +191,7 @@ void shader_core_ctx::create_front_pipeline() {
     m_icnt = new shader_memory_interface(this, m_cluster);
   }
   m_mem_fetch_allocator =
-      new shader_core_mem_fetch_allocator(m_sid, m_tpc, m_memory_config);
+      new simt_core_mem_fetch_allocator(m_sid, m_tpc, m_memory_config);
 #endif
   // fetch
   m_last_warp_fetched = 0;
@@ -199,15 +199,15 @@ void shader_core_ctx::create_front_pipeline() {
 #define STRSIZE 1024
   char name[STRSIZE];
   snprintf(name, STRSIZE, "L1I_%03d", m_sid);
-  m_L1I = new l0_ccache(this, name, m_config->m_L0C_config,m_sid,INSTRUCTION,/*m_icnt*/nullptr,IN_L1I_MISS_QUEUE);
+  m_L0C = new l0_ccache(this, name, m_config->m_L0C_config,m_sid,INSTRUCTION,/*m_icnt*/nullptr,IN_L1I_MISS_QUEUE);
   /*
-  m_L1I = new read_only_cache(name, m_config->m_L1I_config, m_sid,
+  m_L0C = new read_only_cache(name, m_config->m_L0C_config, m_sid,
                               get_shader_instruction_cache_id(), m_icnt,
                               IN_L1I_MISS_QUEUE);
                               */
 }
 
-void shader_core_ctx::create_schedulers() {
+void simt_core_ctx::create_schedulers() {
   m_scoreboard = new Scoreboard(m_sid, m_config->max_warps_per_shader);
 
   // scedulers
@@ -295,7 +295,7 @@ void shader_core_ctx::create_schedulers() {
   }
 }
 
-void shader_core_ctx::create_exec_pipeline() {
+void simt_core_ctx::create_exec_pipeline() {
   // op collector configuration
   enum { SP_CUS, DP_CUS, SFU_CUS, TENSOR_CORE_CUS, INT_CUS, MEM_CUS, GEN_CUS };
 
@@ -493,12 +493,12 @@ void shader_core_ctx::create_exec_pipeline() {
   }
 }
 
-shader_core_ctx::shader_core_ctx(class opu_sim *opu,
+simt_core_ctx::simt_core_ctx(class opu_sim *opu,
                                  class simt_core_cluster *cluster,
                                  unsigned shader_id, unsigned tpc_id,
                                  const simtcore_config *config,
                                  /*const memory_config *mem_config,*/
-                                 shader_core_stats *stats)
+                                 simt_core_stats *stats)
     : core_t(opu, config->warp_size, config->n_thread_per_shader),
       m_barriers(this, config->max_warps_per_shader, config->max_cta_per_core,
                  config->max_barriers_per_cta, config->warp_size),
@@ -529,7 +529,7 @@ shader_core_ctx::shader_core_ctx(class opu_sim *opu,
   m_occupied_cta_to_hwtid.clear();
 }
 
-void shader_core_ctx::reinit(unsigned start_thread, unsigned end_thread,
+void simt_core_ctx::reinit(unsigned start_thread, unsigned end_thread,
                              bool reset_not_completed) {
   if (reset_not_completed) {
     m_not_completed = 0;
@@ -557,7 +557,7 @@ void shader_core_ctx::reinit(unsigned start_thread, unsigned end_thread,
   }
 }
 
-void shader_core_ctx::init_warps(unsigned cta_id, unsigned start_thread,
+void simt_core_ctx::init_warps(unsigned cta_id, unsigned start_thread,
                                  unsigned end_thread, unsigned ctaid,
                                  int cta_size, KernelInfo &kernel) {
   //
@@ -592,7 +592,7 @@ void shader_core_ctx::init_warps(unsigned cta_id, unsigned start_thread,
 
 // return the next pc of a thread
 #if 0
-address_type shader_core_ctx::next_pc(int tid) const {
+address_type simt_core_ctx::next_pc(int tid) const {
   if (tid == -1) return -1;
   ptx_thread_info *the_thread = m_thread[tid];
   if (the_thread == NULL) return -1;
@@ -603,13 +603,13 @@ address_type shader_core_ctx::next_pc(int tid) const {
 #endif
 
 
-void shader_core_ctx::get_pdom_stack_top_info(unsigned tid, unsigned *pc,
+void simt_core_ctx::get_pdom_stack_top_info(unsigned tid, unsigned *pc,
                                               unsigned *rpc) const {
   unsigned warp_id = tid / m_config->warp_size;
   m_simt_stack[warp_id]->get_pdom_stack_top_info(pc, rpc);
 }
 
-float shader_core_ctx::get_current_occupancy(unsigned long long &active,
+float simt_core_ctx::get_current_occupancy(unsigned long long &active,
                                              unsigned long long &total) const {
   // To match the achieved_occupancy in nvprof, only SMs that are active are
   // counted toward the occupancy.
@@ -633,7 +633,7 @@ float shader_core_ctx::get_current_occupancy(unsigned long long &active,
 
 #endif
 
-const warp_inst_t *exec_shader_core_ctx::get_next_inst(unsigned warp_id,
+const warp_inst_t *exec_simt_core_ctx::get_next_inst(unsigned warp_id,
                                                        address_type pc) {
   // read the inst from the functional model
   // return m_opuusim->opu_ctx->ptx_fetch_inst(pc);
@@ -641,19 +641,19 @@ const warp_inst_t *exec_shader_core_ctx::get_next_inst(unsigned warp_id,
   return nullptr;
 }
 
-void exec_shader_core_ctx::get_pdom_stack_top_info(unsigned warp_id,
+void exec_simt_core_ctx::get_pdom_stack_top_info(unsigned warp_id,
                                                    const warp_inst_t *pI,
                                                    unsigned *pc,
                                                    unsigned *rpc) {
   m_simt_stack[warp_id]->get_pdom_stack_top_info(pc, rpc);
 }
 
-const active_mask_t &exec_shader_core_ctx::get_active_mask(
+const active_mask_t &exec_simt_core_ctx::get_active_mask(
     unsigned warp_id, const warp_inst_t *pI) {
   return m_simt_stack[warp_id]->get_active_mask();
 }
 
-void shader_core_ctx::decode() {
+void simt_core_ctx::decode() {
   if (m_inst_fetch_buffer.m_valid) {
     // decode 1 or 2 instructions and place them into ibuffer
     address_type pc = m_inst_fetch_buffer.m_pc;
@@ -674,10 +674,10 @@ void shader_core_ctx::decode() {
   }
 }
 
-void shader_core_ctx::fetch() {
+void simt_core_ctx::fetch() {
   if (!m_inst_fetch_buffer.m_valid) {
-    if (m_L1I->access_ready()) {
-      mem_fetch *mf = m_L1I->next_access();
+    if (m_L0C->access_ready()) {
+      mem_fetch *mf = m_L0C->next_access();
       m_warp[mf->get_wid()]->clear_imiss_pending();
       m_inst_fetch_buffer =
           ifetch_buffer_t(m_warp[mf->get_wid()]->get_pc(),
@@ -760,7 +760,7 @@ void shader_core_ctx::fetch() {
             // shader_cache_access_log(m_sid, INSTRUCTION, 0);
           }
           else
-            status = m_L1I->access(
+            status = m_L0C->access(
                 (address_type)ppc, mf,
                 m_opuusim->gpu_sim_cycle + m_opuusim->gpu_tot_sim_cycle, events);
 
@@ -784,10 +784,10 @@ void shader_core_ctx::fetch() {
     }
   }
 
-  m_L1I->cycle();
+  m_L0C->cycle();
 }
 
-void exec_shader_core_ctx::func_exec_inst(warp_inst_t &inst) {
+void exec_simt_core_ctx::func_exec_inst(warp_inst_t &inst) {
   execute_warp_inst_t(inst);
   if (inst.is_load() || inst.is_store()) {
     inst.generate_mem_accesses();
@@ -796,12 +796,12 @@ void exec_shader_core_ctx::func_exec_inst(warp_inst_t &inst) {
 }
 
 // TODO schi add
-void shader_core_ctx::warp_reaches_barrier(OpuWarpinst &inst_) {
+void simt_core_ctx::warp_reaches_barrier(OpuWarpinst &inst_) {
     warp_inst_t &inst = dynamic_cast<warp_inst_t&>(inst_);
     m_barriers.warp_reaches_barrier(m_warp[inst.warp_id()]->get_cta_id(), inst.warp_id(), &inst);
 }
 
-void shader_core_ctx::issue_warp(register_set &pipe_reg_set,
+void simt_core_ctx::issue_warp(register_set &pipe_reg_set,
                                  const warp_inst_t *next_inst,
                                  const active_mask_t &active_mask,
                                  unsigned warp_id, unsigned sch_id) {
@@ -834,7 +834,7 @@ void shader_core_ctx::issue_warp(register_set &pipe_reg_set,
   m_warp[warp_id]->set_next_pc(next_inst->pc + next_inst->GetSize());
 }
 
-void shader_core_ctx::issue() {
+void simt_core_ctx::issue() {
   // Ensure fair round robin issu between schedulers
   unsigned j;
   for (unsigned i = 0; i < schedulers.size(); i++) {
@@ -850,7 +850,7 @@ void shader_core_ctx::issue() {
 }
 
 
-void shader_core_ctx::read_operands() {
+void simt_core_ctx::read_operands() {
   for (int i = 0; i < m_config->reg_file_port_throughput; ++i)
     m_operand_collector.step();
 }
@@ -862,7 +862,7 @@ address_type coalesced_segment(address_type addr,
 
 // Returns numbers of addresses in translated_addrs, each addr points to a 4B
 // (32-bit) word
-unsigned shader_core_ctx::translate_local_memaddr(
+unsigned simt_core_ctx::translate_local_memaddr(
     address_type localaddr, unsigned tid, unsigned num_shader,
     unsigned datasize, address_type *translated_addrs) {
   // During functional execution, each thread sees its own memory space for
@@ -944,7 +944,7 @@ unsigned shader_core_ctx::translate_local_memaddr(
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-int shader_core_ctx::test_res_bus(int latency) {
+int simt_core_ctx::test_res_bus(int latency) {
   for (unsigned i = 0; i < num_result_bus; i++) {
     if (!m_result_bus[i]->test(latency)) {
       return i;
@@ -953,7 +953,7 @@ int shader_core_ctx::test_res_bus(int latency) {
   return -1;
 }
 
-void shader_core_ctx::execute() {
+void simt_core_ctx::execute() {
   for (unsigned i = 0; i < num_result_bus; i++) {
     *(m_result_bus[i]) >>= 1;
   }
@@ -989,7 +989,7 @@ void shader_core_ctx::execute() {
 }
 
 
-void shader_core_ctx::warp_inst_complete(const warp_inst_t &inst) {
+void simt_core_ctx::warp_inst_complete(const warp_inst_t &inst) {
 #if 0
       printf("[warp_inst_complete] uid=%u core=%u warp=%u pc=%#x @ time=%llu \n",
              inst.get_uid(), m_sid, inst.warp_id(), inst.pc,  m_opuusim->gpu_tot_sim_cycle +  m_opuusim->gpu_sim_cycle);
@@ -1012,7 +1012,7 @@ void shader_core_ctx::warp_inst_complete(const warp_inst_t &inst) {
   inst.completed(m_opuusim->gpu_tot_sim_cycle + m_opuusim->gpu_sim_cycle);
 }
 
-void shader_core_ctx::writeback() {
+void simt_core_ctx::writeback() {
   unsigned max_committed_thread_instructions =
       m_config->warp_size *
       (m_config->pipe_widths[EX_WB]);  // from the functional units
@@ -1061,7 +1061,7 @@ void shader_core_ctx::writeback() {
 
 
 #if 0
-void shader_core_ctx::register_cta_thread_exit(unsigned cta_num,
+void simt_core_ctx::register_cta_thread_exit(unsigned cta_num,
                                                KernelInfo *kernel) {
   assert(m_cta_status[cta_num] > 0);
   m_cta_status[cta_num]--;
@@ -1115,7 +1115,7 @@ void shader_core_ctx::register_cta_thread_exit(unsigned cta_num,
   }
 }
 
-void shader_core_ctx::start_kernel_finish()
+void simt_core_ctx::start_kernel_finish()
 {
     assert(!m_kernel_finishing);
     m_kernel_finishing = true;
@@ -1123,7 +1123,7 @@ void shader_core_ctx::start_kernel_finish()
 }
 #endif
 
-void shader_core_ctx::finish_kernel()
+void simt_core_ctx::finish_kernel()
 {
   assert( m_kernel != NULL );
   m_kernel->dec_running();
@@ -1141,18 +1141,18 @@ void shader_core_ctx::finish_kernel()
 }
 
 #if 0
-void shader_core_ctx::incexecstat(warp_inst_t *&inst)
+void simt_core_ctx::incexecstat(warp_inst_t *&inst)
 {
   if(inst->mem_op==TEX)
     inctex_stat(inst->active_count(),1);
 }
 #endif
 
-void shader_core_ctx::print_stage(unsigned int stage, FILE *fout) const {
+void simt_core_ctx::print_stage(unsigned int stage, FILE *fout) const {
   // m_pipeline_reg[stage].print(fout);
 }
 
-void shader_core_ctx::display_simt_state(FILE *fout, int mask) const {
+void simt_core_ctx::display_simt_state(FILE *fout, int mask) const {
     /*
   if ((mask & 4) && m_config->model == POST_DOMINATOR) {
     fprintf(fout, "per warp SIMT control-flow state:\n");
@@ -1181,7 +1181,7 @@ void shader_core_ctx::display_simt_state(FILE *fout, int mask) const {
 }
 
 
-void shader_core_ctx::display_pipeline(FILE *fout, int print_mem,
+void simt_core_ctx::display_pipeline(FILE *fout, int print_mem,
                                        int mask) const {
   fprintf(fout, "=================================================\n");
   fprintf(fout, "shader %u at cycle %Lu+%Lu (%u threads running)\n", m_sid,
@@ -1191,7 +1191,7 @@ void shader_core_ctx::display_pipeline(FILE *fout, int print_mem,
   // dump_warp_state(fout);
   fprintf(fout, "\n");
 
-  m_L1I->display_state(fout);
+  m_L0C->display_state(fout);
 
   fprintf(fout, "IF/ID       = ");
   if (!m_inst_fetch_buffer.m_valid)
@@ -1270,7 +1270,7 @@ void shader_core_ctx::display_pipeline(FILE *fout, int print_mem,
 }
 
 
-void shader_core_ctx::cycle() {
+void simt_core_ctx::cycle() {
   if (!isactive() && get_not_completed() == 0) return;
 
   m_stats->shader_cycles[m_sid]++;
@@ -1286,21 +1286,21 @@ void shader_core_ctx::cycle() {
 
 // Flushes all content of the cache to memory
 
-void shader_core_ctx::cache_flush() { m_ldst_unit->flush(); }
+void simt_core_ctx::cache_flush() { m_ldst_unit->flush(); }
 
-void shader_core_ctx::cache_invalidate() { m_ldst_unit->invalidate(); }
+void simt_core_ctx::cache_invalidate() { m_ldst_unit->invalidate(); }
 
 
-warp_exec_t* shader_core_ctx::get_warp(unsigned warp_id) {
+warp_exec_t* simt_core_ctx::get_warp(unsigned warp_id) {
     return m_warp[warp_id];
 }
 
-WarpState* shader_core_ctx::get_warp_state(unsigned warp_id) const {
+WarpState* simt_core_ctx::get_warp_state(unsigned warp_id) const {
     return m_warp_state[warp_id];
 }
 
 #if 0
-void shader_core_ctx::warp_exit(unsigned warp_id) {
+void simt_core_ctx::warp_exit(unsigned warp_id) {
   bool done = true;
   for (unsigned i = warp_id * get_config()->warp_size;
        i < (warp_id + 1) * get_config()->warp_size; i++) {
@@ -1317,11 +1317,11 @@ void shader_core_ctx::warp_exit(unsigned warp_id) {
 }
 #endif
 
-active_mask_t shader_core_ctx::warp_active_mask(uint32_t warp_id) {
+active_mask_t simt_core_ctx::warp_active_mask(uint32_t warp_id) {
     return m_warp[warp_id]->m_active_threads;
 }
 
-bool shader_core_ctx::check_if_non_released_reduction_barrier(
+bool simt_core_ctx::check_if_non_released_reduction_barrier(
     warp_inst_t &inst) {
   unsigned warp_id = inst.warp_id();
   bool bar_red_op = (inst.op == opu_op_t::BARRIER_OP) && (inst.bar_type == barrier_t::RED);
@@ -1335,11 +1335,11 @@ bool shader_core_ctx::check_if_non_released_reduction_barrier(
   return non_released_barrier_reduction;
 }
 
-bool shader_core_ctx::warp_waiting_at_barrier(unsigned warp_id) const {
+bool simt_core_ctx::warp_waiting_at_barrier(unsigned warp_id) const {
   return m_barriers.warp_waiting_at_barrier(warp_id);
 }
 
-bool shader_core_ctx::warp_waiting_at_mem_barrier(unsigned warp_id) {
+bool simt_core_ctx::warp_waiting_at_mem_barrier(unsigned warp_id) {
   if (!m_warp[warp_id]->get_membar()) return false;
   if (!m_scoreboard->pendingWrites(warp_id)) {
     m_warp[warp_id]->clear_membar();
@@ -1361,7 +1361,7 @@ bool shader_core_ctx::warp_waiting_at_mem_barrier(unsigned warp_id) {
 }
 
 #if 1
-void shader_core_ctx::set_max_cta(const KernelInfo &kernel) {
+void simt_core_ctx::set_max_cta(const KernelInfo &kernel) {
   // calculate the max cta count and cta size for local memory address mapping
   kernel_max_cta_per_shader = m_config->max_cta(kernel);
   unsigned int gpu_cta_size = kernel.threads_per_cta();
@@ -1372,12 +1372,12 @@ void shader_core_ctx::set_max_cta(const KernelInfo &kernel) {
 }
 #endif
 
-void shader_core_ctx::decrement_atomic_count(unsigned wid, unsigned n) {
+void simt_core_ctx::decrement_atomic_count(unsigned wid, unsigned n) {
   assert(m_warp[wid]->get_n_atomic() >= n);
   m_warp[wid]->dec_n_atomic(n);
 }
 
-void shader_core_ctx::broadcast_barrier_reduction(unsigned cta_id,
+void simt_core_ctx::broadcast_barrier_reduction(unsigned cta_id,
                                                   unsigned bar_id,
                                                   warp_set_t warps) {
   for (unsigned i = 0; i < m_config->max_warps_per_shader; i++) {
@@ -1390,26 +1390,26 @@ void shader_core_ctx::broadcast_barrier_reduction(unsigned cta_id,
   }
 }
 
-bool shader_core_ctx::fetch_unit_response_buffer_full() const { return false; }
+bool simt_core_ctx::fetch_unit_response_buffer_full() const { return false; }
 
-void shader_core_ctx::accept_fetch_response(gem5::OpuMemfetch *mf) {
+void simt_core_ctx::accept_fetch_response(gem5::OpuMemfetch *mf) {
 #if 0
   mf->set_status(IN_SHADER_FETCHED,
                  m_opuusim->gpu_sim_cycle + m_opuusim->gpu_tot_sim_cycle);
-  m_L1I->fill(mf, m_opuusim->gpu_sim_cycle + m_opuusim->gpu_tot_sim_cycle);
+  m_L0C->fill(mf, m_opuusim->gpu_sim_cycle + m_opuusim->gpu_tot_sim_cycle);
 #endif
 }
 
-bool shader_core_ctx::ldst_unit_response_buffer_full() const {
+bool simt_core_ctx::ldst_unit_response_buffer_full() const {
   return m_ldst_unit->response_buffer_full();
 }
 
 #if 0
-void shader_core_ctx::accept_ldst_unit_response(mem_fetch *mf) {
+void simt_core_ctx::accept_ldst_unit_response(mem_fetch *mf) {
   m_ldst_unit->fill(mf);
 }
 
-void shader_core_ctx::store_ack(class mem_fetch *mf) {
+void simt_core_ctx::store_ack(class mem_fetch *mf) {
   assert(mf->get_type() == WRITE_ACK ||
          (m_config->opu_perfect_mem && mf->get_is_write()));
   unsigned warp_id = mf->get_wid();
@@ -1418,38 +1418,38 @@ void shader_core_ctx::store_ack(class mem_fetch *mf) {
 #endif
 
 #if 0
-void shader_core_ctx::print_cache_stats(FILE *fp, unsigned &dl1_accesses,
+void simt_core_ctx::print_cache_stats(FILE *fp, unsigned &dl1_accesses,
                                         unsigned &dl1_misses) {
   m_ldst_unit->print_cache_stats(fp, dl1_accesses, dl1_misses);
 }
 
-void shader_core_ctx::get_cache_stats(cache_stats &cs) {
+void simt_core_ctx::get_cache_stats(cache_stats &cs) {
   // Adds stats from each cache to 'cs'
-  cs += m_L1I->get_stats();          // Get L1I stats
+  cs += m_L0C->get_stats();          // Get L1I stats
   m_ldst_unit->get_cache_stats(cs);  // Get L1D, L1C, L1T stats
 }
 
-void shader_core_ctx::get_L1I_sub_stats(struct cache_sub_stats &css) const {
-  if (m_L1I) m_L1I->get_sub_stats(css);
+void simt_core_ctx::get_L1I_sub_stats(struct cache_sub_stats &css) const {
+  if (m_L0C) m_L0C->get_sub_stats(css);
 }
-void shader_core_ctx::get_L1D_sub_stats(struct cache_sub_stats &css) const {
+void simt_core_ctx::get_L1D_sub_stats(struct cache_sub_stats &css) const {
   m_ldst_unit->get_L1D_sub_stats(css);
 }
-void shader_core_ctx::get_L1C_sub_stats(struct cache_sub_stats &css) const {
+void simt_core_ctx::get_L1C_sub_stats(struct cache_sub_stats &css) const {
   m_ldst_unit->get_L1C_sub_stats(css);
 }
-void shader_core_ctx::get_L1T_sub_stats(struct cache_sub_stats &css) const {
+void simt_core_ctx::get_L1T_sub_stats(struct cache_sub_stats &css) const {
   m_ldst_unit->get_L1T_sub_stats(css);
 }
 
-void shader_core_ctx::get_icnt_power_stats(long &n_simt_to_mem,
+void simt_core_ctx::get_icnt_power_stats(long &n_simt_to_mem,
                                            long &n_mem_to_simt) const {
   n_simt_to_mem += m_stats->n_simt_to_mem[m_sid];
   n_mem_to_simt += m_stats->n_mem_to_simt[m_sid];
 }
 #endif
 
-void exec_shader_core_ctx::checkExecutionStatusAndUpdate(warp_inst_t &inst,
+void exec_simt_core_ctx::checkExecutionStatusAndUpdate(warp_inst_t &inst,
                                                          unsigned t,
                                                          unsigned tid) {
   uint32_t wid = inst.warp_id();
@@ -1480,32 +1480,32 @@ void exec_shader_core_ctx::checkExecutionStatusAndUpdate(warp_inst_t &inst,
   }
 }
 
-bool shader_core_ctx::fence_unblock_needed(unsigned warp_id) {
+bool simt_core_ctx::fence_unblock_needed(unsigned warp_id) {
     return m_warp[warp_id]->get_membar();
 }
-void shader_core_ctx::complete_fence(unsigned warp_id) {
+void simt_core_ctx::complete_fence(unsigned warp_id) {
     assert(m_warp[warp_id]->get_membar());
     m_warp[warp_id]->clear_membar();
 }
 
-bool shader_core_ctx::ldst_unit_wb_inst(OpuWarpinst &inst) {
+bool simt_core_ctx::ldst_unit_wb_inst(OpuWarpinst &inst) {
     return m_ldst_unit->writebackInst(dynamic_cast<warp_inst_t&>(inst));
 }
 
-void shader_core_ctx::inc_store_req(unsigned warp_id) { m_warp[warp_id]->inc_store_req(); }
+void simt_core_ctx::inc_store_req(unsigned warp_id) { m_warp[warp_id]->inc_store_req(); }
 
-void shader_core_ctx::dec_inst_in_pipeline(unsigned warp_id) {
+void simt_core_ctx::dec_inst_in_pipeline(unsigned warp_id) {
   m_warp[warp_id]->dec_inst_in_pipeline();
 }  // also used in writeback()
 
-void shader_core_ctx::set_kernel(KernelInfo *k) {
+void simt_core_ctx::set_kernel(KernelInfo *k) {
     assert(k);
     m_kernel = k;
     k->inc_running();
     // printf("GPGPU-Sim uArch: Shader %d bind to kernel %u \'%s\'\n", m_sid,
     //       m_kernel->get_uid(), m_kernel->name().c_str());
 }
-void shader_core_ctx::issue_block2core(KernelInfo &kernel) {
+void simt_core_ctx::issue_block2core(KernelInfo &kernel) {
   if (!m_config->opu_concurrent_kernel_sm)
     set_max_cta(kernel);
   else
@@ -1604,7 +1604,7 @@ void shader_core_ctx::issue_block2core(KernelInfo &kernel) {
 }
 
 #if 1
-bool shader_core_ctx::can_issue_1block(KernelInfo &kernel) {
+bool simt_core_ctx::can_issue_1block(KernelInfo &kernel) {
   // Jin: concurrent kernels on one SM
   if (m_config->opu_concurrent_kernel_sm) {
     if (m_config->max_cta(kernel) < 1) return false;
@@ -1615,7 +1615,7 @@ bool shader_core_ctx::can_issue_1block(KernelInfo &kernel) {
   }
 }
 
-int shader_core_ctx::find_available_hwtid(unsigned int cta_size, bool occupy) {
+int simt_core_ctx::find_available_hwtid(unsigned int cta_size, bool occupy) {
   unsigned int step;
   for (step = 0; step < m_config->n_thread_per_shader; step += cta_size) {
     unsigned int hw_tid;
@@ -1636,7 +1636,7 @@ int shader_core_ctx::find_available_hwtid(unsigned int cta_size, bool occupy) {
   }
 }
 
-bool shader_core_ctx::occupy_shader_resource_1block(KernelInfo &k,
+bool simt_core_ctx::occupy_shader_resource_1block(KernelInfo &k,
                                                     bool occupy) {
   unsigned threads_per_cta = k.threads_per_cta();
   // const class function_info *kernel = k.entry();
@@ -1677,7 +1677,7 @@ bool shader_core_ctx::occupy_shader_resource_1block(KernelInfo &k,
   return true;
 }
 
-void shader_core_ctx::release_shader_resource_1block(unsigned hw_ctaid,
+void simt_core_ctx::release_shader_resource_1block(unsigned hw_ctaid,
                                                      KernelInfo &k) {
   if (m_config->opu_concurrent_kernel_sm) {
     unsigned threads_per_cta = k.threads_per_cta();

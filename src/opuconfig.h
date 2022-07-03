@@ -72,12 +72,12 @@ class simtcore_config : public core_config {
   }
 
   void init() {
-    int ntok = sscanf(opu_shader_core_pipeline_opt, "%d:%d",
+    int ntok = sscanf(opu_simt_core_pipeline_opt, "%d:%d",
                       &n_thread_per_shader, &warp_size);
     if (ntok != 2) {
       printf(
           "GPGPU-Sim uArch: error while parsing configuration string "
-          "opu_shader_core_pipeline_opt\n");
+          "opu_simt_core_pipeline_opt\n");
       abort();
     }
 
@@ -114,6 +114,12 @@ class simtcore_config : public core_config {
     assert(!(n_thread_per_shader % warp_size));
 
     set_pipeline_latency();
+
+    m_L0C_config.init(m_L0C_config.m_config_string, FuncCachePreferNone);
+    m_L0V_config.init(m_L0V_config.m_config_string, FuncCachePreferNone);
+    m_L0S_config.init(m_L0S_config.m_config_string, FuncCachePreferNone);
+    // opu_cache_texl1_linesize = m_L0T_config.get_line_sz();
+    opu_cache_constl1_linesize = m_L0C_config.get_line_sz();
 
     m_valid = true;
 
@@ -165,7 +171,7 @@ class simtcore_config : public core_config {
   // backward pointer
   gem5::OpuContext *opu_ctx;
   // data
-  char *opu_shader_core_pipeline_opt;
+  char *opu_simt_core_pipeline_opt;
   bool opu_perfect_mem;
   bool opu_clock_gated_reg_file;
   bool opu_clock_gated_lanes;
@@ -273,7 +279,7 @@ class simtcore_config : public core_config {
   unsigned m_specialized_unit_num;
 
   mutable cache_config m_L0C_config;
-  mutable cache_config m_L0V_config;
-  mutable cache_config m_L0S_config;
+  mutable l0d_cache_config m_L0V_config;
+  mutable l0d_cache_config m_L0S_config;
 };
 

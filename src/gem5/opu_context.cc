@@ -115,7 +115,7 @@ OpuSimBase *OpuContext::gem5_opu_sim_init(OpuStream **p_opu_stream, gem5::OpuTop
         printf("Failed to dlsym make_opusim, error - %sn\n", dlerror());
         exit(-1);
     }
-    g_config = new opu_sim_config();
+    //g_config = new opu_sim_config();
     g_the_opu = make_opusim(g_config, this, opu_top);
   }
 

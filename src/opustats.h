@@ -2,8 +2,8 @@
 #include "simt_common.h"
 #include "opuconfig.h"
 
-struct shader_core_stats_pod {
-  void *shader_core_stats_pod_start[0];  // DO NOT MOVE FROM THE TOP - spaceless
+struct simt_core_stats_pod {
+  void *simt_core_stats_pod_start[0];  // DO NOT MOVE FROM THE TOP - spaceless
                                        // pointer to the start of this structure
   unsigned long long *shader_cycles;
   unsigned *m_num_sim_insn;   // number of scalar thread instructions committed
@@ -101,13 +101,13 @@ struct shader_core_stats_pod {
   long *n_mem_to_simt;
 };
 
-class shader_core_stats : public shader_core_stats_pod {
+class simt_core_stats : public simt_core_stats_pod {
  public:
-  shader_core_stats(const simtcore_config *config) {
+  simt_core_stats(const simtcore_config *config) {
     m_config = config;
-    shader_core_stats_pod *pod = reinterpret_cast<shader_core_stats_pod *>(
-        this->shader_core_stats_pod_start);
-    memset(pod, 0, sizeof(shader_core_stats_pod));
+    simt_core_stats_pod *pod = reinterpret_cast<simt_core_stats_pod *>(
+        this->simt_core_stats_pod_start);
+    memset(pod, 0, sizeof(simt_core_stats_pod));
     shader_cycles = (unsigned long long *)calloc(config->num_shader(),
                                                  sizeof(unsigned long long));
     m_num_sim_insn = (unsigned *)calloc(config->num_shader(), sizeof(unsigned));
@@ -227,7 +227,7 @@ class shader_core_stats : public shader_core_stats_pod {
     m_shader_warp_slot_issue_distro.resize(config->num_shader());
   }
 
-  ~shader_core_stats() {
+  ~simt_core_stats() {
     free(m_num_sim_insn);
     free(m_num_sim_winsn);
     free(m_num_FPdecoded_insn);
@@ -302,7 +302,7 @@ class shader_core_stats : public shader_core_stats_pod {
   std::vector<unsigned> m_last_shader_warp_slot_issue_distro;
 
   friend class power_stat_t;
-  friend class shader_core_ctx;
+  friend class simt_core_ctx;
   friend class ldst_unit;
   friend class simt_core_cluster;
   friend class scheduler_unit;

@@ -431,10 +431,10 @@ void ldst_unit::active_lanes_in_pipeline() {
 */
 
 void ldst_unit::init(/*mem_fetch_interface *icnt,
-                     shader_core_mem_fetch_allocator *mf_allocator,*/
-                     shader_core_ctx *core, opndcoll_rfu_t *operand_collector,
+                     simt_core_mem_fetch_allocator *mf_allocator,*/
+                     simt_core_ctx *core, opndcoll_rfu_t *operand_collector,
                      Scoreboard *scoreboard,
-                     /*const memory_config *mem_config,*/ shader_core_stats *stats,
+                     /*const memory_config *mem_config,*/ simt_core_stats *stats,
                      unsigned sid, unsigned tpc) {
   // m_memory_config = mem_config;
   // m_icnt = icnt;
@@ -473,10 +473,10 @@ void ldst_unit::init(/*mem_fetch_interface *icnt,
 }
 
 ldst_unit::ldst_unit(/*mem_fetch_interface *icnt,
-                     shader_core_mem_fetch_allocator *mf_allocator,*/
-                     shader_core_ctx *core, opndcoll_rfu_t *operand_collector,
+                     simt_core_mem_fetch_allocator *mf_allocator,*/
+                     simt_core_ctx *core, opndcoll_rfu_t *operand_collector,
                      Scoreboard *scoreboard, uint32_t smem_latency,
-                     /*const memory_config *mem_config,*/ shader_core_stats *stats,
+                     /*const memory_config *mem_config,*/ simt_core_stats *stats,
                      unsigned sid, unsigned tpc, bool sub_core_model)
     : pipelined_simd_unit(NULL, smem_latency, core, 0, sub_core_model),
       m_next_wb() {
@@ -504,10 +504,10 @@ ldst_unit::ldst_unit(/*mem_fetch_interface *icnt,
 
 #if 0
 ldst_unit::ldst_unit(/*mem_fetch_interface *icnt,
-                     shader_core_mem_fetch_allocator *mf_allocator,*/
-                     shader_core_ctx *core, opndcoll_rfu_t *operand_collector,
+                     simt_core_mem_fetch_allocator *mf_allocator,*/
+                     simt_core_ctx *core, opndcoll_rfu_t *operand_collector,
                      Scoreboard *scoreboard, const simtcore_config *config,
-                     /*const memory_config *mem_config*/ shader_core_stats *stats,
+                     /*const memory_config *mem_config*/ simt_core_stats *stats,
                      unsigned sid, unsigned tpc, bool sub_core_model/*, l1_cache *new_l1d_cache*/)
     : pipelined_simd_unit(NULL, config, 3, core, 0, sub_core_model),
       // m_L1D(new_l1d_cache),

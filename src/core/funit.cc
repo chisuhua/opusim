@@ -67,7 +67,7 @@ unsigned pipelined_simd_unit::get_active_lanes_in_pipeline() {
 pipelined_simd_unit::pipelined_simd_unit(register_set *result_port,
                                          /*const simtcore_config *config,*/
                                          unsigned max_latency,
-                                         shader_core_ctx *core,
+                                         simt_core_ctx *core,
                                          unsigned issue_reg_id,
                                          bool sub_core_model)
     : simd_function_unit() {

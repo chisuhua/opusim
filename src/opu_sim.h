@@ -89,6 +89,7 @@ class opu_sim : public gem5::OpuSimBase {
   unsigned finished_kernel();
   void set_kernel_done(KernelInfo *kernel);
   void stop_all_running_kernels();
+  uint32_t num_cores();
 
   void init();
   // void cycle();
@@ -221,7 +222,7 @@ class opu_sim : public gem5::OpuSimBase {
   // const memory_config *m_memory_config;
 
   // stats
-  class shader_core_stats *m_shader_stats;
+  class simt_core_stats *m_shader_stats;
   // class memory_stats_t *m_memory_stats;
   // class power_stat_t *m_power_stats;
   class opu_sim_wrapper *m_gpgpusim_wrapper;

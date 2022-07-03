@@ -456,6 +456,9 @@ void opu_sim::stop_all_running_kernels() {
   }
 }
 
+uint32_t opu_sim::num_cores() {
+  return m_shader_config->num_shader();
+}
 
 // TODO schi opu_sim::opu_sim( const opu_sim_config &config )
 opu_sim::opu_sim(opu_sim_config *config, gem5::OpuContext *ctx, gem5::OpuTop *opu_top)
@@ -472,7 +475,7 @@ opu_sim::opu_sim(opu_sim_config *config, gem5::OpuContext *ctx, gem5::OpuTop *op
 //                                             config.g_power_config_name, config.g_power_simulation_mode, config.g_dvfs_enabled);
 #endif
 
-  m_shader_stats = new shader_core_stats(m_shader_config);
+  m_shader_stats = new simt_core_stats(m_shader_config);
   //m_memory_stats = new memory_stats_t(m_config.num_shader(), m_shader_config,
   //                                    m_memory_config, this);
   average_pipeline_duty_cycle = (float *)malloc(sizeof(float));
@@ -930,7 +933,7 @@ void opu_sim::get_pdom_stack_top_info(unsigned sid, unsigned tid,
 }
 */
 
-void shader_core_ctx::mem_instruction_stats(const warp_inst_t &inst) {
+void simt_core_ctx::mem_instruction_stats(const warp_inst_t &inst) {
 #if 0
   unsigned active_count = inst.active_count();
   // this breaks some encapsulation: the is_[space] functions, if you change
@@ -979,7 +982,7 @@ void shader_core_ctx::mem_instruction_stats(const warp_inst_t &inst) {
  */
 
     /*
-unsigned exec_shader_core_ctx::sim_init_thread(
+unsigned exec_simt_core_ctx::sim_init_thread(
     KernelInfo &kernel, ptx_thread_info **thread_info, int sid, unsigned tid,
     unsigned threads_left, unsigned num_threads, core_t *core,
     unsigned hw_cta_id, unsigned hw_warp_id) {
@@ -1430,7 +1433,7 @@ opu_sim::l2_cycle()
 //}
 
 
-void shader_core_ctx::dump_warp_state(FILE *fout) const {
+void simt_core_ctx::dump_warp_state(FILE *fout) const {
   fprintf(fout, "\n");
   fprintf(fout, "per warp functional simulation status:\n");
   //for (unsigned w = 0; w < m_config->max_warps_per_shader; w++)
@@ -1746,7 +1749,8 @@ static const char *sg_argv[] = {"", "-config", "opusim.config"};
 
 extern "C" {
 
-opu_sim* make_opusim(opu_sim_config *config, gem5::OpuContext *ctx, gem5::OpuTop *opu_top) {
+opu_sim* make_opusim(opu_sim_config *&config, gem5::OpuContext *ctx, gem5::OpuTop *opu_top) {
+  config = new opu_sim_config();
   option_parser_t opp = option_parser_create();
   config->reg_options(opp);
 

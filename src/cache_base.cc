@@ -28,13 +28,13 @@ const char *cache_fail_status_str(enum cache_reservation_fail_reason status) {
   return static_cache_reservation_fail_reason_str[status];
 }
 
-unsigned l1d_cache_config::set_bank(address_type addr) const {
+unsigned l0d_cache_config::set_bank(address_type addr) const {
   // For sector cache, we select one sector per bank (sector interleaving)
   // This is what was found in Volta (one sector per bank, sector interleaving)
   // otherwise, line interleaving
-  return cache_config::hash_function(addr, l1_banks,
-                                     l1_banks_byte_interleaving_log2,
-                                     l1_banks_log2, l1_banks_hashing_function);
+  return cache_config::hash_function(addr, l0_banks,
+                                     l0_banks_byte_interleaving_log2,
+                                     l0_banks_log2, l0_banks_hashing_function);
 }
 
 unsigned cache_config::set_index(address_type addr) const {

@@ -1,15 +1,15 @@
 #pragma once
 #include "opuconfig.h"
 
-class shader_core_stats;
+class simt_core_stats;
 class simtcore_config;
-class shader_core_ctx;
+class simt_core_ctx;
 
 class simt_core_cluster {
  public:
   simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
                     const simtcore_config *config,
-                    shader_core_stats *stats);
+                    simt_core_stats *stats);
   unsigned get_not_completed() const;
   void reinit();
 
@@ -22,7 +22,7 @@ class simt_core_cluster {
   void cache_invalidate();
   unsigned max_cta(const KernelInfo &kernel);
   unsigned get_n_active_sms() const;
-  shader_core_ctx *get_core(int id_in_cluster) { return m_core[id_in_cluster]; }
+  simt_core_ctx *get_core(int id_in_cluster) { return m_core[id_in_cluster]; }
 
  protected:
   unsigned m_cluster_id;
@@ -63,21 +63,21 @@ class simt_core_cluster {
   std::list<unsigned> m_core_sim_order;
 
   const simtcore_config *m_config;
-  shader_core_stats *m_stats;
-  shader_core_ctx **m_core;
+  simt_core_stats *m_stats;
+  simt_core_ctx **m_core;
 
-  virtual void create_shader_core_ctx() = 0;
+  virtual void create_simt_core_ctx() = 0;
 };
 
 class exec_simt_core_cluster : public simt_core_cluster {
  public:
   exec_simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
                          const simtcore_config *config,
-                         class shader_core_stats *stats)
+                         class simt_core_stats *stats)
       : simt_core_cluster(gpu, cluster_id, config, stats) {
-    create_shader_core_ctx();
+    create_simt_core_ctx();
   }
 
-  virtual void create_shader_core_ctx();
+  virtual void create_simt_core_ctx();
 };
 

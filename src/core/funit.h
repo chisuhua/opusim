@@ -3,7 +3,7 @@
 #include <string>
 
 class warp_inst_t;
-class shader_core_ctx;
+class simt_core_ctx;
 
 class simd_function_unit {
 public:
@@ -41,7 +41,7 @@ class pipelined_simd_unit : public simd_function_unit {
  public:
   pipelined_simd_unit(register_set *result_port,
                       /*const simtcore_config *config,*/ unsigned max_latency,
-                      shader_core_ctx *core, unsigned issue_reg_id, bool sub_core_model);
+                      simt_core_ctx *core, unsigned issue_reg_id, bool sub_core_model);
 
   // modifiers
   virtual void cycle();
@@ -79,7 +79,7 @@ class pipelined_simd_unit : public simd_function_unit {
   unsigned m_pipeline_depth;
   warp_inst_t **m_pipeline_reg;
   register_set *m_result_port;
-  class shader_core_ctx *m_core;
+  class simt_core_ctx *m_core;
   unsigned m_issue_reg_id;  // if sub_core_model is enabled we can only issue
                             // from a subset of operand collectors
 

@@ -166,7 +166,8 @@ OpuTop::OpuTop(const OpuTopParams &p) :
     deviceProperties.warpSize = theOpuUsim->warp_size();
     deviceProperties.clockRate = theOpuUsim->shader_clock();
 // #if (CUDART_VERSION >= 2010)
-    deviceProperties.multiProcessorCount = theOpuUsim->get_config()->num_shader();
+    // deviceProperties.multiProcessorCount = theOpuUsim->get_config()->num_shader();
+    deviceProperties.multiProcessorCount = theOpuUsim->num_cores();
 // #endif
     OutputStream *os = simout.find(p.stats_filename);
     if (!os) {

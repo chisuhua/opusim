@@ -45,7 +45,7 @@
 namespace gem5 {
 class OpuContext;
 }
-class shader_core_stats;
+class simt_core_stats;
 class scheduler_unit;
 class simd_function_unit;
 class ldst_unit;
@@ -87,21 +87,21 @@ inline unsigned wid_from_hw_tid(unsigned tid, unsigned warp_size) {
   return tid / warp_size;
 };
 
-class shader_core_ctx;
-class shader_core_stats;
+class simt_core_ctx;
+class simt_core_stats;
 
 class simt_core_cluster;
 class shader_memory_interface;
-class shader_core_mem_fetch_allocator;
+class simt_core_mem_fetch_allocator;
 class cache_t;
 namespace gem5 {
 class OpuMemfetch;
 }
 
 #if 0
-class shader_core_mem_fetch_allocator : public mem_fetch_allocator {
+class simt_core_mem_fetch_allocator : public mem_fetch_allocator {
  public:
-  shader_core_mem_fetch_allocator(unsigned core_id, unsigned cluster_id,
+  simt_core_mem_fetch_allocator(unsigned core_id, unsigned cluster_id,
                                   const memory_config *config) {
     m_core_id = core_id;
     m_cluster_id = cluster_id;
@@ -132,15 +132,15 @@ private:
 };
 #endif
 
-class shader_core_ctx : public core_t {
+class simt_core_ctx : public core_t {
  public:
   // creator:
-  shader_core_ctx(class opu_sim *gpu, class simt_core_cluster *cluster,
+  simt_core_ctx(class opu_sim *gpu, class simt_core_cluster *cluster,
                   unsigned shader_id, unsigned tpc_id,
                   const simtcore_config *config,
-                  shader_core_stats *stats);
+                  simt_core_stats *stats);
 
-  virtual ~shader_core_ctx() {};
+  virtual ~simt_core_ctx() {};
 
   // used by simt_core_cluster:
   // modifiers
@@ -553,7 +553,7 @@ class shader_core_ctx : public core_t {
   class simt_core_cluster *m_cluster;
 
   // statistics 
-  shader_core_stats *m_stats;
+  simt_core_stats *m_stats;
 
   // CTA scheduling / hardware thread allocation
   unsigned m_n_active_cta;  // number of Cooperative Thread Arrays (blocks)
@@ -568,10 +568,10 @@ class shader_core_ctx : public core_t {
 
   // interconnect interface
   // mem_fetch_interface *m_icnt;
-  // shader_core_mem_fetch_allocator *m_mem_fetch_allocator;
+  // simt_core_mem_fetch_allocator *m_mem_fetch_allocator;
 
   // fetch
-  l0_ccache *m_L1I;  // instruction cache
+  l0_ccache *m_L0C;  // instruction cache
   int m_last_warp_fetched;
 
   // decode/dispatch
@@ -627,13 +627,13 @@ class shader_core_ctx : public core_t {
   std::map<unsigned int, unsigned int> m_occupied_cta_to_hwtid;
 };
 
-class exec_shader_core_ctx : public shader_core_ctx {
+class exec_simt_core_ctx : public simt_core_ctx {
  public:
-  exec_shader_core_ctx(class opu_sim *gpu, class simt_core_cluster *cluster,
+  exec_simt_core_ctx(class opu_sim *gpu, class simt_core_cluster *cluster,
                        unsigned shader_id, unsigned tpc_id,
                        const simtcore_config *config,
-                       shader_core_stats *stats)
-      : shader_core_ctx(gpu, cluster, shader_id, tpc_id, config,
+                       simt_core_stats *stats)
+      : simt_core_ctx(gpu, cluster, shader_id, tpc_id, config,
                         stats) {
     create_front_pipeline();
     create_shd_warp();
@@ -664,7 +664,7 @@ class exec_shader_core_ctx : public shader_core_ctx {
 
 class shader_memory_interface : public mem_fetch_interface {
  public:
-  shader_memory_interface(shader_core_ctx *core, simt_core_cluster *cluster) {
+  shader_memory_interface(simt_core_ctx *core, simt_core_cluster *cluster) {
     m_core = core;
     m_cluster = cluster;
   }
@@ -677,13 +677,13 @@ class shader_memory_interface : public mem_fetch_interface {
   }
 
  private:
-  shader_core_ctx *m_core;
+  simt_core_ctx *m_core;
   simt_core_cluster *m_cluster;
 };
 
 class perfect_memory_interface : public mem_fetch_interface {
  public:
-  perfect_memory_interface(shader_core_ctx *core, simt_core_cluster *cluster) {
+  perfect_memory_interface(simt_core_ctx *core, simt_core_cluster *cluster) {
     m_core = core;
     m_cluster = cluster;
   }
@@ -698,7 +698,7 @@ class perfect_memory_interface : public mem_fetch_interface {
   }
 
  private:
-  shader_core_ctx *m_core;
+  simt_core_ctx *m_core;
   simt_core_cluster *m_cluster;
 };
 #endif

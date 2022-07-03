@@ -6,7 +6,7 @@
 
 class warp_exec_t {
  public:
-  warp_exec_t(class shader_core_ctx *shader, unsigned warp_size)
+  warp_exec_t(class simt_core_ctx *shader, unsigned warp_size)
       : m_shader(shader), m_warp_size(warp_size) {
     m_stores_outstanding = 0;
     m_inst_in_pipeline = 0;
@@ -145,14 +145,14 @@ class warp_exec_t {
   unsigned get_dynamic_warp_id() const { return m_dynamic_warp_id; }
   unsigned get_warp_id() const { return m_warp_id; }
 
-  class shader_core_ctx *get_shader() {
+  class simt_core_ctx *get_shader() {
     return m_shader;
   }
 
   active_mask_t m_active_threads;
  private:
   static const unsigned IBUFFER_SIZE = 2;
-  class shader_core_ctx *m_shader;
+  class simt_core_ctx *m_shader;
   unsigned m_cta_id;
   unsigned m_warp_id;
   unsigned m_warp_size;

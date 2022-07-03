@@ -2,11 +2,11 @@
 #include "simt_core.h"
 #include "opu_sim.h"
 
-void exec_simt_core_cluster::create_shader_core_ctx() {
-  m_core = new shader_core_ctx *[m_config->n_simt_cores_per_cluster];
+void exec_simt_core_cluster::create_simt_core_ctx() {
+  m_core = new simt_core_ctx *[m_config->n_simt_cores_per_cluster];
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++) {
     unsigned sid = m_config->cid_to_sid(i, m_cluster_id);
-    m_core[i] = new exec_shader_core_ctx(m_opu, this, sid, m_cluster_id,
+    m_core[i] = new exec_simt_core_ctx(m_opu, this, sid, m_cluster_id,
                                          m_config, m_stats);
     m_core_sim_order.push_back(i);
   }
@@ -15,7 +15,7 @@ void exec_simt_core_cluster::create_shader_core_ctx() {
 
 simt_core_cluster::simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
                                      const simtcore_config *config,
-                                     shader_core_stats *stats) {
+                                     simt_core_stats *stats) {
   m_config = config;
   // m_cta_issue_next_core = m_config->n_simt_cores_per_cluster -
   //                        1;  // this causes first launch to use hw cta 0

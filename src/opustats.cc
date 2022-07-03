@@ -1,7 +1,7 @@
 #include "opustats.h"
 
 #if 0
-void shader_core_stats::print(FILE *fout) const {
+void simt_core_stats::print(FILE *fout) const {
   unsigned long long thread_icount_uarch = 0;
   unsigned long long warp_icount_uarch = 0;
 
@@ -130,7 +130,7 @@ void shader_core_stats::print(FILE *fout) const {
 }
 #endif
 
-void shader_core_stats::event_warp_issued(unsigned s_id, unsigned warp_id,
+void simt_core_stats::event_warp_issued(unsigned s_id, unsigned warp_id,
                                           unsigned num_issued,
                                           unsigned dynamic_warp_id) {
   assert(warp_id <= m_config->max_warps_per_shader);
@@ -147,7 +147,7 @@ void shader_core_stats::event_warp_issued(unsigned s_id, unsigned warp_id,
 }
 
 #if 0
-void shader_core_stats::visualizer_print(gzFile visualizer_file) {
+void simt_core_stats::visualizer_print(gzFile visualizer_file) {
   // warp divergence breakdown
   gzprintf(visualizer_file, "WarpDivergenceBreakdown:");
   unsigned int total = 0;

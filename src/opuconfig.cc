@@ -166,8 +166,8 @@ void simtcore_config::reg_options(class OptionParser *opp) {
   //option_parser_register(opp, "-opu_simd_model", OPT_INT32, &model,
   //                       "1 = post-dominator", "1");
   option_parser_register(
-      opp, "-opu_shader_core_pipeline", OPT_CSTR,
-      &opu_shader_core_pipeline_opt,
+      opp, "-opu_simt_core_pipeline", OPT_CSTR,
+      &opu_simt_core_pipeline_opt,
       "shader core pipeline config, i.e., {<nthread>:<warpsize>}", "1024:32");
   /*
   option_parser_register(opp, "-opu_tex_cache:l1", OPT_CSTR,
@@ -176,38 +176,62 @@ void simtcore_config::reg_options(class OptionParser *opp) {
                          " {<nsets>:<bsize>:<assoc>,<rep>:<wr>:<alloc>:<wr_"
                          "alloc>,<mshr>:<N>:<merge>,<mq>:<rf>}",
                          "8:128:5,L:R:m:N,F:128:4,128:2");
+                         */
   option_parser_register(
-      opp, "-opu_const_cache:l1", OPT_CSTR, &m_L1C_config.m_config_string,
+      opp, "-opu_const_cache:l0", OPT_CSTR, &m_L0C_config.m_config_string,
       "per-shader L1 constant memory cache  (READ-ONLY) config "
       " {<nsets>:<bsize>:<assoc>,<rep>:<wr>:<alloc>:<wr_alloc>,<mshr>:<N>:<"
       "merge>,<mq>} ",
       "64:64:2,L:R:f:N,A:2:32,4");
+  /*
   option_parser_register(opp, "-opu_cache:il1", OPT_CSTR,
                          &m_L1I_config.m_config_string,
                          "shader L1 instruction cache config "
                          " {<nsets>:<bsize>:<assoc>,<rep>:<wr>:<alloc>:<wr_"
                          "alloc>,<mshr>:<N>:<merge>,<mq>} ",
                          "4:256:4,L:R:f:N,A:2:32,4");
-  option_parser_register(opp, "-opu_cache:dl1", OPT_CSTR,
-                         &m_L1D_config.m_config_string,
-                         "per-shader L1 data cache config "
+                         */
+  option_parser_register(opp, "-opu_cache:dl0v", OPT_CSTR,
+                         &m_L0V_config.m_config_string,
+                         "per-shader L0 data cache config "
                          " {<nsets>:<bsize>:<assoc>,<rep>:<wr>:<alloc>:<wr_"
                          "alloc>,<mshr>:<N>:<merge>,<mq> | none}",
                          "none");
-  option_parser_register(opp, "-opu_l1_cache_write_ratio", OPT_UINT32,
-                         &m_L1D_config.m_wr_percent, "L1D write ratio", "0");
-  option_parser_register(opp, "-opu_l1_banks", OPT_UINT32,
-                         &m_L1D_config.l1_banks, "The number of L1 cache banks",
+  option_parser_register(opp, "-opu_l0v_cache_write_ratio", OPT_UINT32,
+                         &m_L0V_config.m_wr_percent, "L1D write ratio", "0");
+  option_parser_register(opp, "-opu_l0v_banks", OPT_UINT32,
+                         &m_L0V_config.l0_banks, "The number of L1 cache banks",
                          "1");
-  option_parser_register(opp, "-opu_l1_banks_byte_interleaving", OPT_UINT32,
-                         &m_L1D_config.l1_banks_byte_interleaving,
+  option_parser_register(opp, "-opu_l0v_banks_byte_interleaving", OPT_UINT32,
+                         &m_L0V_config.l0_banks_byte_interleaving,
                          "l1 banks byte interleaving granularity", "32");
-  option_parser_register(opp, "-opu_l1_banks_hashing_function", OPT_UINT32,
-                         &m_L1D_config.l1_banks_hashing_function,
+  option_parser_register(opp, "-opu_l0v_banks_hashing_function", OPT_UINT32,
+                         &m_L0V_config.l0_banks_hashing_function,
                          "l1 banks hashing function", "0");
-  option_parser_register(opp, "-opu_l1_latency", OPT_UINT32,
-                         &m_L1D_config.l1_latency, "L1 Hit Latency", "1");
-                         */
+  option_parser_register(opp, "-opu_l0v_latency", OPT_UINT32,
+                         &m_L0V_config.l0_latency, "L1 Hit Latency", "1");
+
+  option_parser_register(opp, "-opu_cache:dl0s", OPT_CSTR,
+                         &m_L0S_config.m_config_string,
+                         "per-shader L0 data cache config "
+                         " {<nsets>:<bsize>:<assoc>,<rep>:<wr>:<alloc>:<wr_"
+                         "alloc>,<mshr>:<N>:<merge>,<mq> | none}",
+                         "none");
+  option_parser_register(opp, "-opu_l0v_cache_write_ratio", OPT_UINT32,
+                         &m_L0S_config.m_wr_percent, "L1D write ratio", "0");
+  option_parser_register(opp, "-opu_l0v_banks", OPT_UINT32,
+                         &m_L0S_config.l0_banks, "The number of L1 cache banks",
+                         "1");
+  option_parser_register(opp, "-opu_l0v_banks_byte_interleaving", OPT_UINT32,
+                         &m_L0S_config.l0_banks_byte_interleaving,
+                         "l1 banks byte interleaving granularity", "32");
+  option_parser_register(opp, "-opu_l0v_banks_hashing_function", OPT_UINT32,
+                         &m_L0S_config.l0_banks_hashing_function,
+                         "l1 banks hashing function", "0");
+  option_parser_register(opp, "-opu_l0v_latency", OPT_UINT32,
+                         &m_L0S_config.l0_latency, "L1 Hit Latency", "1");
+
+
   option_parser_register(opp, "-opu_smem_latency", OPT_UINT32, &smem_latency,
                          "smem Latency", "3");
   /*
