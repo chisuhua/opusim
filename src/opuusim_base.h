@@ -1,8 +1,10 @@
 #pragma once
 #include <stdint.h>
 #include <memory>
-
+namespace opu {
 class opu_sim_config;
+}
+
 class KernelInfo;
 namespace gem5 {
 class OpuCoreBase;
@@ -23,7 +25,7 @@ public:
     virtual uint32_t shader_clock() const = 0;
     virtual void core_cycle_start() = 0;
     virtual void core_cycle_end() = 0;
-    virtual const opu_sim_config *get_config() const = 0;
+    virtual const opu::opu_sim_config *get_config() const = 0;
     virtual bool can_start_kernel() = 0;
     virtual void launch(gem5::KernelInfoBase *) = 0;
     virtual uint32_t finished_kernel() = 0;

@@ -2,6 +2,8 @@
 #include "inc/Instruction.h"
 #include "opuconfig.h"
 
+namespace opu {
+
 address_type line_size_based_tag_func(address_type address,
                                        address_type line_size) {
   // gives the tag for an address based on a given line size
@@ -641,4 +643,5 @@ void warp_inst_t::print(FILE *fout) const {
   fprintf(fout, "]: ");
   // m_config->opu_ctx->func_sim->ptx_print_insn(pc, fout);
   fprintf(fout, "\n");
+}
 }

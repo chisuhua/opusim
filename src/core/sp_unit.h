@@ -1,5 +1,7 @@
 #pragma once
 #include "funit.h"
+
+namespace opu {
 class simtcore_config;
 
 class sp_unit : public pipelined_simd_unit {
@@ -32,3 +34,4 @@ class sp_unit : public pipelined_simd_unit {
   bool is_issue_partitioned() { return true; }
 };
 
+}

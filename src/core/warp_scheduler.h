@@ -1,6 +1,7 @@
 #include "core.h"
 #include <vector>
 
+namespace opu {
 class Scoreboard;
 class warp_exec_t;
 class simt_stack;
@@ -291,5 +292,6 @@ class swl_scheduler : public scheduler_unit {
   scheduler_prioritization_type m_prioritization;
   unsigned m_num_warps_to_limit;
 };
+}
 
 

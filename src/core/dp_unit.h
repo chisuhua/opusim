@@ -1,5 +1,7 @@
 #pragma once
 #include "funit.h"
+
+namespace opu {
 class simtcore_config;
 
 class dp_unit : public pipelined_simd_unit {
@@ -21,3 +23,4 @@ class dp_unit : public pipelined_simd_unit {
 };
 
 
+}

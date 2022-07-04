@@ -8,7 +8,9 @@
 #ifndef SCOREBOARD_H_
 #define SCOREBOARD_H_
 
-#include "simt_core.h"
+
+#include "opucore.h"
+namespace opu {
 class warp_inst_t;
 
 class Scoreboard {
@@ -38,5 +40,6 @@ private:
     // class gpgpu_t *m_gpu;
 };
 
+}
 
 #endif /* SCOREBOARD_H_ */

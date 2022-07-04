@@ -2,6 +2,8 @@
 
 #include "simt_common.h"
 
+namespace opu {
+
 struct ifetch_buffer_t {
   ifetch_buffer_t() { m_valid = false; }
 
@@ -18,3 +20,4 @@ struct ifetch_buffer_t {
   unsigned m_warp_id;
 };
 
+}

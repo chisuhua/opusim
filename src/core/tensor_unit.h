@@ -1,5 +1,7 @@
 #pragma once
 #include "funit.h"
+
+namespace opu {
 class simtcore_config;
 
 class tensor_unit : public pipelined_simd_unit {
@@ -19,5 +21,4 @@ class tensor_unit : public pipelined_simd_unit {
   virtual void issue(register_set &source_reg);
   bool is_issue_partitioned() { return true; }
 };
-
-
+}

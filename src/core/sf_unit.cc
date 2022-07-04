@@ -1,8 +1,9 @@
 #include "sf_unit.h"
-#include "simt_core.h"
+#include "opucore.h"
 #include "warp_inst.h"
 #include "coasm.h"
 
+namespace opu {
 
 sf_unit::sf_unit(register_set *result_port, const simtcore_config *config,
          simt_core_ctx *core, unsigned issue_reg_id, bool sub_core_model)
@@ -30,3 +31,4 @@ void sf_unit::active_lanes_in_pipeline() {
 }
 
 
+}

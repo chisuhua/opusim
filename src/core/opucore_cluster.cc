@@ -1,8 +1,10 @@
-#include "simt_core_cluster.h"
-#include "simt_core.h"
+#include "opucore_cluster.h"
+#include "opucore.h"
 #include "opu_sim.h"
 
-void exec_simt_core_cluster::create_simt_core_ctx() {
+namespace opu {
+
+void exec_opucore_cluster::create_simt_core_ctx() {
   m_core = new simt_core_ctx *[m_config->n_simt_cores_per_cluster];
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++) {
     unsigned sid = m_config->cid_to_sid(i, m_cluster_id);
@@ -13,7 +15,7 @@ void exec_simt_core_cluster::create_simt_core_ctx() {
 }
 
 
-simt_core_cluster::simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
+opucore_cluster::opucore_cluster(class opu_sim *gpu, unsigned cluster_id,
                                      const simtcore_config *config,
                                      simt_core_stats *stats) {
   m_config = config;
@@ -25,19 +27,19 @@ simt_core_cluster::simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
   // m_memory_stats = mstats;
 }
 
-unsigned simt_core_cluster::get_not_completed() const { unsigned not_completed = 0;
+unsigned opucore_cluster::get_not_completed() const { unsigned not_completed = 0;
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++)
     not_completed += m_core[i]->get_not_completed();
   return not_completed;
 }
 
-void simt_core_cluster::reinit() {
+void opucore_cluster::reinit() {
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++)
     m_core[i]->reinit(0, m_config->n_thread_per_shader, true);
 }
 
 
-void simt_core_cluster::core_cycle() {
+void opucore_cluster::core_cycle() {
   for (std::list<unsigned>::iterator it = m_core_sim_order.begin();
        it != m_core_sim_order.end(); ++it) {
     m_core[*it]->cycle();
@@ -49,12 +51,12 @@ void simt_core_cluster::core_cycle() {
   }
 }
 
-unsigned simt_core_cluster::max_cta(const KernelInfo &kernel) {
+unsigned opucore_cluster::max_cta(const KernelInfo &kernel) {
   return m_config->n_simt_cores_per_cluster * m_config->max_cta(kernel);
 }
 
 #if 0
-void simt_core_cluster::print_not_completed(FILE *fp) const {
+void opucore_cluster::print_not_completed(FILE *fp) const {
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++) {
     unsigned not_completed = m_core[i]->get_not_completed();
     unsigned sid = m_config->cid_to_sid(i, m_cluster_id);
@@ -62,7 +64,7 @@ void simt_core_cluster::print_not_completed(FILE *fp) const {
   }
 }
 
-float simt_core_cluster::get_current_occupancy(
+float opucore_cluster::get_current_occupancy(
     unsigned long long &active, unsigned long long &total) const {
   float aggregate = 0.f;
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++) {
@@ -71,7 +73,7 @@ float simt_core_cluster::get_current_occupancy(
   return aggregate / m_config->n_simt_cores_per_cluster;
 }
 
-unsigned simt_core_cluster::get_n_active_cta() const {
+unsigned opucore_cluster::get_n_active_cta() const {
   unsigned n = 0;
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++)
     n += m_core[i]->get_n_active_cta();
@@ -79,14 +81,14 @@ unsigned simt_core_cluster::get_n_active_cta() const {
 }
 #endif
 
-unsigned simt_core_cluster::get_n_active_sms() const {
+unsigned opucore_cluster::get_n_active_sms() const {
   unsigned n = 0;
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++)
     n += m_core[i]->isactive();
   return n;
 }
 
-unsigned simt_core_cluster::issue_block2core() {
+unsigned opucore_cluster::issue_block2core() {
   unsigned num_blocks_issued = 0;
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++) {
     unsigned core =
@@ -125,24 +127,24 @@ unsigned simt_core_cluster::issue_block2core() {
   return num_blocks_issued;
 }
 
-void simt_core_cluster::cache_flush() {
+void opucore_cluster::cache_flush() {
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++)
     m_core[i]->cache_flush();
 }
 
-void simt_core_cluster::cache_invalidate() {
+void opucore_cluster::cache_invalidate() {
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++)
     m_core[i]->cache_invalidate();
 }
 
 #if 0
-bool simt_core_cluster::icnt_injection_buffer_full(unsigned size, bool write) {
+bool opucore_cluster::icnt_injection_buffer_full(unsigned size, bool write) {
   unsigned request_size = size;
   if (!write) request_size = READ_PACKET_SIZE;
   return !::icnt_has_buffer(m_cluster_id, request_size);
 }
 
-void simt_core_cluster::icnt_inject_request_packet(class mem_fetch *mf) {
+void opucore_cluster::icnt_inject_request_packet(class mem_fetch *mf) {
   // stats
   if (mf->get_is_write())
     m_stats->made_write_mfs++;
@@ -208,7 +210,7 @@ void simt_core_cluster::icnt_inject_request_packet(class mem_fetch *mf) {
                 mf->size());
 }
 
-void simt_core_cluster::icnt_cycle() {
+void opucore_cluster::icnt_cycle() {
   if (!m_response_fifo.empty()) {
     mem_fetch *mf = m_response_fifo.front();
     unsigned cid = m_config->sid_to_cid(mf->get_sid());
@@ -247,14 +249,14 @@ void simt_core_cluster::icnt_cycle() {
   }
 }
 
-void simt_core_cluster::get_pdom_stack_top_info(unsigned sid, unsigned tid,
+void opucore_cluster::get_pdom_stack_top_info(unsigned sid, unsigned tid,
                                                 unsigned *pc,
                                                 unsigned *rpc) const {
   unsigned cid = m_config->sid_to_cid(sid);
   m_core[cid]->get_pdom_stack_top_info(tid, pc, rpc);
 }
 
-void simt_core_cluster::display_pipeline(unsigned sid, FILE *fout,
+void opucore_cluster::display_pipeline(unsigned sid, FILE *fout,
                                          int print_mem, int mask) {
   m_core[m_config->sid_to_cid(sid)]->display_pipeline(fout, print_mem, mask);
 
@@ -268,14 +270,14 @@ void simt_core_cluster::display_pipeline(unsigned sid, FILE *fout,
   }
 }
 
-void simt_core_cluster::print_cache_stats(FILE *fp, unsigned &dl1_accesses,
+void opucore_cluster::print_cache_stats(FILE *fp, unsigned &dl1_accesses,
                                           unsigned &dl1_misses) const {
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; ++i) {
     m_core[i]->print_cache_stats(fp, dl1_accesses, dl1_misses);
   }
 }
 
-void simt_core_cluster::get_icnt_stats(long &n_simt_to_mem,
+void opucore_cluster::get_icnt_stats(long &n_simt_to_mem,
                                        long &n_mem_to_simt) const {
   long simt_to_mem = 0;
   long mem_to_simt = 0;
@@ -286,13 +288,13 @@ void simt_core_cluster::get_icnt_stats(long &n_simt_to_mem,
   n_mem_to_simt = mem_to_simt;
 }
 
-void simt_core_cluster::get_cache_stats(cache_stats &cs) const {
+void opucore_cluster::get_cache_stats(cache_stats &cs) const {
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; ++i) {
     m_core[i]->get_cache_stats(cs);
   }
 }
 
-void simt_core_cluster::get_L1I_sub_stats(struct cache_sub_stats &css) const {
+void opucore_cluster::get_L1I_sub_stats(struct cache_sub_stats &css) const {
   struct cache_sub_stats temp_css;
   struct cache_sub_stats total_css;
   temp_css.clear();
@@ -303,7 +305,7 @@ void simt_core_cluster::get_L1I_sub_stats(struct cache_sub_stats &css) const {
   }
   css = total_css;
 }
-void simt_core_cluster::get_L1D_sub_stats(struct cache_sub_stats &css) const {
+void opucore_cluster::get_L1D_sub_stats(struct cache_sub_stats &css) const {
   struct cache_sub_stats temp_css;
   struct cache_sub_stats total_css;
   temp_css.clear();
@@ -314,7 +316,7 @@ void simt_core_cluster::get_L1D_sub_stats(struct cache_sub_stats &css) const {
   }
   css = total_css;
 }
-void simt_core_cluster::get_L1C_sub_stats(struct cache_sub_stats &css) const {
+void opucore_cluster::get_L1C_sub_stats(struct cache_sub_stats &css) const {
   struct cache_sub_stats temp_css;
   struct cache_sub_stats total_css;
   temp_css.clear();
@@ -325,7 +327,7 @@ void simt_core_cluster::get_L1C_sub_stats(struct cache_sub_stats &css) const {
   }
   css = total_css;
 }
-void simt_core_cluster::get_L1T_sub_stats(struct cache_sub_stats &css) const {
+void opucore_cluster::get_L1T_sub_stats(struct cache_sub_stats &css) const {
   struct cache_sub_stats temp_css;
   struct cache_sub_stats total_css;
   temp_css.clear();
@@ -337,3 +339,4 @@ void simt_core_cluster::get_L1T_sub_stats(struct cache_sub_stats &css) const {
   css = total_css;
 }
 #endif
+}

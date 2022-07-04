@@ -1,6 +1,8 @@
 #include "opndcoll.h"
 #include "opuconfig.h"
-#include "simt_core.h"
+#include "opucore.h"
+
+namespace opu {
 
 void opndcoll_rfu_t::add_cu_set(unsigned set_id, unsigned num_cu,
                                 unsigned num_dispatch) {
@@ -391,3 +393,4 @@ std::list<opndcoll_rfu_t::op_t> opndcoll_rfu_t::arbiter_t::allocate_reads() {
   return result;
 }
 
+}

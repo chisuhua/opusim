@@ -2,6 +2,8 @@
 #include "abstract_core.h"
 #include "simt_common.h"
 
+namespace opu {
+
 class simt_core_ctx;
 
 class barrier_set_t {
@@ -50,3 +52,4 @@ struct insn_latency_info {
   unsigned long latency;
 };
 
+}

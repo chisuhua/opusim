@@ -42,6 +42,8 @@
 
 using namespace std;
 
+namespace opu {
+
 // A generic option registry regardless of data type
 class OptionRegistryInterface 
 {
@@ -417,6 +419,7 @@ void option_parser_print(option_parser_t opp,
     p_opr->Print(fout);
 }
 
+}
 
 
 // #define UNIT_TEST
@@ -536,9 +539,9 @@ int stringparsertest()
 
 int main(int argc, const char *argv[]) 
 {
-    cppinterfacetest(argc,argv);
-    cinterfacetest(argc,argv);
-    stringparsertest(); 
+    opu::cppinterfacetest(argc,argv);
+    opu::cinterfacetest(argc,argv);
+    opu::stringparsertest(); 
 
     return 0;
 }

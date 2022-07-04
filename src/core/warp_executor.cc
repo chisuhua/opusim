@@ -1,5 +1,7 @@
 #include "warp_executor.h"
-#include "simt_core.h"
+#include "opucore.h"
+
+namespace opu {
 
 bool warp_exec_t::functional_done() const {
   return get_n_completed() == m_warp_size;
@@ -72,3 +74,4 @@ void warp_exec_t::print_ibuffer(FILE *fout) const {
 #endif
 }
 
+}

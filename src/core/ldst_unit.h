@@ -3,6 +3,8 @@
 #include "stats.h"
 #include <list>
 
+namespace opu {
+
 class simtcore_config;
 class Scoreboard;
 class opndcoll_rfu_t;
@@ -135,3 +137,4 @@ protected:
   // void L1_latency_queue_cycle();
 };
 
+}

@@ -4,17 +4,20 @@
 #include "warp_inst.h"
 #include "opucore_base.h"
 
-class warp_exec_t;
-class WarpState;
-class opu_sim;
 class KernelInfo;
+class WarpState;
+
+namespace opu {
+
+class warp_exec_t;
+class opu_sim;
 
 /*
  * This abstract class used as a base for functional and performance and
  * simulation, it has basic functional simulation data structures and
  * procedures.
  */
-class core_t : public gem5::OpuCoreBase {
+class core_t : public ::gem5::OpuCoreBase {
  public:
   core_t(opu_sim *opuusim,
          unsigned warp_size,
@@ -94,3 +97,4 @@ class core_t : public gem5::OpuCoreBase {
   unsigned reduction_storage[MAX_CTA_PER_SHADER][MAX_BARRIERS_PER_CTA];
 };
 
+}

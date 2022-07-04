@@ -1,6 +1,8 @@
 #include "funit.h"
 #include "warp_inst.h"
-#include "simt_core.h"
+#include "opucore.h"
+
+namespace opu {
 
 simd_function_unit::simd_function_unit(/*const simtcore_config *config*/) {
   // m_config = config;
@@ -83,3 +85,4 @@ pipelined_simd_unit::pipelined_simd_unit(register_set *result_port,
 }
 
 
+}

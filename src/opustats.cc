@@ -1,5 +1,7 @@
 #include "opustats.h"
 
+namespace opu {
+
 #if 0
 void simt_core_stats::print(FILE *fout) const {
   unsigned long long thread_icount_uarch = 0;
@@ -254,3 +256,4 @@ void simt_core_stats::visualizer_print(gzFile visualizer_file) {
 
 
 
+}

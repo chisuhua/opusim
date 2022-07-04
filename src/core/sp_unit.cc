@@ -1,8 +1,9 @@
 #include "sp_unit.h"
-#include "simt_core.h"
+#include "opucore.h"
 #include "warp_inst.h"
 #include "coasm.h"
 
+namespace opu {
 void sp_unit::issue(register_set &source_reg) {
   warp_inst_t **ready_reg =
       source_reg.get_ready(m_sub_core_model, m_issue_reg_id);
@@ -26,4 +27,4 @@ sp_unit::sp_unit(register_set *result_port, const simtcore_config *config,
                           issue_reg_id, sub_core_model) {
   m_name = "SP ";
 }
-
+}

@@ -1,5 +1,7 @@
 #pragma once
 
+namespace opu {
+
 enum cache_access_logger_types { NORMALS, TEXTURE, CONSTANT, INSTRUCTION };
 
 #define MAX_DEFAULT_CACHE_SIZE_MULTIBLIER 4
@@ -31,3 +33,4 @@ enum cache_event_type {
   WRITE_ALLOCATE_SENT
 };
 
+}

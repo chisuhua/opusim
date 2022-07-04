@@ -16,6 +16,9 @@
 
 class Instruction;
 class WarpState;
+
+namespace opu {
+
 class simtcore_config;
 
 
@@ -300,5 +303,6 @@ private:
   const char *m_name;
 };
 
+}
 
 #endif

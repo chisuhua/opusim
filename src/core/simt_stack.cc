@@ -2,6 +2,8 @@
 #include <assert.h>
 #include "coasm.h"
 
+namespace opu {
+
 simt_stack::simt_stack(unsigned wid, unsigned warpSize/*, class gpgpu_sim *gpu*/) {
   m_warp_id = wid;
   m_warp_size = warpSize;
@@ -265,3 +267,4 @@ void simt_stack::update(simt_mask_t &thread_done, addr_vector_t &next_pc,
   }
 }
 
+}

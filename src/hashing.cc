@@ -2,7 +2,7 @@
 #include "simt_common.h"
 #include <string.h>
 
-
+namespace opu {
 
 unsigned ipoly_hash_function(address_type higher_bits, unsigned index,
                              unsigned bank_set_num) {
@@ -120,4 +120,5 @@ unsigned PAE_hash_function(address_type higher_bits, unsigned index,
     assert(0);
     return 0;
   }
+}
 }

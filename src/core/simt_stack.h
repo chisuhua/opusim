@@ -4,6 +4,8 @@
 #include "coasm.h"
 #include <deque>
 
+namespace opu {
+
 class simt_stack {
  public:
   simt_stack(unsigned wid, unsigned warpSize/*, class gpgpu_sim *gpu*/);
@@ -48,3 +50,4 @@ class simt_stack {
   // class gpgpu_sim *m_gpu;
 };
 
+}

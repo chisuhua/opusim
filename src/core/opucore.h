@@ -47,6 +47,10 @@ class WarpStateTest;
 namespace gem5 {
 class OpuContext;
 }
+
+class KernelInfo;
+
+namespace opu {
 class simt_core_stats;
 class scheduler_unit;
 class simd_function_unit;
@@ -54,7 +58,6 @@ class ldst_unit;
 class inst_t;
 class Scoreboard;
 class opndcoll_rfu_t;
-class KernelInfo;
 
 enum exec_unit_type_t {
   NONE = 0,
@@ -92,7 +95,7 @@ inline unsigned wid_from_hw_tid(unsigned tid, unsigned warp_size) {
 class simt_core_ctx;
 class simt_core_stats;
 
-class simt_core_cluster;
+class opucore_cluster;
 class shader_memory_interface;
 class simt_core_mem_fetch_allocator;
 class cache_t;
@@ -137,14 +140,14 @@ private:
 class simt_core_ctx : public core_t {
  public:
   // creator:
-  simt_core_ctx(class opu_sim *gpu, class simt_core_cluster *cluster,
+  simt_core_ctx(class opu_sim *gpu, class opucore_cluster *cluster,
                   unsigned shader_id, unsigned tpc_id,
                   const simtcore_config *config,
                   simt_core_stats *stats);
 
   virtual ~simt_core_ctx() {};
 
-  // used by simt_core_cluster:
+  // used by opucore_cluster:
   // modifiers
   void cycle();
   void reinit(unsigned start_thread, unsigned end_thread,
@@ -153,7 +156,7 @@ class simt_core_ctx : public core_t {
 
   void cache_flush();
   void cache_invalidate();
-  void accept_fetch_response(gem5::OpuMemfetch *mf);
+  void accept_fetch_response(::gem5::OpuMemfetch *mf);
   // void accept_ldst_unit_response(class mem_fetch *mf);
   void broadcast_barrier_reduction(unsigned cta_id, unsigned bar_id,
                                    warp_set_t warps);
@@ -552,7 +555,7 @@ class simt_core_ctx : public core_t {
                    // interconnect concentration)
   const simtcore_config *m_config;
   // const memory_config *m_memory_config;
-  class simt_core_cluster *m_cluster;
+  class opucore_cluster *m_cluster;
 
   // statistics 
   simt_core_stats *m_stats;
@@ -628,11 +631,13 @@ class simt_core_ctx : public core_t {
   unsigned int m_occupied_ctas;
   std::bitset<MAX_THREAD_PER_SM> m_occupied_hwtid;
   std::map<unsigned int, unsigned int> m_occupied_cta_to_hwtid;
+
+  friend class exec_opucore_cluster;
 };
 
 class exec_simt_core_ctx : public simt_core_ctx {
  public:
-  exec_simt_core_ctx(class opu_sim *gpu, class simt_core_cluster *cluster,
+  exec_simt_core_ctx(class opu_sim *gpu, class opucore_cluster *cluster,
                        unsigned shader_id, unsigned tpc_id,
                        const simtcore_config *config,
                        simt_core_stats *stats)
@@ -662,12 +667,13 @@ class exec_simt_core_ctx : public simt_core_ctx {
   virtual const active_mask_t &get_active_mask(unsigned warp_id,
                                                const warp_inst_t *pI);
 };
+}
 
 #if 0
 
 class shader_memory_interface : public mem_fetch_interface {
  public:
-  shader_memory_interface(simt_core_ctx *core, simt_core_cluster *cluster) {
+  shader_memory_interface(simt_core_ctx *core, opucore_cluster *cluster) {
     m_core = core;
     m_cluster = cluster;
   }
@@ -681,12 +687,12 @@ class shader_memory_interface : public mem_fetch_interface {
 
  private:
   simt_core_ctx *m_core;
-  simt_core_cluster *m_cluster;
+  opucore_cluster *m_cluster;
 };
 
 class perfect_memory_interface : public mem_fetch_interface {
  public:
-  perfect_memory_interface(simt_core_ctx *core, simt_core_cluster *cluster) {
+  perfect_memory_interface(simt_core_ctx *core, opucore_cluster *cluster) {
     m_core = core;
     m_cluster = cluster;
   }
@@ -702,6 +708,6 @@ class perfect_memory_interface : public mem_fetch_interface {
 
  private:
   simt_core_ctx *m_core;
-  simt_core_cluster *m_cluster;
+  opucore_cluster *m_cluster;
 };
 #endif

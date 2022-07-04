@@ -1,7 +1,9 @@
 #include "tensor_unit.h"
-#include "simt_core.h"
+#include "opucore.h"
 #include "warp_inst.h"
 #include "coasm.h"
+
+namespace opu {
 
 tensor_unit::tensor_unit(register_set *result_port,
                          const simtcore_config *config,
@@ -30,5 +32,4 @@ void tensor_unit::active_lanes_in_pipeline() {
   m_core->incfumemactivelanes_stat(active_count);
 }
 
-
-
+}

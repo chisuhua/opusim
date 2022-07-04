@@ -2,6 +2,12 @@
 #include <bitset>
 #include "simt_common.h"
 
+namespace gem5 {
+class OpuContext;
+}
+
+namespace opu {
+
 const unsigned MAX_MEMORY_ACCESS_SIZE = 128;
 typedef std::bitset<MAX_MEMORY_ACCESS_SIZE> mem_access_byte_mask_t;
 const unsigned SECTOR_CHUNCK_SIZE = 4;   //four sectors
@@ -23,15 +29,11 @@ enum mem_access_type {
    NUM_MEM_ACCESS_TYPE
 };
 
-namespace gem5 {
-class OpuContext;
-}
-
 class mem_access_t {
  public:
-  mem_access_t(gem5::OpuContext *ctx) { init(ctx); }
+  mem_access_t(::gem5::OpuContext *ctx) { init(ctx); }
   mem_access_t(mem_access_type type, address_type address, unsigned size,
-               bool wr, gem5::OpuContext *ctx) {
+               bool wr, ::gem5::OpuContext *ctx) {
     init(ctx);
     m_type = type;
     m_addr = address;
@@ -41,7 +43,7 @@ class mem_access_t {
   mem_access_t(mem_access_type type, address_type address, unsigned size,
                bool wr, const active_mask_t &active_mask,
                const mem_access_byte_mask_t &byte_mask,
-               const mem_access_sector_mask_t &sector_mask, gem5::OpuContext *ctx)
+               const mem_access_sector_mask_t &sector_mask, ::gem5::OpuContext *ctx)
       : m_warp_mask(active_mask),
         m_byte_mask(byte_mask),
         m_sector_mask(sector_mask) {
@@ -98,10 +100,10 @@ class mem_access_t {
     }
   }
 
-  gem5::OpuContext *m_ctx;
+  ::gem5::OpuContext *m_ctx;
 
 private:
-  void init(gem5::OpuContext *ctx)
+  void init(::gem5::OpuContext *ctx)
   {
       m_ctx = ctx;
       m_uid=++sm_next_access_uid;
@@ -153,3 +155,4 @@ public:
 };
 
 
+}

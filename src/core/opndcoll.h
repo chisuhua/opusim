@@ -4,6 +4,7 @@
 #include "simt_common.h"
 #include "warp_inst.h"
 
+namespace opu {
 class simt_core_ctx;
 
 int register_bank(int regnum, int wid, unsigned num_banks,
@@ -486,3 +487,4 @@ class opndcoll_rfu_t {  // operand collector based register file unit
   simt_core_ctx                 *m_shader;
 };
 
+}

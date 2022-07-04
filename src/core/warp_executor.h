@@ -4,6 +4,8 @@
 #include "simt_common.h"
 #include "warp_inst.h"
 
+namespace opu {
+
 class warp_exec_t {
  public:
   warp_exec_t(class simt_core_ctx *shader, unsigned warp_size)
@@ -79,10 +81,10 @@ class warp_exec_t {
   void set_next_pc(address_type pc) { m_next_pc = pc; }
 
   void store_info_of_last_inst_at_barrier(const warp_inst_t *pI) {
-    m_inst_at_barrier = *pI;
+    m_inst_at_barrier = pI;
   }
-  warp_inst_t *restore_info_of_last_inst_at_barrier() {
-    return &m_inst_at_barrier;
+  const warp_inst_t *restore_info_of_last_inst_at_barrier() {
+    return m_inst_at_barrier;
   }
 
   void ibuffer_fill(unsigned slot, const warp_inst_t *pI) {
@@ -172,7 +174,7 @@ class warp_exec_t {
     bool m_valid;
   };
 
-  warp_inst_t m_inst_at_barrier;
+  const warp_inst_t *m_inst_at_barrier;
   ibuffer_entry m_ibuffer[IBUFFER_SIZE];
   unsigned m_next;
 
@@ -194,3 +196,4 @@ class warp_exec_t {
   bool m_cdp_dummy;
 };
 
+}

@@ -2,6 +2,8 @@
 #include "warp_inst.h"
 #include <string>
 
+namespace opu {
+
 class warp_inst_t;
 class simt_core_ctx;
 
@@ -87,3 +89,4 @@ class pipelined_simd_unit : public simd_function_unit {
   bool m_sub_core_model;
 };
 
+}

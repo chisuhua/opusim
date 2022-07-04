@@ -2,6 +2,8 @@
 //#include "intersim2/stats.hpp"
 #include <stdio.h>
 
+namespace opu {
+
 Stats_gpgpu* StatCreate (const char * name, double bin_size, int num_bins) {
    Stats_gpgpu* newstat = new Stats_gpgpu(NULL,name,bin_size,num_bins);
    newstat->Clear ();
@@ -56,4 +58,5 @@ int main ()
 }
 #endif
 
+}
 

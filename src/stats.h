@@ -28,6 +28,8 @@
 #ifndef STATS_INCLUDED
 #define STATS_INCLUDED
 
+namespace opu {
+
 enum mem_stage_access_type {
    C_MEM,
    T_MEM,
@@ -56,5 +58,6 @@ enum mem_stage_stall_type {
    N_MEM_STAGE_STALL_TYPE
 };
 
+}
 
 #endif

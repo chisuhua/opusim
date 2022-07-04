@@ -5,6 +5,8 @@
 // clock constants
 #define MhZ *1000000
 
+namespace opu {
+
 // opu_sim_config::opu_sim_config(gem5::OpuContext *ctx) {
 opu_sim_config::opu_sim_config() {
   m_shader_config = new simtcore_config();
@@ -181,3 +183,4 @@ void opu_sim_config::init() {
 unsigned opu_sim_config::num_shader() const { return m_shader_config->num_shader(); }
 
 unsigned opu_sim_config::num_cluster() const { return m_shader_config->n_simt_clusters; }
+}

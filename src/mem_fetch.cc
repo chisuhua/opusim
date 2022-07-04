@@ -1,5 +1,6 @@
 #include "mem_fetch.h"
 
+namespace opu {
 unsigned mem_fetch::sm_next_mf_request_uid = 1;
 
 mem_fetch::mem_fetch(const mem_access_t &access, const warp_inst_t *inst,
@@ -69,4 +70,5 @@ unsigned mem_fetch::get_num_flits(bool simt_to_mem) {
     sz = get_ctrl_size();
 
   return (sz / icnt_flit_size) + ((sz % icnt_flit_size) ? 1 : 0);
+}
 }

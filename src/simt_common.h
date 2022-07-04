@@ -4,6 +4,8 @@
 #include <map>
 #include <bitset>
 //#include "core/warp_inst.h"
+//
+namespace opu {
 
 using address_type = uint64_t;
 
@@ -122,3 +124,4 @@ enum TRACE {
 #define SCHED_DPRINTF(x, ...) do {} while (0)
 
 
+}

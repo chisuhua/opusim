@@ -2,8 +2,12 @@
 #include "coasm.h"
 #include <functional>
 
+namespace opu {
 class warp_inst_t;
+}
+
 class OpuWarpinst;
+
 
 namespace gem5 {
 class OpuSimBase;
@@ -19,7 +23,7 @@ class OpuMemfetch {
 using icacheFetch_ftype = std::function<void(uint64_t, OpuMemfetch*)>;
 using getLocalBaseVaddr_ftype = std::function<uint64_t()>;
 using record_block_commit_ftype = std::function<void(uint32_t)>;
-using executeMemOp_ftype = std::function<bool(const warp_inst_t &)>;
+using executeMemOp_ftype = std::function<bool(const opu::warp_inst_t &)>;
 using writebackClear_ftype = std::function<void()>;
 
 #define CB(name) \

@@ -1,5 +1,5 @@
 #include "ldst_unit.h"
-#include "simt_core.h"
+#include "opucore.h"
 #include "warp_inst.h"
 #include "scoreboard.h"
 #include "coasm.h"
@@ -7,6 +7,8 @@
 #include "opuconfig.h"
 #include "opu_sim.h"
 #include <cassert>
+
+namespace opu {
 
 
 bool ldst_unit::shared_cycle(warp_inst_t &inst, mem_stage_stall_type &rc_fail,
@@ -900,3 +902,4 @@ void ldst_unit::print(FILE *fout) const {
 }
 #endif
 
+}

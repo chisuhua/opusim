@@ -1,8 +1,9 @@
 
 #include "scoreboard.h"
-#include "simt_core.h"
+#include "opucore.h"
 // #include "shader_trace.h"
 
+namespace opu {
 // Constructor
 Scoreboard::Scoreboard(unsigned sid, unsigned n_warps /*, class gpgpu_t* gpu*/)
     : longopregs() {
@@ -127,4 +128,5 @@ bool Scoreboard::checkCollision(unsigned wid, const class warp_inst_t* inst) con
 
 bool Scoreboard::pendingWrites(unsigned wid) const {
   return !reg_table[wid].empty();
+}
 }

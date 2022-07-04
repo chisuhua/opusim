@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <stdio.h>
 
+namespace opu {
 ///
 /// Cache_stats
 /// Used to record statistics for each cache.
@@ -58,3 +59,4 @@ class cache_stats {
   unsigned long long m_cache_fill_port_busy_cycles;
 };
 
+}

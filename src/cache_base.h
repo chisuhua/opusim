@@ -11,7 +11,7 @@
 #include "cache_stats.h"
 #include "cache_common.h"
 
-
+namespace opu {
 struct evicted_block_info {
   address_type m_block_addr;
   unsigned m_modified_size;
@@ -1555,3 +1555,4 @@ class l1_cache : public data_cache {
 };
 
 
+}

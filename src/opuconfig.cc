@@ -4,6 +4,8 @@
 #define TMPHACK
 #include "inc/KernelInfo.h"
 
+namespace opu {
+
 unsigned int simtcore_config::max_cta(const KernelInfo &k) const {
     assert(false);
 }
@@ -531,3 +533,4 @@ void simtcore_config::reg_options(class OptionParser *opp) {
   }
 }
 
+}

@@ -1,5 +1,7 @@
 #pragma once
 #include "funit.h"
+
+namespace opu {
 class simtcore_config;
 
 
@@ -22,3 +24,4 @@ class specialized_unit : public pipelined_simd_unit {
   unsigned m_supported_op;
 };
 
+}

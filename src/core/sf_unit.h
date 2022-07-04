@@ -1,6 +1,8 @@
 #pragma once
 #include "funit.h"
 #include "warp_inst.h"
+
+namespace opu {
 class simtcore_config;
 
 class sf_unit : public pipelined_simd_unit {
@@ -25,3 +27,4 @@ class sf_unit : public pipelined_simd_unit {
   bool is_issue_partitioned() { return true; }
 };
 
+}

@@ -12,6 +12,8 @@ namespace gem5 {
 }
 class KernelInfo;
 
+namespace opu {
+
 class core_config {
  public:
   core_config() {
@@ -169,7 +171,7 @@ class simtcore_config : public core_config {
   void set_pipeline_latency();
 
   // backward pointer
-  gem5::OpuContext *opu_ctx;
+  ::gem5::OpuContext *opu_ctx;
   // data
   char *opu_simt_core_pipeline_opt;
   bool opu_perfect_mem;
@@ -283,3 +285,4 @@ class simtcore_config : public core_config {
   mutable l0d_cache_config m_L0S_config;
 };
 
+}

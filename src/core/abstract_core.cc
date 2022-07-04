@@ -2,6 +2,7 @@
 #include "simt_common.h"
 #include "inc/Instruction.h"
 
+namespace opu {
 
 void core_t::execute_warp_inst_t(warp_inst_t &inst, unsigned warpId) {
   active_mask_t active_mask = warp_active_mask(warpId);
@@ -83,4 +84,5 @@ void core_t::initilizeSIMTStack(unsigned warp_count, unsigned warp_size) {
 void core_t::get_pdom_stack_top_info(unsigned warpId, unsigned *pc,
                                      unsigned *rpc) const {
   m_simt_stack[warpId]->get_pdom_stack_top_info(pc, rpc);
+}
 }

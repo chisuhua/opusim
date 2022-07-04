@@ -4,6 +4,8 @@ namespace gem5 {
 class OpuContext;
 }
 
+namespace opu {
+
 class simtcore_config;
 
 class opu_sim_config {
@@ -72,3 +74,4 @@ class opu_sim_config {
   friend class opu_sim;
 };
 
+}

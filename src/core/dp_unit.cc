@@ -1,8 +1,9 @@
 #include "dp_unit.h"
-#include "simt_core.h"
+#include "opucore.h"
 #include "warp_inst.h"
 #include "coasm.h"
 
+namespace opu {
 
 dp_unit::dp_unit(register_set *result_port, const simtcore_config *config,
                  simt_core_ctx *core, unsigned issue_reg_id, bool sub_core_model)
@@ -28,3 +29,4 @@ void dp_unit ::issue(register_set &source_reg) {
   pipelined_simd_unit::issue(source_reg);
 }
 
+}

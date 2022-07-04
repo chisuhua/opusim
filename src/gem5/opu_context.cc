@@ -5,7 +5,9 @@
 #include <cstdio>
 #include <dlfcn.h>
 
+namespace opu {
 opu_sim_config *g_config {nullptr};
+}
 
 namespace gem5 {
 OpuSimBase *g_the_opu {nullptr};
@@ -98,7 +100,7 @@ gpgpu_sim *OpuContext::gpgpu_ptx_sim_init_perf() {
 }
 #endif
 
-typedef OpuSimBase* (*pfn_make_opusim)(opu_sim_config* config, OpuContext *ctx, gem5::OpuTop *);
+typedef OpuSimBase* (*pfn_make_opusim)(opu::opu_sim_config* &config, gem5::OpuContext *ctx, gem5::OpuTop *);
 
 OpuSimBase *OpuContext::gem5_opu_sim_init(OpuStream **p_opu_stream, gem5::OpuTop *opu_top, const char *config_path)
 {

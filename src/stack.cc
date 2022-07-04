@@ -30,6 +30,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
+namespace opu {
+
 void push_stack(Stack *S, address_type val) {
    assert(S->top < S->max_size);
    S->v[S->top] = val;
@@ -85,4 +87,5 @@ int element_exist_stack(Stack *S, address_type value) {
 
 void reset_stack(Stack *S) {
    S->top = 0;
+}
 }

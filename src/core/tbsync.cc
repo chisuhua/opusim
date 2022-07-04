@@ -1,5 +1,7 @@
 #include "tbsync.h"
-#include "simt_core.h"
+#include "opucore.h"
+
+namespace opu {
 
 barrier_set_t::barrier_set_t(simt_core_ctx *shader,
                              unsigned max_warps_per_core,
@@ -172,3 +174,4 @@ void barrier_set_t::dump() {
   fflush(stdout);
 }
 
+}

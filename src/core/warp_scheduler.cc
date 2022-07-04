@@ -1,9 +1,11 @@
 #include "simt_common.h"
-#include "simt_core.h"
+#include "opucore.h"
 #include "warp_scheduler.h"
 #include "warp_executor.h"
 #include "opustats.h"
 #include <algorithm>
+
+namespace opu {
 
 std::shared_ptr<warp_exec_t> scheduler_unit::warp(int i) { return (*m_warp)[i]; }
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
@@ -576,3 +578,4 @@ void swl_scheduler::order_warps() {
   }
 }
 
+}

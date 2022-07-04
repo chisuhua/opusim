@@ -26,8 +26,8 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "simt_core.h"
-#include "simt_core_cluster.h"
+#include "opucore.h"
+#include "opucore_cluster.h"
 #include <float.h>
 #include <limits.h>
 #include <string.h>
@@ -67,6 +67,8 @@
 #include "inc/KernelInfo.h"
 
 #define PRIORITIZE_MSHR_OVER_WB 1
+
+namespace opu {
 
 #if 0
 // extern opu_sim *g_the_gpu;
@@ -110,12 +112,12 @@ std::list<unsigned> simt_core_ctx::get_regs_written(const warp_inst_t &fvt) cons
 
 void exec_simt_core_ctx::create_shd_warp() {
   m_warp.resize(m_config->max_warps_per_shader);
-  m_warp_statetest.resize(m_config->max_warps_per_shader);
+  m_warp_state.resize(m_config->max_warps_per_shader);
   for (unsigned k = 0; k < m_config->max_warps_per_shader; ++k) {
     // m_warp[k] = std::make_shared<warp_exec_t>(this, m_config->warp_size);
     m_warp.emplace_back(std::move(std::make_shared<warp_exec_t>(this, m_config->warp_size)));
     // m_warp[k] = new warp_exec_t(this, m_config->warp_size);
-    // m_warp_statetest[k] = new WarpStateTest(512, 512, m_config->warp_size);
+    m_warp_state[k] = new WarpState(512, 512, m_config->warp_size);
   }
 }
 
@@ -496,7 +498,7 @@ void simt_core_ctx::create_exec_pipeline() {
 }
 
 simt_core_ctx::simt_core_ctx(class opu_sim *opu,
-                                 class simt_core_cluster *cluster,
+                                 class opucore_cluster *cluster,
                                  unsigned shader_id, unsigned tpc_id,
                                  const simtcore_config *config,
                                  /*const memory_config *mem_config,*/
@@ -1394,7 +1396,7 @@ void simt_core_ctx::broadcast_barrier_reduction(unsigned cta_id,
 
 bool simt_core_ctx::fetch_unit_response_buffer_full() const { return false; }
 
-void simt_core_ctx::accept_fetch_response(gem5::OpuMemfetch *mf) {
+void simt_core_ctx::accept_fetch_response(::gem5::OpuMemfetch *mf) {
 #if 0
   mf->set_status(IN_SHADER_FETCHED,
                  m_opuusim->gpu_sim_cycle + m_opuusim->gpu_tot_sim_cycle);
@@ -1714,3 +1716,4 @@ void simt_core_ctx::release_shader_resource_1block(unsigned hw_ctaid,
 }
 #endif
 
+}

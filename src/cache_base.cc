@@ -2,7 +2,7 @@
 #include "hashing.h"
 // used to allocate memory that is large enough to adapt the changes in cache
 // size across kernels
-
+namespace opu {
 const char *cache_request_status_str(enum cache_request_status status) {
   static const char *static_cache_request_status_str[] = {
       "HIT",         "HIT_RESERVED", "MISS", "RESERVATION_FAIL",
@@ -815,3 +815,4 @@ enum cache_request_status read_only_cache::access(
 }
 
 
+}

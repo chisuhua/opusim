@@ -35,6 +35,7 @@
 #include "statwrapper.h"
 //#include "gpu-misc.h"
 
+namespace opu {
 template <class T>
 struct fifo_data {
    T *m_data;
@@ -189,5 +190,6 @@ private:
    fifo_data<T> *m_head;
    fifo_data<T> *m_tail;
 };
+}
 
 #endif

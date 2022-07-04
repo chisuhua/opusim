@@ -2,6 +2,8 @@
 #include "mem_common.h"
 #include <cassert>
 
+namespace opu {
+
 cache_stats::cache_stats() {
   m_stats.resize(NUM_MEM_ACCESS_TYPE);
   m_stats_pw.resize(NUM_MEM_ACCESS_TYPE);
@@ -261,3 +263,4 @@ bool cache_stats::check_fail_valid(int type, int fail) const {
     return false;
 }
 
+}

@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include "option_parser.h"
 
+namespace opu {
 // pointer to C++ class
 typedef class OptionParser *option_parser_t;
 
@@ -77,3 +78,4 @@ void option_parser_delimited_string(option_parser_t opp,
 void option_parser_print(option_parser_t opp, 
                          FILE *fout);
 
+}

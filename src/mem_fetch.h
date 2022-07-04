@@ -3,6 +3,8 @@
 #include "core/warp_inst.h"
 #include "opucore_base.h"
 
+namespace opu {
+
 enum mf_type {
   READ_REQUEST = 0,
   WRITE_REQUEST,
@@ -41,7 +43,7 @@ enum mem_fetch_status {
     NUM_MEM_REQ_STAT
 };
 
-class mem_fetch : public gem5::OpuMemfetch {
+class mem_fetch : public ::gem5::OpuMemfetch {
  public:
   mem_fetch(const mem_access_t &access, const warp_inst_t *inst,
             unsigned ctrl_size, unsigned wid, unsigned sid, unsigned tpc,
@@ -163,3 +165,4 @@ private:
                               // when fetch-on-write policy is used
 };
 
+}

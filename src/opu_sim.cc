@@ -42,8 +42,8 @@
 
 // #include "dram.h"
 #include "mem_fetch.h"
-#include "core/simt_core.h"
-#include "core/simt_core_cluster.h"
+#include "core/opucore.h"
+#include "core/opucore_cluster.h"
 //#include "shader_trace.h"
 #include "cache_base.h"
 
@@ -81,7 +81,6 @@ class opu_sim_wrapper {};
 
 bool g_interactive_debugger_enabled = false;
 
-opu_sim* g_the_gpu;
 
 // tr1_hash_map<new_addr_type, unsigned> address_random_interleaving;
 
@@ -93,6 +92,9 @@ opu_sim* g_the_gpu;
 #define ICNT 0x08
 
 #define MEM_LATENCY_STAT_IMPL
+
+namespace opu {
+opu_sim* g_the_gpu;
 
 // #include "mem_latency_stat.h"
 
@@ -312,7 +314,7 @@ void memory_config::reg_options(class OptionParser *opp) {
 
 /////////////////////////////////////////////////////////////////////////////
 
-void opu_sim::launch(gem5::KernelInfoBase *kinfo_base) {
+void opu_sim::launch(::gem5::KernelInfoBase *kinfo_base) {
   auto kinfo = dynamic_cast<KernelInfo*>(kinfo_base);
   unsigned cta_size = kinfo->threads_per_cta();
   if (cta_size > m_shader_config->n_thread_per_shader) {
@@ -461,7 +463,7 @@ uint32_t opu_sim::num_cores() {
 }
 
 // TODO schi opu_sim::opu_sim( const opu_sim_config &config )
-opu_sim::opu_sim(opu_sim_config *config, gem5::OpuContext *ctx, gem5::OpuTop *opu_top)
+opu_sim::opu_sim(opu_sim_config *config, ::gem5::OpuContext *ctx, ::gem5::OpuTop *opu_top)
     : OpuSimBase(opu_top)
     , m_config(*config)
 {
@@ -1493,10 +1495,10 @@ void opu_sim::dump_pipeline(int mask, int s, int m) const {
   */
 }
 
-simt_core_cluster *opu_sim::getSIMTCluster() { return *m_cluster; }
+opucore_cluster *opu_sim::getSIMTCluster() { return *m_cluster; }
 
 // TODO schi add
-gem5::OpuCoreBase* opu_sim::getSIMTCore(uint32_t id)
+::gem5::OpuCoreBase* opu_sim::getSIMTCore(uint32_t id)
 {
 //    int clusters = m_config.m_shader_config.n_simt_clusters;
     int shaders_per_cluster = m_config.m_shader_config->n_simt_cores_per_cluster;
@@ -1737,10 +1739,10 @@ void opu_sim::shader_print_l1_miss_stat(FILE *fout) const {
 }
 
 void exec_opu_sim::createSIMTCluster() {
-  m_cluster = new simt_core_cluster *[m_shader_config->n_simt_clusters];
+  m_cluster = new opucore_cluster *[m_shader_config->n_simt_clusters];
   for (unsigned i = 0; i < m_shader_config->n_simt_clusters; i++)
     m_cluster[i] =
-        new exec_simt_core_cluster(this, i, m_shader_config,
+        new exec_opucore_cluster(this, i, m_shader_config,
                                    m_shader_stats);
 }
 
@@ -1749,7 +1751,7 @@ static const char *sg_argv[] = {"", "-config", "opusim.config"};
 
 extern "C" {
 
-opu_sim* make_opusim(opu_sim_config *&config, gem5::OpuContext *ctx, gem5::OpuTop *opu_top) {
+opu_sim* make_opusim(opu_sim_config *&config, ::gem5::OpuContext *ctx, ::gem5::OpuTop *opu_top) {
   config = new opu_sim_config();
   option_parser_t opp = option_parser_create();
   config->reg_options(opp);
@@ -1768,3 +1770,4 @@ opu_sim* make_opusim(opu_sim_config *&config, gem5::OpuContext *ctx, gem5::OpuTo
 
 }
 
+}

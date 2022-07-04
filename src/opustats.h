@@ -2,6 +2,8 @@
 #include "simt_common.h"
 #include "opuconfig.h"
 
+namespace opu {
+
 struct simt_core_stats_pod {
   void *simt_core_stats_pod_start[0];  // DO NOT MOVE FROM THE TOP - spaceless
                                        // pointer to the start of this structure
@@ -304,9 +306,10 @@ class simt_core_stats : public simt_core_stats_pod {
   friend class power_stat_t;
   friend class simt_core_ctx;
   friend class ldst_unit;
-  friend class simt_core_cluster;
+  friend class opucore_cluster;
   friend class scheduler_unit;
   friend class TwoLevelScheduler;
   friend class LooseRoundRobbinScheduler;
 };
 
+}

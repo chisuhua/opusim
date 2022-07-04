@@ -1,13 +1,15 @@
 #pragma once
 #include "opuconfig.h"
 
+namespace opu {
+
 class simt_core_stats;
 class simtcore_config;
 class simt_core_ctx;
 
-class simt_core_cluster {
+class opucore_cluster {
  public:
-  simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
+  opucore_cluster(class opu_sim *gpu, unsigned cluster_id,
                     const simtcore_config *config,
                     simt_core_stats *stats);
   unsigned get_not_completed() const;
@@ -69,15 +71,16 @@ class simt_core_cluster {
   virtual void create_simt_core_ctx() = 0;
 };
 
-class exec_simt_core_cluster : public simt_core_cluster {
+class exec_opucore_cluster : public opucore_cluster {
  public:
-  exec_simt_core_cluster(class opu_sim *gpu, unsigned cluster_id,
+  exec_opucore_cluster(class opu_sim *gpu, unsigned cluster_id,
                          const simtcore_config *config,
                          class simt_core_stats *stats)
-      : simt_core_cluster(gpu, cluster_id, config, stats) {
+      : opucore_cluster(gpu, cluster_id, config, stats) {
     create_simt_core_ctx();
   }
 
   virtual void create_simt_core_ctx();
 };
 
+}

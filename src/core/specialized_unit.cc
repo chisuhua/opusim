@@ -1,7 +1,9 @@
 #include "specialized_unit.h"
-#include "simt_core.h"
+#include "opucore.h"
 #include "warp_inst.h"
 #include "coasm.h"
+
+namespace opu {
 
 void specialized_unit::active_lanes_in_pipeline() {
   unsigned active_count = pipelined_simd_unit::get_active_lanes_in_pipeline();
@@ -32,3 +34,4 @@ void specialized_unit ::issue(register_set &source_reg) {
 
 
 
+}

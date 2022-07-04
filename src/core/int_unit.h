@@ -2,6 +2,8 @@
 
 #include "funit.h"
 
+namespace opu {
+
 class int_unit : public pipelined_simd_unit {
  public:
   int_unit(register_set *result_port, uint32_t max_int_latency,
@@ -34,3 +36,4 @@ class int_unit : public pipelined_simd_unit {
   bool is_issue_partitioned() { return true; }
 };
 
+}

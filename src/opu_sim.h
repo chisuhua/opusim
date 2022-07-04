@@ -9,7 +9,7 @@
 //#include "../trace.h"
 //#include "addrdec.h"
 //#include "gpu-cache.h"
-#include "core/simt_core.h"
+#include "core/opucore.h"
 #include "opuusim_base.h"
 #include "inc/ExecContext.h"
 
@@ -78,13 +78,16 @@ class KernelInfoBase;
 class KernelInfo;
 
 
-class opu_sim : public gem5::OpuSimBase {
+namespace opu {
+class opu_sim_config;
+
+class opu_sim : public ::gem5::OpuSimBase {
  public:
-  opu_sim(opu_sim_config *config, gem5::OpuContext *ctx, gem5::OpuTop *opu_top = NULL );
+  opu_sim(opu_sim_config *config, ::gem5::OpuContext *ctx, ::gem5::OpuTop *opu_top = NULL );
 
   void set_prop(struct cudaDeviceProp *prop);
 
-  void launch(gem5::KernelInfoBase *kinfo);
+  void launch(::gem5::KernelInfoBase *kinfo);
   bool can_start_kernel();
   unsigned finished_kernel();
   void set_kernel_done(KernelInfo *kernel);
@@ -147,7 +150,7 @@ class opu_sim : public gem5::OpuSimBase {
   void dump_pipeline(int mask, int s, int m) const;
 
   // TODO schi add
-  gem5::OpuCoreBase* getSIMTCore(uint32_t id) override;
+  ::gem5::OpuCoreBase* getSIMTCore(uint32_t id) override;
 
   // void perf_memcpy_to_gpu(size_t dst_start_addr, size_t count);
 
@@ -166,10 +169,10 @@ class opu_sim : public gem5::OpuSimBase {
    * Returning the cluster of of the shader core, used by the functional
    * simulation so far
    */
-  simt_core_cluster *getSIMTCluster();
+  opucore_cluster *getSIMTCluster();
 
   // backward pointer
-  gem5::OpuContext *opu_ctx;
+  ::gem5::OpuContext *opu_ctx;
 
  private:
   // clocks
@@ -188,7 +191,7 @@ class opu_sim : public gem5::OpuSimBase {
 
  protected:
   ///// data /////
-  class simt_core_cluster **m_cluster;
+  class opucore_cluster **m_cluster;
   class memory_partition_unit **m_memory_partition_unit;
   class memory_sub_partition **m_memory_sub_partition;
 
@@ -292,10 +295,11 @@ class opu_sim : public gem5::OpuSimBase {
 
 class exec_opu_sim : public opu_sim {
  public:
-  exec_opu_sim(opu_sim_config *config, gem5::OpuContext *ctx, gem5::OpuTop *opu_top = NULL )
+  exec_opu_sim(opu_sim_config *config, ::gem5::OpuContext *ctx, ::gem5::OpuTop *opu_top = NULL )
       : opu_sim(config, ctx, opu_top) {
     createSIMTCluster();
   }
 
   virtual void createSIMTCluster() override;
 };
+}
