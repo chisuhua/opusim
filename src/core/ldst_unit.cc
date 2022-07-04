@@ -447,7 +447,7 @@ void ldst_unit::init(/*mem_fetch_interface *icnt,
   m_stats = stats;
   m_sid = sid;
   m_tpc = tpc;
-  m_config = simtcore_config::getInstance();
+  m_config = g_opucore_config; // simtcore_config::getInstance();
 #define STRSIZE 1024
 #if 0
   char L1T_name[STRSIZE];

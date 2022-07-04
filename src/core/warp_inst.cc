@@ -11,14 +11,15 @@ address_type line_size_based_tag_func(address_type address,
 }
 
 warp_inst_t::warp_inst_t() {
-    m_uid = 0;
-    m_empty = true;
-    m_isatomic = false;
-    m_per_scalar_thread_valid = false;
-    m_mem_accesses_created = false;
-    m_cache_hit = false;
-    should_do_atomic = true;
-    m_config = simtcore_config::getInstance();
+  m_uid = 0;
+  m_empty = true;
+  m_isatomic = false;
+  m_per_scalar_thread_valid = false;
+  m_mem_accesses_created = false;
+  m_cache_hit = false;
+  should_do_atomic = true;
+  // m_config = simtcore_config::getInstance();
+  m_config = g_opucore_config;
 }
 
 void warp_inst_t::issue(const active_mask_t &mask, unsigned warp_id,

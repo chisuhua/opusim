@@ -58,12 +58,14 @@ class core_config {
   bool adaptive_cache_config;
 };
 
+extern simtcore_config *g_opucore_config;
+
 class simtcore_config : public core_config {
  public:
   simtcore_config() : core_config() {
     pipeline_widths_string = NULL;
   }
-
+/*
   static simtcore_config* getInstance() {
     static simtcore_config* config = nullptr;
     if (config == nullptr) {
@@ -72,7 +74,7 @@ class simtcore_config : public core_config {
     }
     return config;
   }
-
+*/
   void init() {
     int ntok = sscanf(opu_simt_core_pipeline_opt, "%d:%d",
                       &n_thread_per_shader, &warp_size);

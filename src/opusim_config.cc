@@ -7,9 +7,12 @@
 
 namespace opu {
 
+simtcore_config *g_opucore_config;
+
 // opu_sim_config::opu_sim_config(gem5::OpuContext *ctx) {
 opu_sim_config::opu_sim_config() {
   m_shader_config = new simtcore_config();
+  g_opucore_config = m_shader_config;
   m_valid = false;
   // opu_ctx = ctx;
 }
