@@ -118,7 +118,7 @@ OpuSimBase *OpuContext::gem5_opu_sim_init(OpuStream **p_opu_stream, gem5::OpuTop
         exit(-1);
     }
     //g_config = new opu_sim_config();
-    g_the_opu = make_opusim(g_config, this, opu_top);
+    g_the_opu = make_opusim(opu::g_config, this, opu_top);
   }
 
   m_opu_stream = new OpuStream(g_the_opu, true);
