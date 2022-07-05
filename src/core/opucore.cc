@@ -114,8 +114,8 @@ void exec_simt_core_ctx::create_shd_warp() {
   m_warp.resize(m_config->max_warps_per_shader);
   m_warp_state.resize(m_config->max_warps_per_shader);
   for (unsigned k = 0; k < m_config->max_warps_per_shader; ++k) {
-    // m_warp[k] = std::make_shared<warp_exec_t>(this, m_config->warp_size);
-    m_warp.emplace_back(std::move(std::make_shared<warp_exec_t>(this, m_config->warp_size)));
+    m_warp[k] = std::make_shared<warp_exec_t>(this, m_config->warp_size);
+    // m_warp.emplace_back(std::move(std::make_shared<warp_exec_t>(this, m_config->warp_size)));
     // m_warp[k] = new warp_exec_t(this, m_config->warp_size);
     m_warp_state[k] = new WarpState(512, 512, m_config->warp_size);
   }

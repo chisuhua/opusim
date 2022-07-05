@@ -273,7 +273,7 @@ void OpuTop::streamTick() {
 
     streamScheduled = false;
     // FIXME
-#if 0
+#if 1
     // launch operation on device if one is pending and can be run
     stream_operation op = streamManager->front();
     bool kickoff = op.do_operation(theOpuUsim);
