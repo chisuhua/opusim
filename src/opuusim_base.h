@@ -13,7 +13,7 @@ class KernelInfoBase;
 
 class OpuSimBase {
 public:
-    OpuSimBase(OpuTop *opu_top): opu_top(opu_top) {};
+    OpuSimBase(OpuTop *opu_top) :  opu_top(opu_top){};
     virtual OpuCoreBase* getSIMTCore(uint32_t id) = 0;
     virtual void init() = 0;
     virtual bool active() = 0;

@@ -43,6 +43,7 @@ SimObject('OpuCore.py')
 SimObject('OpuTop.py')
 SimObject('OpuLsq.py')
 
+Source('opusim_interface.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
 Source('opu_context.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
 Source('opu_stream.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
 Source('opu_core.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})

@@ -33,6 +33,7 @@
 #define TMPHACK
 #include "inc/KernelInfo.h"
 #undef TMPHACK
+#include "inc/KernelInfo.h"
 
 #include <math.h>
 #include <signal.h>
@@ -1766,6 +1767,11 @@ opu_sim* make_opusim(opu_sim_config *&config, ::gem5::OpuContext *ctx, ::gem5::O
   g_the_gpu = new exec_opu_sim(config, ctx, opu_top);
 
   return g_the_gpu;
+}
+
+::gem5::KernelInfoBase* make_kernel(DispatchInfo *disp_info) {
+    ::gem5::KernelInfoBase *kinfo = new KernelInfo(disp_info);
+  return kinfo;
 }
 
 }

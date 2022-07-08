@@ -1,9 +1,9 @@
 #include "opu_context.hh"
 #include "opu_stream.hh"
+#include "opusim_interface.hh"
 #include "../opuusim_base.h"
 #include "../opusim_config.h"
 #include <cstdio>
-#include <dlfcn.h>
 
 namespace opu {
 opu_sim_config *g_config {nullptr};
@@ -106,19 +106,10 @@ OpuSimBase *OpuContext::gem5_opu_sim_init(OpuStream **p_opu_stream, gem5::OpuTop
 {
   // the_gpgpusim->g_the_gpu_config = new gpgpu_sim_config(this);
   if (g_the_opu == nullptr) {
-    void* lib_handle = dlopen("libopusim.so", RTLD_NOW | RTLD_GLOBAL);
-    if (lib_handle == nullptr) {
-        printf("Failed to load libopusim.so, error - %sn\n", dlerror());
-        exit(-1);
-    }
-    pfn_make_opusim make_opusim = (pfn_make_opusim)dlsym(lib_handle, "make_opusim");
+    auto sim_intf = OpuSimInterface::GetInstance();
 
-    if (make_opusim == nullptr) {
-        printf("Failed to dlsym make_opusim, error - %sn\n", dlerror());
-        exit(-1);
-    }
     //g_config = new opu_sim_config();
-    g_the_opu = make_opusim(opu::g_config, this, opu_top);
+    g_the_opu = sim_intf->make_opusim(opu::g_config, this, opu_top);
   }
 
   m_opu_stream = new OpuStream(g_the_opu, true);

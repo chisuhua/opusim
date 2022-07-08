@@ -26,6 +26,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "opu_stream.hh"
+#include "opusim_interface.hh"
 // #include "cuda-sim/cuda-sim.h"
 #include "../opuusim_base.h"
 // #include "gpgpusim_entrypoint.h"
@@ -124,6 +125,12 @@ void Stream_st::print(FILE *fp)
     pthread_mutex_unlock(&m_lock);
 }
 
+stream_operation::stream_operation( ::DispatchInfo *disp_info, bool sim_mode, Stream_st *stream )
+{
+    auto sim_intf = OpuSimInterface::GetInstance();
+    m_kernel = sim_intf->make_kernel(disp_info);
+
+}
 
 bool stream_operation::do_operation( OpuSimBase *gpu )
 {
@@ -256,7 +263,7 @@ bool OpuStream::operation( bool * sim)
     bool check=check_finished_kernel();
     pthread_mutex_lock(&m_lock);
 //    if(check)m_gpu->print_stats();
-    stream_operation op =front();
+    stream_operation op = front();
     if(!op.do_operation( m_gpu )) //not ready to execute
     {
         //cancel operation

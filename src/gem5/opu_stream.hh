@@ -33,6 +33,8 @@
 #include <list>
 // #include "abstract_core.h"
 
+class DispatchInfo;
+
 namespace gem5 {
 class OpuSimBase;
 class KernelInfoBase;
@@ -143,6 +145,7 @@ public:
         m_done=false;
         launchTime = curTick();
     }
+    stream_operation( DispatchInfo *disp_info, bool sim_mode, struct Stream_st *stream );
     stream_operation( KernelInfoBase *kernel, bool sim_mode, struct Stream_st *stream )
     {
         m_type=stream_kernel_launch;
