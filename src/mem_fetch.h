@@ -75,7 +75,7 @@ class mem_fetch : public ::gem5::OpuMemfetch {
   unsigned get_data_size() const { return m_data_size; }
   void set_data_size(unsigned size) { m_data_size = size; }
   unsigned get_ctrl_size() const { return m_ctrl_size; }
-  unsigned size() const { return m_data_size + m_ctrl_size; }
+  unsigned size() const override { return m_data_size + m_ctrl_size; }
   bool is_write() { return m_access.is_write(); }
   void set_addr(address_type addr) { m_access.set_addr(addr); }
   address_type get_addr() const { return m_access.get_addr(); }
@@ -109,7 +109,7 @@ class mem_fetch : public ::gem5::OpuMemfetch {
     return m_access.get_sector_mask();
   }
 
-  address_type get_pc() const { return m_inst.empty() ? -1 : m_inst.pc; }
+  address_type get_pc() const override { return m_inst.empty() ? -1 : m_inst.pc; }
   const warp_inst_t &get_inst() { return m_inst; }
   enum mem_fetch_status get_status() const { return m_status; }
 

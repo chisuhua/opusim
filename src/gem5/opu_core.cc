@@ -432,7 +432,7 @@ OpuCore::recvLSQDataResp(PacketPtr pkt, int lane_id)
     DPRINTF(OpuCoreAccess, "Got a response for lane %d address 0x%llx\n",
             lane_id, pkt->req->getVaddr());
 
-    OpuWarpinst &inst = ((SenderState*)pkt->senderState)->inst;
+    const OpuWarpinst &inst = ((SenderState*)pkt->senderState)->inst;
     assert(!inst.empty() && inst.valid());
 
     if (pkt->isRead()) {

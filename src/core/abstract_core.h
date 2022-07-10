@@ -68,9 +68,9 @@ class core_t : public ::gem5::OpuCoreBase {
   unsigned get_warp_size() const { return m_warp_size; }
 
   virtual void cycle() {}; // = 0;
-  virtual bool ldst_unit_wb_inst(OpuWarpinst &inst) = 0;
+  virtual bool ldst_unit_wb_inst(const OpuWarpinst &inst) = 0;
   virtual void writeRegister(const OpuWarpinst &inst, unsigned warpSize, unsigned lane_id, char* data);
-  virtual void warp_reaches_barrier(OpuWarpinst &inst) = 0;
+  virtual void warp_reaches_barrier(const OpuWarpinst &inst) = 0;
   virtual bool fence_unblock_needed(unsigned warp_id)  = 0;
   virtual void complete_fence(unsigned warp_id) = 0;
 

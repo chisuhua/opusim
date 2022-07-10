@@ -775,8 +775,8 @@ void exec_simt_core_ctx::func_exec_inst(warp_inst_t &inst) {
 }
 
 // TODO schi add
-void simt_core_ctx::warp_reaches_barrier(OpuWarpinst &inst_) {
-    warp_inst_t &inst = dynamic_cast<warp_inst_t&>(inst_);
+void simt_core_ctx::warp_reaches_barrier(const OpuWarpinst &inst_) {
+    const warp_inst_t &inst = dynamic_cast<const warp_inst_t&>(inst_);
     m_barriers.warp_reaches_barrier(m_warp[inst.warp_id()]->get_cta_id(), inst.warp_id(), &inst);
 }
 
@@ -1372,10 +1372,11 @@ void simt_core_ctx::broadcast_barrier_reduction(unsigned cta_id,
 bool simt_core_ctx::fetch_unit_response_buffer_full() const { return false; }
 
 void simt_core_ctx::accept_fetch_response(::gem5::OpuMemfetch *mf) {
-#if 0
-  mf->set_status(IN_SHADER_FETCHED,
+#if 1
+  auto mf_ = dynamic_cast<mem_fetch*>(mf);
+  mf_->set_status(IN_SHADER_FETCHED,
                  m_opuusim->gpu_sim_cycle + m_opuusim->gpu_tot_sim_cycle);
-  m_L0C->fill(mf, m_opuusim->gpu_sim_cycle + m_opuusim->gpu_tot_sim_cycle);
+  m_L0C->fill(mf_, m_opuusim->gpu_sim_cycle + m_opuusim->gpu_tot_sim_cycle);
 #endif
 }
 
@@ -1467,8 +1468,8 @@ void simt_core_ctx::complete_fence(unsigned warp_id) {
     m_warp[warp_id]->clear_membar();
 }
 
-bool simt_core_ctx::ldst_unit_wb_inst(OpuWarpinst &inst) {
-    return m_ldst_unit->writebackInst(dynamic_cast<warp_inst_t&>(inst));
+bool simt_core_ctx::ldst_unit_wb_inst(const OpuWarpinst &inst) {
+    return m_ldst_unit->writebackInst(dynamic_cast<const warp_inst_t&>(inst));
 }
 
 void simt_core_ctx::inc_store_req(unsigned warp_id) { m_warp[warp_id]->inc_store_req(); }

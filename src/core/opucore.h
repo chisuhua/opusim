@@ -117,7 +117,7 @@ class simt_core_ctx : public core_t {
                                    warp_set_t warps);
 
   // TODO schi add
-  bool ldst_unit_wb_inst(OpuWarpinst &inst);
+  bool ldst_unit_wb_inst(const OpuWarpinst &inst);
 
   void set_kernel(KernelInfo *k) ;
 
@@ -154,7 +154,7 @@ class simt_core_ctx : public core_t {
   virtual bool warp_waiting_at_barrier(unsigned warp_id) const;
 
   // TODO schi add
-  void warp_reaches_barrier(OpuWarpinst &inst);
+  void warp_reaches_barrier(const OpuWarpinst &inst);
   bool fence_unblock_needed(unsigned warp_id) ;
   void complete_fence(unsigned warp_id) ;
 

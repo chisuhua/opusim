@@ -653,7 +653,7 @@ void ldst_unit::writeback() {
 
 
 // TODO schi add
-bool ldst_unit::writebackInst(warp_inst_t &inst)
+bool ldst_unit::writebackInst(const warp_inst_t &inst)
 {
     if (m_next_wb.empty()) {
         m_next_wb = inst;

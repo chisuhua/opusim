@@ -24,7 +24,7 @@ public:
 
   // individual warp hits barrier
   void warp_reaches_barrier(unsigned cta_id, unsigned warp_id,
-                            warp_inst_t *inst);
+                            const warp_inst_t *inst);
 
   // warp reaches exit
   void warp_exit(unsigned warp_id);

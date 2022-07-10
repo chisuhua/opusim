@@ -177,8 +177,8 @@ class OpuCore : public ClockedObject
 
     class SenderState : public Packet::SenderState {
     public:
-        SenderState(OpuWarpinst _inst) : inst(_inst) {}
-        OpuWarpinst inst;
+        SenderState(const OpuWarpinst &_inst) : inst(_inst) {}
+        const OpuWarpinst &inst;
     };
 
     const Params * params() const {

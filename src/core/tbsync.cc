@@ -73,7 +73,7 @@ void barrier_set_t::deallocate_barrier(unsigned cta_id) {
 
 // individual warp hits barrier
 void barrier_set_t::warp_reaches_barrier(unsigned cta_id, unsigned warp_id,
-                                         warp_inst_t *inst) {
+                                         const warp_inst_t *inst) {
   barrier_t bar_type = inst->bar_type;
   unsigned bar_id = inst->bar_id;
   unsigned bar_count = inst->bar_count;

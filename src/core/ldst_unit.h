@@ -35,7 +35,7 @@ public:
   // TODO schi add
   /// Inserts this instruction into the writeback stage of the pipeline
   /// Returns true if successful, false if there is an instruction blocking
-  bool writebackInst(warp_inst_t &inst);
+  bool writebackInst(const warp_inst_t &inst);
 
   // accessors
   virtual unsigned clock_multiplier() const;
