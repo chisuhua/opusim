@@ -70,32 +70,6 @@
 
 namespace opu {
 
-#if 0
-// extern opu_sim *g_the_gpu;
-mem_fetch *simt_core_mem_fetch_allocator::alloc(
-    address_type addr, mem_access_type type, unsigned size, bool wr,
-    unsigned long long cycle) const {
-  mem_access_t access(type, addr, size, wr, m_memory_config->opu_ctx);
-  mem_fetch *mf =
-      new mem_fetch(access, NULL, wr ? WRITE_PACKET_SIZE : READ_PACKET_SIZE, -1,
-                    m_core_id, m_cluster_id, m_memory_config, cycle);
-  return mf;
-}
-
-mem_fetch *simt_core_mem_fetch_allocator::alloc(
-    address_type addr, mem_access_type type, const active_mask_t &active_mask,
-    const mem_access_byte_mask_t &byte_mask,
-    const mem_access_sector_mask_t &sector_mask, unsigned size, bool wr,
-    unsigned long long cycle, unsigned wid, unsigned sid, unsigned tpc,
-    mem_fetch *original_mf) const {
-  mem_access_t access(type, addr, size, wr, active_mask, byte_mask, sector_mask,
-                      m_memory_config->opu_ctx);
-  mem_fetch *mf = new mem_fetch(
-      access, NULL, wr ? WRITE_PACKET_SIZE : READ_PACKET_SIZE, wid, m_core_id,
-      m_cluster_id, m_memory_config, cycle, original_mf);
-  return mf;
-}
-#endif
 /////////////////////////////////////////////////////////////////////////////
 
 std::list<unsigned> simt_core_ctx::get_regs_written(const warp_inst_t &fvt) const {
@@ -194,9 +168,9 @@ void simt_core_ctx::create_front_pipeline() {
   } else {
     m_icnt = new shader_memory_interface(this, m_cluster);
   }
-  m_mem_fetch_allocator =
-      new simt_core_mem_fetch_allocator(m_sid, m_tpc, m_memory_config);
 #endif
+  m_mem_fetch_allocator =
+      new simt_core_mem_fetch_allocator(m_sid, m_tpc, m_opuusim->opu_ctx);
   // fetch
   m_last_warp_fetched = 0;
 
@@ -478,9 +452,9 @@ void simt_core_ctx::create_exec_pipeline() {
     }
   }
 #if 1
-  m_ldst_unit = new ldst_unit(/*m_icnt, m_mem_fetch_allocator,*/ this,
+  m_ldst_unit = new ldst_unit(m_icnt, m_mem_fetch_allocator, this,
                               &m_operand_collector, m_scoreboard, m_config->smem_latency,
-                              /*m_memory_config, */m_stats, m_sid, m_tpc);
+                              /*m_memory_config, */m_stats, m_sid, m_tpc, true);
   m_fu.push_back(m_ldst_unit);
 #endif
   m_dispatch_port.push_back(ID_OC_MEM);
@@ -510,6 +484,7 @@ simt_core_ctx::simt_core_ctx(class opu_sim *opu,
       m_dynamic_warp_id(0) {
     // TODO schi 
     m_kernel_finishing = false;
+    m_kernel = nullptr;
 
   m_cluster = cluster;
   m_config = config;

@@ -1,5 +1,6 @@
 #include "opuconfig.h"
 #include "option_parser.h"
+#include <algorithm>
 
 #define TMPHACK
 #include "inc/KernelInfo.h"
@@ -7,12 +8,8 @@
 namespace opu {
 
 unsigned int simtcore_config::max_cta(const KernelInfo &k) const {
-    assert(false);
-}
-#if 0
-unsigned int simtcore_config::max_cta(const kernel_info_t &k) const {
   unsigned threads_per_cta = k.threads_per_cta();
-  const class function_info *kernel = k.entry();
+  // const class function_info *kernel = k.entry();
   unsigned int padded_cta_size = threads_per_cta;
   if (padded_cta_size % warp_size)
     padded_cta_size = ((padded_cta_size / warp_size) + 1) * (warp_size);
@@ -20,27 +17,27 @@ unsigned int simtcore_config::max_cta(const kernel_info_t &k) const {
   // Limit by n_threads/shader
   unsigned int result_thread = n_thread_per_shader / padded_cta_size;
 
-  const struct opu_ptx_sim_info *kernel_info = ptx_sim_kernel_info(kernel);
+  // const struct opu_ptx_sim_info *kernel_info = ptx_sim_kernel_info(kernel);
 
   // Limit by shmem/shader
   unsigned int result_shmem = (unsigned)-1;
-  if (kernel_info->smem > 0)
-    result_shmem = opu_shmem_size / kernel_info->smem;
+  if (k.get_shared_memsize() > 0)
+    result_shmem = opu_shmem_size / k.get_shared_memsize();
 
   // Limit by register count, rounded up to multiple of 4.
   unsigned int result_regs = (unsigned)-1;
-  if (kernel_info->regs > 0)
+  if (k.get_vreg_used() > 0)
     result_regs = opu_shader_registers /
-                  (padded_cta_size * ((kernel_info->regs + 3) & ~3));
+                  (padded_cta_size * ((k.get_vreg_used() + 3) & ~3));
 
   // Limit by CTA
   unsigned int result_cta = max_cta_per_core;
 
   unsigned result = result_thread;
-  result = gs_min2(result, result_shmem);
-  result = gs_min2(result, result_regs);
-  result = gs_min2(result, result_cta);
-
+  result = std::min(result, result_shmem);
+  result = std::min(result, result_regs);
+  result = std::min(result, result_cta);
+#if 0
   static const struct opu_ptx_sim_info *last_kinfo = NULL;
   if (last_kinfo !=
       kernel_info) {  // Only print out stats if kernel_info struct changes
@@ -52,7 +49,7 @@ unsigned int simtcore_config::max_cta(const kernel_info_t &k) const {
     if (result == result_cta) printf(" cta_limit");
     printf("\n");
   }
-
+#endif
   // gpu_max_cta_per_shader is limited by number of CTAs if not enough to keep
   // all cores busy
   if (k.num_blocks() < result * num_shader()) {
@@ -77,14 +74,14 @@ unsigned int simtcore_config::max_cta(const kernel_info_t &k) const {
   if (adaptive_cache_config && !k.cache_config_set) {
     // For more info about adaptive cache, see
     // https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#shared-memory-7-x
-    unsigned total_shmem = kernel_info->smem * result;
+    unsigned total_shmem = k.get_shared_memsize() * result;
     assert(total_shmem >= 0 && total_shmem <= shmem_opt_list.back());
 
     // Unified cache config is in KB. Converting to B
-    unsigned total_unified = m_L1D_config.m_unified_cache_size * 1024;
+    unsigned total_unified = m_L0V_config.m_unified_cache_size * 1024;
 
-    bool l1d_configured = false;
-    unsigned max_assoc = m_L1D_config.get_max_assoc();
+    bool l0v_configured = false;
+    unsigned max_assoc = m_L0V_config.get_max_assoc();
 
     for (std::vector<unsigned>::const_iterator it = shmem_opt_list.begin();
          it < shmem_opt_list.end(); it++) {
@@ -93,41 +90,40 @@ unsigned int simtcore_config::max_cta(const kernel_info_t &k) const {
         // make sure the ratio is between 0 and 1
         assert(0 <= l1_ratio && l1_ratio <= 1);
         // round to nearest instead of round down
-        m_L1D_config.set_assoc(max_assoc * l1_ratio + 0.5f);
-        l1d_configured = true;
+        m_L0V_config.set_assoc(max_assoc * l1_ratio + 0.5f);
+        l0v_configured = true;
         break;
       }
     }
 
-    assert(l1d_configured && "no shared memory option found");
+    assert(l0v_configured && "no shared memory option found");
 
-    if (m_L1D_config.is_streaming()) {
+    if (m_L0V_config.is_streaming()) {
       // for streaming cache, if the whole memory is allocated
       // to the L1 cache, then make the allocation to be on_MISS
       // otherwise, make it ON_FILL to eliminate line allocation fails
       // i.e. MSHR throughput is the same, independent on the L1 cache
       // size/associativity
       if (total_shmem == 0) {
-        m_L1D_config.set_allocation_policy(ON_MISS);
+        m_L0V_config.set_allocation_policy(ON_MISS);
         printf("GPGPU-Sim: Reconfigure L1 allocation to ON_MISS\n");
       } else {
-        m_L1D_config.set_allocation_policy(ON_FILL);
+        m_L0V_config.set_allocation_policy(ON_FILL);
         printf("GPGPU-Sim: Reconfigure L1 allocation to ON_FILL\n");
       }
     }
     printf("GPGPU-Sim: Reconfigure L1 cache to %uKB\n",
-           m_L1D_config.get_total_size_inKB());
+           m_L0V_config.get_total_size_inKB());
 
     k.cache_config_set = true;
   }
 
   return result;
 }
-#endif
 
 void simtcore_config::set_pipeline_latency() {
   // calculate the max latency  based on the input
-#if 0
+#if 1
   unsigned int_latency[6];
   unsigned fp_latency[5];
   unsigned dp_latency[5];
@@ -165,6 +161,61 @@ void simtcore_config::set_pipeline_latency() {
 #endif
 }
 void simtcore_config::reg_options(class OptionParser *opp) {
+  option_parser_register(
+      opp, "-opcode_latency_int", OPT_CSTR, &opcode_latency_int,
+      "Opcode latencies for integers <ADD,MAX,MUL,MAD,DIV,SHFL>"
+      "Default 1,1,19,25,145,32",
+      "1,1,19,25,145,32");
+  option_parser_register(opp, "-opcode_latency_fp", OPT_CSTR,
+                         &opcode_latency_fp,
+                         "Opcode latencies for single precision floating "
+                         "points <ADD,MAX,MUL,MAD,DIV>"
+                         "Default 1,1,1,1,30",
+                         "1,1,1,1,30");
+  option_parser_register(opp, "-opcode_latency_dp", OPT_CSTR,
+                         &opcode_latency_dp,
+                         "Opcode latencies for double precision floating "
+                         "points <ADD,MAX,MUL,MAD,DIV>"
+                         "Default 8,8,8,8,335",
+                         "8,8,8,8,335");
+  option_parser_register(opp, "-opcode_latency_sfu", OPT_CSTR,
+                         &opcode_latency_sfu,
+                         "Opcode latencies for SFU instructions"
+                         "Default 8",
+                         "8");
+  option_parser_register(opp, "-opcode_latency_tesnor", OPT_CSTR,
+                         &opcode_latency_tensor,
+                         "Opcode latencies for Tensor instructions"
+                         "Default 64",
+                         "64");
+  option_parser_register(
+      opp, "-opcode_initiation_int", OPT_CSTR, &opcode_initiation_int,
+      "Opcode initiation intervals for integers <ADD,MAX,MUL,MAD,DIV,SHFL>"
+      "Default 1,1,4,4,32,4",
+      "1,1,4,4,32,4");
+  option_parser_register(opp, "-opcode_initiation_fp", OPT_CSTR,
+                         &opcode_initiation_fp,
+                         "Opcode initiation intervals for single precision "
+                         "floating points <ADD,MAX,MUL,MAD,DIV>"
+                         "Default 1,1,1,1,5",
+                         "1,1,1,1,5");
+  option_parser_register(opp, "-opcode_initiation_dp", OPT_CSTR,
+                         &opcode_initiation_dp,
+                         "Opcode initiation intervals for double precision "
+                         "floating points <ADD,MAX,MUL,MAD,DIV>"
+                         "Default 8,8,8,8,130",
+                         "8,8,8,8,130");
+  option_parser_register(opp, "-opcode_initiation_sfu", OPT_CSTR,
+                         &opcode_initiation_sfu,
+                         "Opcode initiation intervals for sfu instructions"
+                         "Default 8",
+                         "8");
+  option_parser_register(opp, "-opcode_initiation_tensor", OPT_CSTR,
+                         &opcode_initiation_tensor,
+                         "Opcode initiation intervals for tensor instructions"
+                         "Default 64",
+                         "64");
+
   //option_parser_register(opp, "-opu_simd_model", OPT_INT32, &model,
   //                       "1 = post-dominator", "1");
   option_parser_register(

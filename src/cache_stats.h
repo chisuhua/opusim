@@ -18,10 +18,10 @@ class cache_stats {
   void clear();
   // Clear AerialVision cache stats after each window
   void clear_pw();
-  // void inc_stats(int access_type, int access_outcome);
+  void inc_stats(int access_type, int access_outcome);
   // Increment AerialVision cache stats
   void inc_stats_pw(int access_type, int access_outcome);
-  // void inc_fail_stats(int access_type, int fail_outcome);
+  void inc_fail_stats(int access_type, int fail_outcome);
   enum cache_request_status select_stats_status(
       enum cache_request_status probe, enum cache_request_status access) const;
   unsigned long long &operator()(int access_type, int access_outcome,

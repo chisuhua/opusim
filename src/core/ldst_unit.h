@@ -2,6 +2,7 @@
 #include "funit.h"
 #include "stats.h"
 #include <list>
+#include <queue>
 
 namespace opu {
 
@@ -14,8 +15,8 @@ class l1_cache;
 
 class ldst_unit: public pipelined_simd_unit {
 public:
-  ldst_unit(/*mem_fetch_interface *icnt,
-            simt_core_mem_fetch_allocator *mf_allocator,*/
+  ldst_unit(mem_fetch_interface *icnt,
+            simt_core_mem_fetch_allocator *mf_allocator,
             simt_core_ctx *core, opndcoll_rfu_t *operand_collector,
             Scoreboard *scoreboard, uint32_t smem_latency,
             simt_core_stats *stats,
@@ -70,8 +71,8 @@ protected:
             /*simt_core_stats *stats,*/
             unsigned sid, unsigned tpc);
 #endif
-  void init(/*mem_fetch_interface *icnt,
-            simt_core_mem_fetch_allocator *mf_allocator,*/
+  void init(mem_fetch_interface *icnt,
+            simt_core_mem_fetch_allocator *mf_allocator,
             simt_core_ctx *core, opndcoll_rfu_t *operand_collector,
             Scoreboard *scoreboard,
             simt_core_stats *stats,
@@ -102,8 +103,8 @@ protected:
 #endif
   simtcore_config *m_config;
   // const memory_config *m_memory_config;
-  // class mem_fetch_interface *m_icnt;
-  // simt_core_mem_fetch_allocator *m_mf_allocator;
+  mem_fetch_interface *m_icnt;
+  simt_core_mem_fetch_allocator *m_mf_allocator;
   class simt_core_ctx *m_core;
   unsigned m_sid;
   unsigned m_tpc;
@@ -133,7 +134,7 @@ protected:
   unsigned long long m_last_inst_gpu_sim_cycle;
   unsigned long long m_last_inst_gpu_tot_sim_cycle;
 
-  // std::vector<std::deque<mem_fetch *>> l1_latency_queue;
+  std::vector<std::deque<mem_fetch *>> l1_latency_queue;
   // void L1_latency_queue_cycle();
 };
 

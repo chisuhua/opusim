@@ -12,6 +12,8 @@
 #include "cache_common.h"
 
 namespace opu {
+class opu_sim;
+
 struct evicted_block_info {
   address_type m_block_addr;
   unsigned m_modified_size;
@@ -1345,7 +1347,7 @@ class data_cache : public baseline_cache {
   data_cache(const char *name, cache_config &config, int core_id, int type_id,
              mem_fetch_interface *memport, mem_fetch_allocator *mfcreator,
              enum mem_fetch_status status, mem_access_type wr_alloc_type,
-             mem_access_type wrbk_type, class gpgpu_sim *gpu)
+             mem_access_type wrbk_type, opu_sim *gpu)
       : baseline_cache(name, config, core_id, type_id, memport, status) {
     init(mfcreator);
     m_wr_alloc_type = wr_alloc_type;
@@ -1416,7 +1418,7 @@ class data_cache : public baseline_cache {
              mem_fetch_interface *memport, mem_fetch_allocator *mfcreator,
              enum mem_fetch_status status, tag_array *new_tag_array,
              mem_access_type wr_alloc_type, mem_access_type wrbk_type,
-             class gpgpu_sim *gpu)
+             opu_sim *gpu)
       : baseline_cache(name, config, core_id, type_id, memport, status,
                        new_tag_array) {
     init(mfcreator);
@@ -1427,9 +1429,8 @@ class data_cache : public baseline_cache {
 
   mem_access_type m_wr_alloc_type;  // Specifies type of write allocate request
                                     // (e.g., L1 or L2)
-  mem_access_type
-      m_wrbk_type;  // Specifies type of writeback request (e.g., L1 or L2)
-  class gpgpu_sim *m_gpu;
+  mem_access_type m_wrbk_type;  // Specifies type of writeback request (e.g., L1 or L2)
+  opu_sim *m_gpu;
 
   //! A general function that takes the result of a tag_array probe
   //  and performs the correspding functions based on the cache configuration
@@ -1535,7 +1536,7 @@ class l1_cache : public data_cache {
  public:
   l1_cache(const char *name, cache_config &config, int core_id, int type_id,
            mem_fetch_interface *memport, mem_fetch_allocator *mfcreator,
-           enum mem_fetch_status status, class gpgpu_sim *gpu)
+           enum mem_fetch_status status, opu_sim *gpu)
       : data_cache(name, config, core_id, type_id, memport, mfcreator, status,
                    L1_WR_ALLOC_R, L1_WRBK_ACC, gpu) {}
 
@@ -1549,7 +1550,7 @@ class l1_cache : public data_cache {
   l1_cache(const char *name, cache_config &config, int core_id, int type_id,
            mem_fetch_interface *memport, mem_fetch_allocator *mfcreator,
            enum mem_fetch_status status, tag_array *new_tag_array,
-           class gpgpu_sim *gpu)
+           opu_sim *gpu)
       : data_cache(name, config, core_id, type_id, memport, mfcreator, status,
                    new_tag_array, L1_WR_ALLOC_R, L1_WRBK_ACC, gpu) {}
 };

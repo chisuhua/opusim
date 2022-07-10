@@ -130,6 +130,11 @@ stream_operation::stream_operation( ::DispatchInfo *disp_info, bool sim_mode, St
     auto sim_intf = OpuSimInterface::GetInstance();
     m_kernel = sim_intf->make_kernel(disp_info);
 
+    m_type = stream_kernel_launch;
+    m_sim_mode = sim_mode;
+    m_stream = stream;
+    m_done = false;
+    launchTime = curTick();
 }
 
 bool stream_operation::do_operation( OpuSimBase *gpu )

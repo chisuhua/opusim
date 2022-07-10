@@ -2,6 +2,20 @@
 #include <bitset>
 #include "simt_common.h"
 
+
+/* READ_PACKET_SIZE:
+   bytes: 6 address (flit can specify chanel so this gives up to ~2GB/channel,
+   so good for now), 2 bytes   [shaderid + mshrid](14 bits) + req_size(0-2 bits
+   if req_size variable) - so up to 2^14 = 16384 mshr total
+ */
+
+#define READ_PACKET_SIZE 8
+
+// WRITE_PACKET_SIZE: bytes: 6 address, 2 miscelaneous.
+#define WRITE_PACKET_SIZE 8
+
+#define WRITE_MASK_SIZE 8
+
 namespace gem5 {
 class OpuContext;
 }
@@ -154,5 +168,28 @@ public:
                            mem_fetch *original_mf) const = 0;
 };
 
+class simt_core_mem_fetch_allocator : public mem_fetch_allocator {
+ public:
+  simt_core_mem_fetch_allocator(unsigned core_id, unsigned cluster_id, gem5::OpuContext* ctx) {
+    m_core_id = core_id;
+    m_cluster_id = cluster_id;
+    m_ctx = ctx;
+  }
+  mem_fetch *alloc(address_type addr, mem_access_type type, unsigned size,
+                   bool wr, unsigned long long cycle) const;
+  mem_fetch *alloc(address_type addr, mem_access_type type,
+                   const active_mask_t &active_mask,
+                   const mem_access_byte_mask_t &byte_mask,
+                   const mem_access_sector_mask_t &sector_mask, unsigned size,
+                   bool wr, unsigned long long cycle, unsigned wid,
+                   unsigned sid, unsigned tpc, mem_fetch *original_mf) const;
+  mem_fetch *alloc(const warp_inst_t &inst, const mem_access_t &access,
+                   unsigned long long cycle) const ;
+
+private:
+  unsigned m_core_id;
+  unsigned m_cluster_id;
+  ::gem5::OpuContext  *m_ctx;
+};
 
 }

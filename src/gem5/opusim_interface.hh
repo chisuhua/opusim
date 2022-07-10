@@ -12,10 +12,10 @@ class OpuContext;
 class OpuTop;
 }
 
-namespace gem5 {
+extern "C" typedef gem5::OpuSimBase* (*pfn_make_opusim)(opu::opu_sim_config* &config, gem5::OpuContext *ctx, gem5::OpuTop *);
+extern "C" typedef gem5::KernelInfoBase* (*pfn_make_kernel)(DispatchInfo *disp_info);
 
-extern "C" typedef OpuSimBase* (*pfn_make_opusim)(opu::opu_sim_config* &config, gem5::OpuContext *ctx, gem5::OpuTop *);
-extern "C" typedef KernelInfoBase* (*pfn_make_kernel)(DispatchInfo *disp_info);
+namespace gem5 {
 
 class OpuSimInterface {
 public:

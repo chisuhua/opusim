@@ -56,6 +56,8 @@ void warp_inst_t::set_not_active(unsigned lane_id) {
   m_warp_active_mask.reset(lane_id);
 }
 
+bool warp_inst_t::valid() const { return m_instruction->valid();};
+
 void warp_inst_t::set_active(const active_mask_t &active) {
   m_warp_active_mask = active;
   if (m_isatomic) {

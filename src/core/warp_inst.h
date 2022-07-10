@@ -74,6 +74,26 @@ public:
       m_per_scalar_thread[n].memreqaddr[i] = addr[i];
   }
 
+  address_type get_addr(unsigned n) const override {
+    assert(m_per_scalar_thread_valid);
+    return m_per_scalar_thread[n].memreqaddr[0];
+  }
+
+  const uint8_t *get_data( unsigned n ) const override
+  {
+    assert( m_per_scalar_thread_valid );
+    assert( m_per_scalar_thread[n].data_valid );
+    return &(m_per_scalar_thread[n].data[0]);
+  }
+
+  bool active(unsigned thread) const override { return m_warp_active_mask.test(thread); }
+  bool valid() const override ;
+  bool empty() const override { return m_empty;};
+  unsigned active_count() const override { return m_warp_active_mask.count(); }
+
+  bool isatomic() const override { return m_isatomic; }
+  uint32_t warp_size() const override { return MAX_WARP_SIZE;};
+
   // TODO schi add
   void set_data( unsigned n, const uint8_t *_data )
   {

@@ -41,7 +41,7 @@ void cache_stats::clear_pw() {
   }
 }
 
-#if 0
+#if 1
 void cache_stats::inc_stats(int access_type, int access_outcome) {
   ///
   /// Increment the stat corresponding to (access_type, access_outcome) by 1.
@@ -62,7 +62,7 @@ void cache_stats::inc_stats_pw(int access_type, int access_outcome) {
   m_stats_pw[access_type][access_outcome]++;
 }
 
-#if 0
+#if 1
 void cache_stats::inc_fail_stats(int access_type, int fail_outcome) {
   if (!check_fail_valid(access_type, fail_outcome))
     assert(0 && "Unknown cache access type or access fail");
