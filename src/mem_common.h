@@ -1,4 +1,8 @@
 #pragma once
+#ifndef __MEM_COMMON_H__
+#define __MEM_COMMON_H__
+
+
 #include <bitset>
 #include "simt_common.h"
 
@@ -53,6 +57,8 @@ class mem_access_t {
     m_addr = address;
     m_req_size = size;
     m_write = wr;
+    // TODO schi add it
+    for (unsigned i = 0; i < size; i++) m_byte_mask.set(i);
   }
   mem_access_t(mem_access_type type, address_type address, unsigned size,
                bool wr, const active_mask_t &active_mask,
@@ -193,3 +199,4 @@ private:
 };
 
 }
+#endif

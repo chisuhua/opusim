@@ -143,10 +143,10 @@ tag_array::tag_array(cache_config &config, int core_id, int type_id)
   m_lines = new cache_block_t *[cache_lines_num];
   if (config.m_cache_type == NORMAL) {
     for (unsigned i = 0; i < cache_lines_num; ++i)
-      m_lines[i] = new line_cache_block();
+      m_lines[i] = new line_cache_block(config.m_line_sz);
   } else if (config.m_cache_type == SECTOR) {
     for (unsigned i = 0; i < cache_lines_num; ++i)
-      m_lines[i] = new sector_cache_block();
+      m_lines[i] = new sector_cache_block(config.m_line_sz);
   } else
     assert(0);
 
@@ -352,12 +352,12 @@ enum cache_request_status tag_array::access(address_type addr, unsigned time,
 void tag_array::fill(address_type addr, unsigned time, mem_fetch *mf,
                      bool is_write) {
   fill(addr, time, mf->get_access_sector_mask(), mf->get_access_byte_mask(),
-       is_write);
+       is_write, mf->get_data_ptr());
 }
 
 void tag_array::fill(address_type addr, unsigned time,
                      mem_access_sector_mask_t mask,
-                     mem_access_byte_mask_t byte_mask, bool is_write) {
+                     mem_access_byte_mask_t byte_mask, bool is_write, uint8_t *data) {
   // assert( m_config.m_alloc_policy == ON_FILL );
   unsigned idx;
   enum cache_request_status status = probe(addr, idx, mask, is_write);
@@ -375,7 +375,7 @@ void tag_array::fill(address_type addr, unsigned time,
     m_dirty--;
   }
   before = m_lines[idx]->is_modified_line();
-  m_lines[idx]->fill(time, mask, byte_mask);
+  m_lines[idx]->fill(time, mask, byte_mask, data);
   if (m_lines[idx]->is_modified_line() && !before) {
     m_dirty++;
   }
@@ -384,7 +384,7 @@ void tag_array::fill(address_type addr, unsigned time,
 void tag_array::fill(unsigned index, unsigned time, mem_fetch *mf) {
   assert(m_config.m_alloc_policy == ON_MISS);
   bool before = m_lines[index]->is_modified_line();
-  m_lines[index]->fill(time, mf->get_access_sector_mask(), mf->get_access_byte_mask());
+  m_lines[index]->fill(time, mf->get_access_sector_mask(), mf->get_access_byte_mask(), mf->get_data_ptr());
   if (m_lines[index]->is_modified_line() && !before) {
     m_dirty++;
   }
@@ -651,6 +651,7 @@ void baseline_cache::cycle() {
 /// Interface for response from lower memory level (model bandwidth restictions
 /// in caller)
 void baseline_cache::fill(mem_fetch *mf, unsigned time) {
+#if 0
   if (m_config.m_mshr_type == SECTOR_ASSOC) {
     assert(mf->get_original_mf());
     extra_mf_fields_lookup::iterator e =
@@ -668,7 +669,7 @@ void baseline_cache::fill(mem_fetch *mf, unsigned time) {
       delete temp;
     }
   }
-
+#endif
   extra_mf_fields_lookup::iterator e = m_extra_mf_fields.find(mf);
   assert(e != m_extra_mf_fields.end());
   assert(e->second.m_valid);

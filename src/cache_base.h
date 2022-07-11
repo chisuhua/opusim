@@ -59,16 +59,17 @@ struct cache_event {
 const char *cache_request_status_str(enum cache_request_status status);
 
 struct cache_block_t {
-  cache_block_t() {
+  cache_block_t(uint32_t line_sz) {
     m_tag = 0;
     m_block_addr = 0;
+    m_data.resize(line_sz);
   }
 
   virtual void allocate(address_type tag, address_type block_addr,
                         unsigned time,
                         mem_access_sector_mask_t sector_mask) = 0;
   virtual void fill(unsigned time, mem_access_sector_mask_t sector_mask,
-                    mem_access_byte_mask_t byte_mask) = 0;
+                    mem_access_byte_mask_t byte_mask, uint8_t *data) = 0;
 
   virtual bool is_invalid_line() = 0;
   virtual bool is_valid_line() = 0;
@@ -103,10 +104,11 @@ struct cache_block_t {
 
   address_type m_tag;
   address_type m_block_addr;
+  std::vector<uint8_t> m_data;
 };
 
 struct line_cache_block : public cache_block_t {
-  line_cache_block() {
+  line_cache_block(uint32_t line_sz) : cache_block_t(line_sz) {
     m_alloc_time = 0;
     m_fill_time = 0;
     m_last_access_time = 0;
@@ -130,7 +132,7 @@ struct line_cache_block : public cache_block_t {
     m_set_byte_mask_on_fill = false;
   }
   virtual void fill(unsigned time, mem_access_sector_mask_t sector_mask,
-                    mem_access_byte_mask_t byte_mask) {
+                    mem_access_byte_mask_t byte_mask, uint8_t *data) {
     // if(!m_ignore_on_fill_status)
     //	assert( m_status == RESERVED );
 
@@ -140,6 +142,11 @@ struct line_cache_block : public cache_block_t {
     if (m_set_byte_mask_on_fill) set_byte_mask(byte_mask);
 
     m_fill_time = time;
+    for (uint32_t i=0; i < m_data.size(); i++) {
+        if (byte_mask.test(i)) {
+            m_data[i] = data[i];
+        }
+    }
   }
   virtual bool is_invalid_line() { return m_status == INVALID; }
   virtual bool is_valid_line() { return m_status == VALID; }
@@ -219,7 +226,7 @@ struct line_cache_block : public cache_block_t {
 };
 
 struct sector_cache_block : public cache_block_t {
-  sector_cache_block() { init(); }
+  sector_cache_block(uint32_t line_sz) : cache_block_t(line_sz) { init(); }
 
   void init() {
     for (unsigned i = 0; i < SECTOR_CHUNCK_SIZE; ++i) {
@@ -297,7 +304,7 @@ struct sector_cache_block : public cache_block_t {
   }
 
   virtual void fill(unsigned time, mem_access_sector_mask_t sector_mask,
-                    mem_access_byte_mask_t byte_mask) {
+                    mem_access_byte_mask_t byte_mask, uint8_t *data) {
     unsigned sidx = get_sector_index(sector_mask);
 
     //	if(!m_ignore_on_fill_status[sidx])
@@ -312,6 +319,13 @@ struct sector_cache_block : public cache_block_t {
 
     m_sector_fill_time[sidx] = time;
     m_line_fill_time = time;
+
+    // FIXME
+    for (uint32_t i=0; i < m_data.size(); i++) {
+      if (byte_mask.test(i)) {
+        m_data[i] = data[i];
+      }
+    }
   }
   virtual bool is_invalid_line() {
     // all the sectors should be invalid
@@ -884,7 +898,7 @@ class tag_array {
   void fill(address_type addr, unsigned time, mem_fetch *mf, bool is_write);
   void fill(unsigned idx, unsigned time, mem_fetch *mf);
   void fill(address_type addr, unsigned time, mem_access_sector_mask_t mask,
-            mem_access_byte_mask_t byte_mask, bool is_write);
+            mem_access_byte_mask_t byte_mask, bool is_write, uint8_t *data);
 
   unsigned size() const { return m_config.get_num_lines(); }
   cache_block_t *get_block(unsigned idx) { return m_lines[idx]; }
@@ -1210,12 +1224,13 @@ class baseline_cache : public cache_t {
   // filling the cache on cudamemcopies. We don't care about anything other than
   // L2 state after the memcopy - so just force the tag array to act as though
   // something is read or written without doing anything else.
+#if 0
   void force_tag_access(address_type addr, unsigned time,
                         mem_access_sector_mask_t mask) {
     mem_access_byte_mask_t byte_mask;
     m_tag_array->fill(addr, time, mask, byte_mask, true);
   }
-
+#endif
  protected:
   // Constructor that can be used by derived classes with custom tag arrays
   baseline_cache(const char *name, cache_config &config, int core_id,

@@ -1,4 +1,8 @@
 #pragma once
+#ifndef __MEM_FETCH_H__
+#define __MEM_FETCH_H__
+
+
 #include "mem_common.h"
 #include "core/warp_inst.h"
 #include "opucore_base.h"
@@ -73,7 +77,8 @@ class mem_fetch : public ::gem5::OpuMemfetch {
   //   m_raw_addr.sub_partition = sub_partition_id;
   // }
   unsigned get_data_size() const { return m_data_size; }
-  void set_data_size(unsigned size) { m_data_size = size; }
+  void set_data_size(unsigned size) { m_data_size = size; m_data.resize(size); }
+  uint8_t *get_data_ptr() override { return &m_data[0]; }
   unsigned get_ctrl_size() const { return m_ctrl_size; }
   unsigned size() const override { return m_data_size + m_ctrl_size; }
   bool is_write() { return m_access.is_write(); }
@@ -132,6 +137,8 @@ private:
   // request type, address, size, mask
   mem_access_t m_access;
   unsigned m_data_size;  // how much data is being written
+  std::vector<uint8_t> m_data;
+
   unsigned
       m_ctrl_size;  // how big would all this meta data be in hardware (does not
                     // necessarily match actual size of mem_fetch)
@@ -166,3 +173,4 @@ private:
 };
 
 }
+#endif

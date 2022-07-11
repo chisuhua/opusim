@@ -16,6 +16,7 @@ class OpuMemfetch {
  public:
   virtual uint32_t size() const = 0; // { return data_size;};
   virtual uint64_t get_pc() const = 0; // { return pc; };
+  virtual uint8_t *get_data_ptr() = 0; // { return pc; };
   // uint32_t data_size;
   // uint64_t pc;
 };
