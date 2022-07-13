@@ -93,8 +93,8 @@ int32_t warp_inst_t::out(uint32_t t) const {
 
 int32_t warp_inst_t::outcount() const {
   int32_t range = 0;
-  for (int dst = 0; dst <= m_instruction->num_dst_operands; dst++) {
-    range += m_instruction->getOperand(Operand::SRC0)->reg_.range_;
+  for (int dst = 0; dst < m_instruction->num_dst_operands; dst++) {
+    range += m_instruction->getOperand(Operand::DST)->reg_.range_;
   }
   return range;
 }
@@ -122,7 +122,7 @@ int32_t warp_inst_t::in(uint32_t t) const {
 
 int32_t warp_inst_t::incount() const {
   int32_t range = 0;
-  for (int src = 0; src <= m_instruction->num_src_operands; src++) {
+  for (int src = 0; src < m_instruction->num_src_operands; src++) {
     range += m_instruction->operands_[src]->reg_.range_;
   }
   return range;

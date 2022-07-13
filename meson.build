@@ -30,9 +30,11 @@ pre_args = [
 extra_cpp_args = ['-Wall', '-std=c++17']
 
 if buildtype == 'release'
-  extra_cpp_args += ['-O3', '-g', '-Wno-strict-aliasing', '-msse4.1', '-flto', '-D_GLIBCXX_DEBUG']
+  #extra_cpp_args += ['-O3', '-g', '-Wno-strict-aliasing', '-msse4.1', '-flto', '-D_GLIBCXX_DEBUG']
+  extra_cpp_args += ['-O3', '-g', '-Wno-strict-aliasing', '-msse4.1', '-flto']
 else
-  extra_cpp_args += ['-O0', '-g', '-Wno-strict-aliasing', '-msse4.1', '-D_GLIBCXX_DEBUG']
+  #extra_cpp_args += ['-O0', '-g', '-Wno-strict-aliasing', '-msse4.1', '-D_GLIBCXX_DEBUG']
+  extra_cpp_args += ['-O0', '-g', '-Wno-strict-aliasing', '-msse4.1' ]
 endif
 
 extra_c_args = extra_cpp_args
