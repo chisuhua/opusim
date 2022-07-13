@@ -88,27 +88,27 @@ uint32_t warp_inst_t::get_num_regs()  const {
 }
 
 int32_t warp_inst_t::out(uint32_t t) const {
-  int32_t reg_idx = m_instruction->operands_[Operand::DST]->getRegIdx(t);
+  int32_t reg_idx = m_instruction->getOperand(Operand::DST)->getRegIdx(t);
 }
 
 int32_t warp_inst_t::outcount() const {
   int32_t range = 0;
   for (int dst = 0; dst <= m_instruction->num_dst_operands; dst++) {
-    range += m_instruction->operands_[Operand::SRC0]->reg_.range_;
+    range += m_instruction->getOperand(Operand::SRC0)->reg_.range_;
   }
   return range;
 }
 
 int32_t warp_inst_t::in(uint32_t t) const {
   int32_t reg_idx = -1;
-  int32_t reg0_idx = m_instruction->operands_[Operand::SRC0]->reg_.reg_idx_;
-  int32_t reg1_idx = m_instruction->operands_[Operand::SRC1]->reg_.reg_idx_;
-  int32_t reg2_idx = m_instruction->operands_[Operand::SRC2]->reg_.reg_idx_;
-  int32_t reg3_idx = m_instruction->operands_[Operand::SRC3]->reg_.reg_idx_;
-  int32_t reg0_range = m_instruction->operands_[Operand::SRC0]->reg_.range_;
-  int32_t reg1_range = m_instruction->operands_[Operand::SRC1]->reg_.range_;
-  int32_t reg2_range = m_instruction->operands_[Operand::SRC2]->reg_.range_;
-  int32_t reg3_range = m_instruction->operands_[Operand::SRC3]->reg_.range_;
+  int32_t reg0_idx = m_instruction->getOperand(Operand::SRC0)->reg_.reg_idx_;
+  int32_t reg1_idx = m_instruction->getOperand(Operand::SRC1)->reg_.reg_idx_;
+  int32_t reg2_idx = m_instruction->getOperand(Operand::SRC2)->reg_.reg_idx_;
+  int32_t reg3_idx = m_instruction->getOperand(Operand::SRC3)->reg_.reg_idx_;
+  int32_t reg0_range = m_instruction->getOperand(Operand::SRC0)->reg_.range_;
+  int32_t reg1_range = m_instruction->getOperand(Operand::SRC1)->reg_.range_;
+  int32_t reg2_range = m_instruction->getOperand(Operand::SRC2)->reg_.range_;
+  int32_t reg3_range = m_instruction->getOperand(Operand::SRC3)->reg_.range_;
 
   if (t < reg0_range) { return reg0_idx + t;}
   t -= reg0_range;

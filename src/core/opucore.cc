@@ -65,6 +65,7 @@
 #include "inc/WarpState.h"
 #define TMPHACK
 #include "inc/KernelInfo.h"
+#include "inc/Instruction.h"
 
 #define PRIORITIZE_MSHR_OVER_WB 1
 
@@ -612,12 +613,19 @@ float simt_core_ctx::get_current_occupancy(unsigned long long &active,
 
 #endif
 
-const warp_inst_t *exec_simt_core_ctx::get_next_inst(unsigned warp_id,
+const warp_inst_t *exec_simt_core_ctx::get_next_inst(ifetch_buffer_t& ibuffer,
                                                        address_type pc) {
   // read the inst from the functional model
   // return m_opuusim->opu_ctx->ptx_fetch_inst(pc);
-  // FIXME
-  return nullptr;
+  address_type pos = pc - ibuffer.m_pc;
+  uint64_t opcode = *(uint64_t*)(&ibuffer.opcode[pos]);
+  std::shared_ptr<Instruction> inst = make_instruction(opcode);
+  inst->pc = pc;
+  inst->Decode(opcode);
+  inst->print();
+  warp_inst_t* winst = new warp_inst_t();
+  winst->m_instruction = inst;
+  return winst;
 }
 
 void exec_simt_core_ctx::get_pdom_stack_top_info(unsigned warp_id,
@@ -636,13 +644,13 @@ void simt_core_ctx::decode() {
   if (m_inst_fetch_buffer.m_valid) {
     // decode 1 or 2 instructions and place them into ibuffer
     address_type pc = m_inst_fetch_buffer.m_pc;
-    const warp_inst_t *pI1 = get_next_inst(m_inst_fetch_buffer.m_warp_id, pc);
+    const warp_inst_t *pI1 = get_next_inst(m_inst_fetch_buffer, pc);
     m_warp[m_inst_fetch_buffer.m_warp_id]->ibuffer_fill(0, pI1);
     m_warp[m_inst_fetch_buffer.m_warp_id]->inc_inst_in_pipeline();
     if (pI1) {
       m_stats->m_num_decoded_insn[m_sid]++;
       const warp_inst_t *pI2 =
-          get_next_inst(m_inst_fetch_buffer.m_warp_id, pc + pI1->GetSize());
+          get_next_inst(m_inst_fetch_buffer, pc + pI1->GetSize());
       if (pI2) {
         m_warp[m_inst_fetch_buffer.m_warp_id]->ibuffer_fill(1, pI2);
         m_warp[m_inst_fetch_buffer.m_warp_id]->inc_inst_in_pipeline();
@@ -660,7 +668,7 @@ void simt_core_ctx::fetch() {
       m_warp[mf->get_wid()]->clear_imiss_pending();
       m_inst_fetch_buffer =
           ifetch_buffer_t(m_warp[mf->get_wid()]->get_pc(),
-                          mf->get_access_size(), mf->get_wid());
+                          mf->get_access_size(), mf->get_wid(), mf->get_data_ptr());
       /*TODO schi
           assert(m_warp[mf->get_wid()]->get_pc() ==
              (mf->get_addr() -
@@ -749,7 +757,7 @@ void simt_core_ctx::fetch() {
             m_warp[warp_id]->set_last_fetch(m_opuusim->gpu_sim_cycle);
           } else if (status == HIT) {
             m_last_warp_fetched = warp_id;
-            m_inst_fetch_buffer = ifetch_buffer_t(pc, nbytes, warp_id);
+            m_inst_fetch_buffer = ifetch_buffer_t(pc, nbytes, warp_id, mf->get_data_ptr());
             m_warp[warp_id]->set_last_fetch(m_opuusim->gpu_sim_cycle);
             delete mf;
           } else {

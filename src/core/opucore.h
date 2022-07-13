@@ -479,7 +479,7 @@ class simt_core_ctx : public core_t {
 */
   virtual void create_shd_warp() = 0;
 
-  virtual const warp_inst_t *get_next_inst(unsigned warp_id,
+  virtual const warp_inst_t *get_next_inst(ifetch_buffer_t& ibuffer,
                                            address_type pc) = 0;
   virtual void get_pdom_stack_top_info(unsigned warp_id, const warp_inst_t *pI,
                                        unsigned *pc, unsigned *rpc) = 0;
@@ -616,7 +616,7 @@ class exec_simt_core_ctx : public simt_core_ctx {
                                    opu_t *gpu);
                                    */
   virtual void create_shd_warp();
-  virtual const warp_inst_t *get_next_inst(unsigned warp_id, address_type pc);
+  virtual const warp_inst_t *get_next_inst(ifetch_buffer_t&, address_type pc);
   virtual void get_pdom_stack_top_info(unsigned warp_id, const warp_inst_t *pI,
                                        unsigned *pc, unsigned *rpc);
   virtual const active_mask_t &get_active_mask(unsigned warp_id,

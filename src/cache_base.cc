@@ -214,13 +214,16 @@ enum cache_request_status tag_array::probe(address_type addr, unsigned &idx,
     if (line->m_tag == tag) {
       if (line->get_status(mask) == RESERVED) {
         idx = index;
+        std::memcpy(mf->get_data_ptr(), &line->m_data[0], mf->get_data_size());
         return HIT_RESERVED;
       } else if (line->get_status(mask) == VALID) {
         idx = index;
+        std::memcpy(mf->get_data_ptr(), &line->m_data[0], mf->get_data_size());
         return HIT;
       } else if (line->get_status(mask) == MODIFIED) {
         if ((!is_write && line->is_readable(mask)) || is_write) {
           idx = index;
+          std::memcpy(mf->get_data_ptr(), &line->m_data[0], mf->get_data_size());
           return HIT;
         } else {
           idx = index;
