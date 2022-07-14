@@ -249,7 +249,7 @@ OpuCore::recvInstResp(PacketPtr pkt)
     DPRINTF(OpuCoreFetch, "Finished fetch on vaddr 0x%x, data 0x%llx\n",
             pkt->req->getVaddr(), *(uint64_t*)(mf_data_ptr));
 
-    coreImpl->accept_fetch_response(iter->second);
+    coreImpl->accept_ifetch_response(iter->second);
 
     busyInstCacheLineAddrs.erase(iter);
 

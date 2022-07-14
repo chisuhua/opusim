@@ -111,7 +111,7 @@ class simt_core_ctx : public core_t {
 
   void cache_flush();
   void cache_invalidate();
-  void accept_fetch_response(::gem5::OpuMemfetch *mf);
+  void accept_ifetch_response(::gem5::OpuMemfetch *mf);
   // void accept_ldst_unit_response(class mem_fetch *mf);
   void broadcast_barrier_reduction(unsigned cta_id, unsigned bar_id,
                                    warp_set_t warps);

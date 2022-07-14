@@ -45,7 +45,7 @@ class OpuCoreBase {
   CB(executeMemOp)
   CB(writebackClear)
 
-  virtual void accept_fetch_response(OpuMemfetch *mf) = 0;
+  virtual void accept_ifetch_response(OpuMemfetch *mf) = 0;
   virtual bool ldst_unit_wb_inst(const OpuWarpinst &inst) = 0;
   virtual void writeRegister(const OpuWarpinst &inst, unsigned warpSize, unsigned lane_id, char* data) = 0;
   virtual bool warp_waiting_at_barrier(unsigned warp_id) const = 0;

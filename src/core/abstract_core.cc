@@ -4,13 +4,14 @@
 
 namespace opu {
 
-void core_t::execute_warp_inst_t(warp_inst_t &inst, unsigned warpId) {
+void core_t::execute_warp_inst_t(warp_inst_t &inst) {
+    uint32_t warpId = inst.warp_id();
   active_mask_t active_mask = warp_active_mask(warpId);
   for (unsigned t = 0; t < m_warp_size; t++) {
     if (active_mask.test(t)) {
       // if (warpId == (unsigned(-1))) warpId = inst.warp_id();
       unsigned tid = m_warp_size * warpId + t;
-      get_warp_state(warpId)->incWarpPC(inst.GetSize(), t);
+      // FIXME get_warp_state(warpId)->incWarpPC(inst.GetSize(), t);
       inst.Execute(get_warp_state(warpId), t);
       // FIXME m_thread[tid]->ptx_exec_inst(inst, t);
 

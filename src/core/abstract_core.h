@@ -54,7 +54,7 @@ class core_t : public ::gem5::OpuCoreBase {
 
   // virtual void checkExecutionStatusAndUpdate(warp_inst_t &inst, unsigned t,
   //                                           unsigned tid) = 0;
-  void execute_warp_inst_t(warp_inst_t &inst, unsigned warpId = (unsigned)-1);
+  void execute_warp_inst_t(warp_inst_t &inst);
   bool ptx_thread_done(uint32_t warp_id, unsigned lane_id) const;
   virtual void updateSIMTStack(unsigned warpId, warp_inst_t *inst);
   void initilizeSIMTStack(unsigned warp_count, unsigned warps_size);

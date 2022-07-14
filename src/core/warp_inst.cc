@@ -101,6 +101,13 @@ int32_t warp_inst_t::outcount() const {
 
 int32_t warp_inst_t::in(uint32_t t) const {
   int32_t reg_idx = -1;
+  for (int src = 0; src < m_instruction->num_src_operands; src++) {
+    int32_t reg_idx = m_instruction->getOperand(static_cast<Operand::OperandName>(Operand::SRC0 + src))->reg_.reg_idx_;
+    int32_t reg_range = m_instruction->getOperand(static_cast<Operand::OperandName>(Operand::SRC0 + src))->reg_.range_;
+    if (t < reg_range) { return reg_idx + t;}
+    t -= reg_range;
+  }
+  /*
   int32_t reg0_idx = m_instruction->getOperand(Operand::SRC0)->reg_.reg_idx_;
   int32_t reg1_idx = m_instruction->getOperand(Operand::SRC1)->reg_.reg_idx_;
   int32_t reg2_idx = m_instruction->getOperand(Operand::SRC2)->reg_.reg_idx_;
@@ -117,6 +124,7 @@ int32_t warp_inst_t::in(uint32_t t) const {
   if (t < reg2_range) { return reg2_idx + t;}
   t -= reg2_range;
   if (t < reg3_range) { return reg3_idx + t;}
+  */
   return -1;
 }
 

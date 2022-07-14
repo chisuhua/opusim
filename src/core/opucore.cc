@@ -1379,7 +1379,7 @@ void simt_core_ctx::broadcast_barrier_reduction(unsigned cta_id,
 
 bool simt_core_ctx::fetch_unit_response_buffer_full() const { return false; }
 
-void simt_core_ctx::accept_fetch_response(::gem5::OpuMemfetch *mf) {
+void simt_core_ctx::accept_ifetch_response(::gem5::OpuMemfetch *mf) {
 #if 1
   auto mf_ = dynamic_cast<mem_fetch*>(mf);
   mf_->set_status(IN_SHADER_FETCHED,
