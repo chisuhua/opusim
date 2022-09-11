@@ -26,8 +26,8 @@ class warp_inst_t : public OpuWarpinst {
 public:
   warp_inst_t();
 
-  uint32_t get_uid() const {};
-  uint32_t get_schd_id() const {};
+  uint32_t get_uid() const { return m_uid;};
+  uint32_t get_schd_id() const { return m_scheduler_id;};
   void issue(const active_mask_t &mask, unsigned warp_id,
                         unsigned long long cycle, int dynamic_warp_id,
                         int sch_id);
@@ -36,6 +36,8 @@ public:
   void set_not_active(unsigned lane_id) ;
   void set_active(const active_mask_t &active) ;
   void Execute(WarpState* warp_state, uint32_t lane);
+  void OperandCollect(WarpState* warp_state);
+  void WriteBack(WarpState* warp_state);
   uint32_t warp_id() const { return m_warp_id;};
 
   uint32_t GetSize() const;

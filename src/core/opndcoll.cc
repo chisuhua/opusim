@@ -46,12 +46,12 @@ void opndcoll_rfu_t::init(unsigned num_banks, simt_core_ctx *shader) {
   m_num_warp_scheds = shader->get_config()->opu_num_sched_per_core;
   unsigned reg_id;
   if (sub_core_model) {
-    assert(num_banks % shader->get_config()->opu_num_sched_per_core == 0);
+    assert(num_banks % m_num_warp_scheds == 0);
     assert(m_num_warp_scheds <= m_cu.size() &&
            m_cu.size() % m_num_warp_scheds == 0);
   }
   m_num_banks_per_sched =
-      num_banks / shader->get_config()->opu_num_sched_per_core;
+      num_banks / m_num_warp_scheds;
 
   for (unsigned j = 0; j < m_cu.size(); j++) {
     if (sub_core_model) {
@@ -293,8 +293,8 @@ bool opndcoll_rfu_t::collector_unit_t::allocate(register_set *pipeline_reg_set,
       } else
         m_src_op[op] = op_t();
     }
-    // move_warp(m_warp,*pipeline_reg);
-    pipeline_reg_set->move_out_to(m_warp);
+    move_warp(m_warp,*pipeline_reg);
+    // pipeline_reg_set->move_out_to(m_warp);
     return true;
   }
   return false;
@@ -303,6 +303,7 @@ bool opndcoll_rfu_t::collector_unit_t::allocate(register_set *pipeline_reg_set,
 void opndcoll_rfu_t::collector_unit_t::dispatch() {
   assert(m_not_ready.none());
   m_output_register->move_in(m_sub_core_model, m_reg_id, m_warp);
+  // m_output_register->OperandCollect(m_shader->get_warp_state(m_warp->warp_id()));
   m_free = true;
   m_output_register = NULL;
   for (unsigned i = 0; i < MAX_REG_OPERANDS * 2; i++) m_src_op[i].reset();

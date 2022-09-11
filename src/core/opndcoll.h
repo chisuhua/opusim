@@ -293,6 +293,8 @@ class opndcoll_rfu_t {  // operand collector based register file unit
     int *_inmatch;
     int *_outmatch;
     int **_request;
+    // ch_device<meshArbiter<4, 4>> *meshArbiter_device;
+    // ch_tracer meshArbiter_sim(device);
   };
 
   class input_port_t {

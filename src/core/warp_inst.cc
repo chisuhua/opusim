@@ -75,6 +75,14 @@ void warp_inst_t::Execute(WarpState* warp_state, uint32_t lane) {
   return m_instruction->Execute(warp_state, lane);
 }
 
+void warp_inst_t::OperandCollect(WarpState* warp_state) {
+  return m_instruction->OperandCollect(warp_state);
+}
+
+void warp_inst_t::WriteBack(WarpState* warp_state) {
+  return m_instruction->WriteBack(warp_state);
+}
+
 uint32_t warp_inst_t::GetSize() const {
   return m_instruction->GetSize();
 }
