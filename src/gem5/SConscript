@@ -30,8 +30,8 @@
 Import('*')
 
 
-SimObject('OpuCore.py')
-SimObject('OpuTop.py')
+SimObject('OpuCore.py', sim_objects=['OpuCore'])
+SimObject('OpuTop.py', sim_objects=['OpuTop', 'OpuSimComponentWrapper'])
 
 Source('opu_core.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
 Source('opu_top.cc', append={'CXXFLAGS': '-Wno-error=ignored-qualifiers'})
